@@ -47,6 +47,7 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 - Compare pinned GEPA and SkillOpt versions using synthetic/local datasets and explicit budgets.
 - Keep train/validation/test separation, rejected candidate history, base/candidate digests, and human adoption.
 - Never let an optimizer alter policy, tests, scorecards, approvals, or application authority.
+- Grader contract upgrades from the 2026-08-29 audit (pinned in the research note): optional per-check weights and `gated` short-circuits in the workflow-grader protocol (SaaS-Bench pattern), checkpoint-union/pass@k metrics for multi-seed e2e, and the evaluator-artifact isolation checklist citing the EvoCodeBench Harbor verifier leak (grader files and logs must never sit in agent-visible paths; contamination supersedes results).
 - After the deterministic path exists, experiment with bounded search proposers (MCTS-style tree over candidate changes, retained alternative branches) on one closed-loop task class, with the evaluation budget fixed by policy.
 
 ### Optional evaluation integrations

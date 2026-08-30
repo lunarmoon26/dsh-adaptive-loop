@@ -22,7 +22,7 @@
       "kind": "local_file",
       "uri": "repo://docs/research-evidence.md",
       "revision": "dal-v0-2026-08-29",
-      "sha256": "eb8891b2182c38f1681d7adb8a2c2afa8ffe375a08b8e644303eb021dc1c0a78",
+      "sha256": "a7094cf466fc372d86b88d8b9671b6db3d7600b28a62cf1c4f8d0b7b79a90daf",
       "local_path": "../docs/research-evidence.md",
       "required": true
     },
@@ -31,7 +31,7 @@
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
       "revision": "dal-v0-2026-08-29",
-      "sha256": "ec176f2b614523a26b2c02987878dab662f18af078ffbae2d370f0ff104e8936",
+      "sha256": "01e9181dbf99a6fdcabf06a0d7f3278e82742057878b73893ba2bce0600bdde2",
       "local_path": "../ROADMAP.md",
       "required": true
     }
