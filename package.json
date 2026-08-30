@@ -1,7 +1,6 @@
 {
-  "name": "dal",
+  "name": "@lunarmoon26/dal",
   "version": "0.1.0",
-  "private": true,
   "description": "Local, human-governed feedback and improvement loop for DeepSeek Harness projects.",
   "license": "MIT",
   "type": "module",
@@ -36,5 +35,15 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "config"
+  ],
+  "prepack": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git"
   }
 }

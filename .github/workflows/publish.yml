@@ -35,14 +35,15 @@ jobs:
         shell: bash
         run: |
           TAG="${{ github.event.release.tag_name }}"
-          if [[ "$TAG" =~ ^(dal-modes|dal-run-record|dal-improve-tools)-v([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?)$ ]]; then
+          if [[ "$TAG" =~ ^(dal-modes|dal-run-record|dal-improve-tools|dal)-v([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?)$ ]]; then
             PACKAGE="${BASH_REMATCH[1]}"
             VERSION="${BASH_REMATCH[2]}"
           else
-            echo "::error::Tag '$TAG' does not match <package>-v<semver> where package is dal-modes, dal-run-record, or dal-improve-tools"
+            echo "::error::Tag '$TAG' does not match <package>-v<semver> where package is dal, dal-modes, dal-run-record, or dal-improve-tools"
             exit 1
           fi
           case "$PACKAGE" in
+            dal) DIR="." ;;
             dal-modes) DIR="plugins/dal-modes" ;;
             dal-run-record) DIR="plugins/dal-run-record" ;;
             dal-improve-tools) DIR="plugins/dal-improve-tools" ;;

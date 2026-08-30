@@ -99,7 +99,7 @@ Local generated evidence lives under `.dal/` and is not source control. Hard-sto
 ## Install and first workspace
 
 ```sh
-npm install -g dal                    # once the root package is published; or: pnpm install -g . inside the checkout
+npm install -g @lunarmoon26/dal         # or: pnpm install -g . inside the checkout
 dal init                             # inside any workspace: stores, skill, instructions, gitignore rules
 ```
 
