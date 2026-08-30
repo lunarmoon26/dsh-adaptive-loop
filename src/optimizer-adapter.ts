@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import { relative, resolve, sep } from "node:path";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { dirname, relative, resolve, sep } from "node:path";
 
 import { DalError } from "./errors.js";
 import { prettyJson, readJsonFile, sha256 } from "./json.js";
@@ -155,6 +155,7 @@ export async function prepareOptimizerExchange(options: PrepareOptions): Promise
   await validateOptimizerExchange(exchange);
 
   const trainingSetPath = resolve(process.cwd(), ".dal", "check", `${trainingSetId}.json`);
+  await mkdir(dirname(trainingSetPath), { recursive: true, mode: 0o700 });
   await writeFile(trainingSetPath, prettyJson(trainingSet), { mode: 0o600 });
   return {
     exchange,
