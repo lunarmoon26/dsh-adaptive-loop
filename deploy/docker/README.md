@@ -19,6 +19,8 @@ The image pins `@deepseek-ai/dsh@0.1.1-rc.2` and `pnpm@11.7.0` on
 node_modules. Supply-chain rule: before sharing the image, pin the base image
 digest and record the image's own digest in the deployment evidence.
 
+Demo image (2026-08-30, bakes the benchmark workflow-tools plugin): `dsh-adaptive-loop/dsh:0.1.1-rc.2-demo`.
+
 Probe-verified image (2026-08-29, this workspace):
 `sha256:9e3cb523c1f90a44e49dcb49e60f84764cf4b5c113c210e0e97534dfa63b35ea`.
 

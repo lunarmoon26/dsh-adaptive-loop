@@ -45,11 +45,14 @@ export interface EffectEntry {
     outcome: EffectOutcome;
     receipt_sha256: string;
     summary: string;
+    params?: Record<string, string | number | boolean>;
 }
 export interface ServiceEnvironment {
     stateRoot: string;
     /** Simulated outcome per effect kind; default all success. */
     faults: Partial<Record<EffectKind, EffectOutcome>>;
+    /** What an 'unknown' effect resolves to when its status is queried. */
+    resolutions?: Partial<Record<EffectKind, EffectOutcome>>;
     now?: () => Date;
 }
 export interface EffectResult {

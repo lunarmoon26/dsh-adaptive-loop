@@ -34,6 +34,7 @@ describe("oracle isolation (audit P0-1)", () => {
     ]) {
       const prompt = promptFor(taskId);
       expect(prompt).toContain("agent-visible task");
+      expect(prompt).toContain("issue_refund");
       expect(prompt).not.toContain("goal_state");
       // The written policy is agent-visible; the oracle-bearing task file is not.
       expect(prompt).not.toContain(`tasks/${taskId}`);
@@ -47,6 +48,7 @@ describe("oracle isolation (audit P0-1)", () => {
       "utf8",
     );
     expect(skill).not.toContain("goal_state");
-    expect(skill).toContain("output convention");
+    expect(skill).toContain("typed tools");
+    expect(skill).toContain("never write result files");
   });
 });

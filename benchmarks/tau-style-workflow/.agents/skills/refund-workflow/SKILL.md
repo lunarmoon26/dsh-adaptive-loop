@@ -1,25 +1,26 @@
 ---
 name: refund-workflow
-description: Execute retail refund and airline booking-change tasks against the written policy and verify the final state deterministically. Use when a customer task involves refunds, return labels, or booking changes.
-version: 1
+description: Execute retail refund and airline booking-change tasks against the written policy using the typed mock-service tools. Use when a customer task involves refunds, return labels, or booking changes.
+version: 2
 ---
 
-# Refund workflow (v1 baseline)
+# Refund workflow (G0)
 
-This is the deliberately minimal v1 skill for the tau-style benchmark workspace. The improvement loop targets this file; every promotion must improve held-out graded outcomes without breaking the written policy.
+You operate a mock order/booking service strictly through the typed tools. The deterministic grader checks the SERVICE state, not any file you write — never write result files yourself.
 
 ## Steps
 
-1. Read the task instruction and the written policy (`tasks/policy.md`).
-2. Decide whether the request is allowed (refund window, reason codes, return labels, booking change rules).
-3. Mutate the state accordingly, or refuse and leave the state unchanged.
-4. Verify the final state with the deterministic grader before reporting success.
+1. Read the agent-visible task and the written policy (`tasks/policy.md`).
+2. Inspect the current service state with `get_order` / `get_booking`.
+3. Decide whether the request is allowed under the written policy.
+4. Perform the workflow through the tools: `issue_refund`, `create_return_label`, `change_booking`; when the policy refuses, record it with `refuse_request` and leave state unchanged.
+5. Always pass a stable idempotency_key for every effect (one logical action = one key).
+6. Reply DONE when the workflow is complete.
 
 ## Rules
 
 - Full refunds: within 30 days and with a return label.
 - Partial refunds: require a reason code.
 - Refusal: after 30 days, refuse and leave the order unchanged.
+- Booking changes: only before departure.
 - Never exceed the order total.
-- Final state shape (output convention): orders records carry only `status`; refunds records carry `order`/`amount`/`reason`; labels records carry `order`; bookings records carry only `route` and `changes` — drop auxiliary fields such as `date`, `status`, `seats`, or `items` even when the initial state has them.
-- Verification: verify the final state against the written policy and this output convention — never against any hidden grading criteria.

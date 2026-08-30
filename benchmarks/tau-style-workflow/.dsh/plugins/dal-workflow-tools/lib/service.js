@@ -73,7 +73,7 @@ async function findEffect(env, idempotencyKey) {
 function outcomeOf(env, kind) {
     return env.faults[kind] ?? "success";
 }
-async function performEffect(env, kind, idempotencyKey, summary, apply) {
+async function performEffect(env, kind, idempotencyKey, summary, apply, params) {
     const existing = await findEffect(env, idempotencyKey);
     if (existing !== undefined) {
         return {
@@ -111,6 +111,7 @@ async function performEffect(env, kind, idempotencyKey, summary, apply) {
         outcome,
         receipt_sha256: receipt,
         summary: detail,
+        ...(params === undefined ? {} : { params }),
     };
     await appendEffect(env, entry);
     return { outcome, receipt_sha256: receipt, idempotent: false, summary: detail };
@@ -135,7 +136,7 @@ export async function issueRefund(env, input) {
         state.refunds.push({ order: input.order_id, amount: input.amount, reason: input.reason });
         order.status = "refunded";
         return null;
-    });
+    }, { order_id: input.order_id, amount: input.amount, reason: input.reason });
 }
 export async function createReturnLabel(env, input) {
     return performEffect(env, "create_return_label", input.idempotency_key, `create return label for ${input.order_id}`, (state) => {
@@ -144,7 +145,7 @@ export async function createReturnLabel(env, input) {
         }
         state.labels.push({ order: input.order_id });
         return null;
-    });
+    }, { order_id: input.order_id });
 }
 export async function changeBooking(env, input) {
     return performEffect(env, "change_booking", input.idempotency_key, `change booking ${input.booking_id} to ${input.new_route}`, (state) => {
@@ -158,17 +159,81 @@ export async function changeBooking(env, input) {
         booking.route = input.new_route;
         booking.changes += 1;
         return null;
-    });
+    }, { booking_id: input.booking_id, new_route: input.new_route });
 }
 export async function refuseRequest(env, input) {
-    return performEffect(env, "refuse_request", input.idempotency_key, `refuse ${input.kind} for ${input.target}: ${input.reason}`, () => null);
+    return performEffect(env, "refuse_request", input.idempotency_key, `refuse ${input.kind} for ${input.target}: ${input.reason}`, () => null, {
+        kind: input.kind,
+        target: input.target,
+        reason: input.reason,
+    });
+}
+function applyResolvedOperation(state, entry) {
+    const params = entry.params ?? {};
+    if (entry.kind === "issue_refund") {
+        const order = state.orders[String(params.order_id ?? "")];
+        if (order === undefined)
+            return "refund references an unknown order";
+        state.refunds.push({
+            order: String(params.order_id),
+            amount: Number(params.amount ?? 0),
+            reason: String(params.reason ?? ""),
+        });
+        order.status = "refunded";
+        return null;
+    }
+    if (entry.kind === "create_return_label") {
+        if (state.orders[String(params.order_id ?? "")] === undefined)
+            return "label references an unknown order";
+        state.labels.push({ order: String(params.order_id) });
+        return null;
+    }
+    if (entry.kind === "change_booking") {
+        const booking = state.bookings[String(params.booking_id ?? "")];
+        if (booking === undefined)
+            return "booking does not exist";
+        booking.route = String(params.new_route ?? booking.route);
+        booking.changes += 1;
+        return null;
+    }
+    return null;
 }
 export async function getEffectStatus(env, idempotencyKey) {
-    const entry = await findEffect(env, idempotencyKey);
+    let entry = await findEffect(env, idempotencyKey);
     if (entry === undefined) {
         return { found: false, outcome: null, receipt_sha256: null, summary: null };
     }
-    return { found: true, outcome: entry.outcome, receipt_sha256: entry.receipt_sha256, summary: entry.summary };
+    const foundEntry = entry;
+    const resolvedTo = foundEntry.outcome === "unknown" ? env.resolutions?.[foundEntry.kind] : undefined;
+    if (resolvedTo !== undefined) {
+        const state = await loadState(env);
+        let detail = `resolved on status query: effect ${foundEntry.kind} actually ${resolvedTo}`;
+        if (resolvedTo === "success") {
+            const rejection = applyResolvedOperation(state, foundEntry);
+            if (rejection !== null) {
+                detail = `resolved on status query: ${rejection}`;
+            }
+            else {
+                await persistState(env, state);
+            }
+        }
+        const entries = await effectEntries(env);
+        const receipt = sha256(`${foundEntry.kind}|${idempotencyKey}|${resolvedTo}|${entries.length}`);
+        const resolvedEntry = {
+            seq: entries.length + 1,
+            at: (env.now?.() ?? new Date()).toISOString(),
+            kind: foundEntry.kind,
+            idempotency_key: idempotencyKey,
+            outcome: resolvedTo,
+            receipt_sha256: receipt,
+            summary: detail,
+            ...(foundEntry.params === undefined ? {} : { params: foundEntry.params }),
+        };
+        await appendEffect(env, resolvedEntry);
+        return { found: true, outcome: resolvedEntry.outcome, receipt_sha256: resolvedEntry.receipt_sha256, summary: resolvedEntry.summary };
+    }
+    const latest = entry;
+    return { found: true, outcome: latest.outcome, receipt_sha256: latest.receipt_sha256, summary: latest.summary };
 }
 /**
  * The evaluator-side projection of the service state: applies the workflow

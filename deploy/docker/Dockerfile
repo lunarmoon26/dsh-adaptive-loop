@@ -34,5 +34,10 @@ COPY dist /opt/dal/dist
 COPY schemas /opt/dal/schemas
 COPY config /opt/dal/config
 
+# The benchmark workspace's typed workflow tools, resolvable from the
+# profile install anchor so --patch overlays can mount them.
+COPY benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools /opt/dal/plugins/dal-workflow-tools
+RUN npm install -g /opt/dal/plugins/dal-workflow-tools
+
 WORKDIR /workspace
 CMD ["dsh", "--help"]

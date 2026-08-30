@@ -87,11 +87,41 @@ describe("mock order/booking service", () => {
     expect(state.bookings["b-5001"]?.changes).toBe(0);
   });
 
+  it("resolves unknown outcomes on status query without double-applying", async () => {
+    const env = await seeded({ issue_refund: "unknown" });
+    env.resolutions = { issue_refund: "success" };
+    const unknown = await issueRefund(env, { order_id: "o-1001", amount: 120, reason: "damaged", idempotency_key: "r-5" });
+    expect(unknown.outcome).toBe("unknown");
+
+    const status = await getEffectStatus(env, "r-5");
+    expect(status.outcome).toBe("success");
+    const state = await loadState(env);
+    expect(state.refunds).toHaveLength(1);
+
+    const again = await getEffectStatus(env, "r-5");
+    expect(again.outcome).toBe("success");
+    expect((await loadState(env)).refunds).toHaveLength(1);
+  });
+
   it("projects the service state through the output convention for grading", async () => {
     const env = await seeded();
     await issueRefund(env, { order_id: "o-1001", amount: 120, reason: "damaged", idempotency_key: "r-4" });
     const projected = projectServiceState(await loadState(env));
     expect(projected.orders["o-1001"]).toEqual({ status: "refunded", total: 120 });
     expect(projected.bookings["b-5001"]).toEqual({ route: "SFO-EWR", changes: 0 });
+  });
+});
+
+describe("G0 skill gap guard", () => {
+  it("keeps the G0 skill free of unknown-outcome guidance (the deliberate gap)", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const { resolve } = await import("node:path");
+    const skill = await readFile(
+      resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow", ".agents", "skills", "refund-workflow", "SKILL.md"),
+      "utf8",
+    );
+    expect(skill).toContain("idempotency_key");
+    expect(skill).not.toContain("get_effect_status");
+    expect(skill).not.toContain("unknown");
   });
 });
