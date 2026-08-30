@@ -641,6 +641,7 @@ export interface RunRecord {
     context_policy_sha256: string | null;
     inference_parameters: Array<{ name: string; value: string }>;
     harness_pins?: Array<{ surface: string; uri: string; sha256: string }>;
+    model_patch_sha256?: string | null;
   };
   artifacts: Array<{ uri: string; sha256: string; description: string }>;
   metrics: { duration_ms: number; tool_calls: number };
@@ -655,6 +656,13 @@ export interface RunRecord {
   }>;
   checks?: Array<{ id: string; pass: boolean; detail: string | null; goal_sha256: string; actual_sha256: string }>;
   batch_id?: string | null;
+  business_outcome?: {
+    status: "passed" | "failed" | "unknown";
+    source: string;
+    score?: number;
+    earned?: number;
+    total?: number;
+  } | null;
   privacy: {
     classification: "public" | "internal" | "restricted";
     contains_personal_data: boolean;

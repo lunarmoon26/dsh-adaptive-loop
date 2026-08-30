@@ -72,6 +72,7 @@ describe("run-mode recorder", () => {
       { name: "bash", version: "unpinned" },
     ]);
     expect(record.evidence).toEqual([`dsh-session://${sessionId}`]);
+    expect(record.business_outcome).toBeNull();
     expect(record.trace).toEqual([
       { seq: 4, turn: 1, step: 1, tool: "bash", outcome: "timeout", code: "TIMEOUT_EXCEEDED" },
     ]);

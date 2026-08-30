@@ -274,6 +274,13 @@
               }
             }
           }
+        },
+        "model_patch_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
         }
       }
     },
@@ -487,6 +494,42 @@
         "null"
       ],
       "maxLength": 128
+    },
+    "business_outcome": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "unknown"
+          ]
+        },
+        "source": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "earned": {
+          "type": "number",
+          "minimum": 0
+        },
+        "total": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
     }
   }
 }

@@ -7,7 +7,7 @@ import { verifyApprovalFile } from "../../src/approval.js";
 import { loadDotEnv } from "../../src/docker.js";
 import { canonicalJson, sha256 } from "../../src/json.js";
 import { ingestRunRecord } from "../../src/runs.js";
-import { promptFor } from "./e2e-prompt.js";
+import { buildModelPatch, promptFor } from "./e2e-prompt.js";
 import { agentVisibleTask, gradeTask, GRADER_VERSION, stableJson, type WorkflowTask } from "../../src/workflow-grader.js";
 
 /**
@@ -80,6 +80,12 @@ async function runTask(args: Map<string, string>, taskId: string): Promise<{ tas
   await writeFile(resultPath, "{}\n", "utf8");
   const started = Date.now();
   const runner = args.get("runner") ?? "docker";
+  const provider = args.get("provider") ?? "deepseek-official";
+  const model = args.get("model") ?? "deepseek-v4-flash";
+  const modelPatch = buildModelPatch(provider, model);
+  const patchPath = join(workspace, ".dal", "benchmark", "e2e", "model-patch.yml");
+  await writeFile(patchPath, modelPatch, "utf8");
+  const containerPatch = "/workspace/benchmarks/tau-style-workflow/.dal/benchmark/e2e/model-patch.yml";
   let result;
   if (runner === "docker") {
     const key = process.env.DEEPSEEK_API_KEY ?? loadDotEnv(repoRoot).DEEPSEEK_API_KEY ?? "";
@@ -95,11 +101,13 @@ async function runTask(args: Map<string, string>, taskId: string): Promise<{ tas
       "dsh",
       "--profile",
       "headless",
+      "--patch",
+      containerPatch,
       prompt,
     ];
     result = spawnSync("docker", argv, { encoding: "utf8", timeout: 900_000, maxBuffer: 32 * 1024 * 1024 });
   } else {
-    result = spawnSync("dsh", ["--profile", "headless", prompt], {
+    result = spawnSync("dsh", ["--profile", "headless", "--patch", patchPath, prompt], {
       cwd: workspace,
       encoding: "utf8",
       timeout: 900_000,
@@ -114,7 +122,14 @@ async function runTask(args: Map<string, string>, taskId: string): Promise<{ tas
     throw new Error(`dsh headless exited ${result.status} for ${taskId}: ${String(result.stderr).slice(-500)}`);
   }
   const state = JSON.parse(await readFile(resultPath, "utf8")) as unknown;
-  return { task, verdict: gradeTask(task, state), state, durationMs, prompt };
+  return {
+    task,
+    verdict: gradeTask(task, state),
+    state,
+    durationMs,
+    prompt,
+    modelPatchSha256: sha256(modelPatch),
+  };
 }
 
 async function main(): Promise<void> {
@@ -140,7 +155,7 @@ async function main(): Promise<void> {
   const provider = args.get("provider") ?? "deepseek-official";
   let failed = 0;
   for (const taskId of tasks) {
-    const { task, verdict, state, durationMs, prompt } = await runTask(args, taskId);
+    const { task, verdict, state, durationMs, prompt, modelPatchSha256 } = await runTask(args, taskId);
     const passed = verdict.pass;
     if (!passed) {
       failed += 1;
@@ -187,7 +202,13 @@ async function main(): Promise<void> {
             uri: "repo://benchmarks/tau-style-workflow/run-e2e.ts",
             sha256: sha256(prompt),
           },
+          {
+            surface: "model_patch",
+            uri: "repo://benchmarks/tau-style-workflow/.dal/benchmark/e2e/model-patch.yml",
+            sha256: modelPatchSha256,
+          },
         ],
+        model_patch_sha256: modelPatchSha256,
       },
       artifacts: [],
       batch_id: batch,
@@ -200,6 +221,13 @@ async function main(): Promise<void> {
         ...(check.weight === undefined ? {} : { weight: check.weight }),
         ...(check.gated === undefined ? {} : { gated: check.gated }),
       })),
+      business_outcome: {
+        status: verdict.pass ? "passed" : "failed",
+        source: "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+        score: verdict.score,
+        earned: verdict.earned,
+        total: verdict.total,
+      },
       metrics: { duration_ms: durationMs, tool_calls: 0 },
       evidence: [`dsh-session://e2e-${task.task_id}`],
       privacy: { classification: "internal", contains_personal_data: false, redactions: [] },

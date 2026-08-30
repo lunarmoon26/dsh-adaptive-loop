@@ -15,3 +15,7 @@ export function promptFor(taskId: string): string {
     "4. When the file is written, respond with exactly one word: DONE",
   ].join("\n");
 }
+/** The headless model-patch overlay declaring the batch's model route. */
+export function buildModelPatch(provider: string, model: string): string {
+  return `- id: agent-default-model\n  config:\n    provider: ${provider}\n    model: ${model}\n`;
+}
