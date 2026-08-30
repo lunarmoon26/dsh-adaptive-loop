@@ -1,11 +1,15 @@
 {
   "name": "dal-workflow-tools",
   "version": "0.1.0",
-    "type": "module",
+  "type": "module",
   "description": "Workspace plugin package source for the tau-style benchmark workspace. Installed into a dsh profile only from this local path, under an exact human approval; this repository holds the pinned source only.",
   "dsh": {
     "pluginId": "dal-workflow-tools",
     "entry": "src/index.ts",
-    "capabilities": ["workflow-state-tools"]
-  }
+    "capabilities": [
+      "workflow-state-tools"
+    ]
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts"
 }
