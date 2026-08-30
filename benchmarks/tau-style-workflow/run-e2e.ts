@@ -7,7 +7,8 @@ import { verifyApprovalFile } from "../../src/approval.js";
 import { loadDotEnv } from "../../src/docker.js";
 import { canonicalJson, sha256 } from "../../src/json.js";
 import { ingestRunRecord } from "../../src/runs.js";
-import { gradeTask, GRADER_VERSION, stableJson, type WorkflowTask } from "../../src/workflow-grader.js";
+import { promptFor } from "./e2e-prompt.js";
+import { agentVisibleTask, gradeTask, GRADER_VERSION, stableJson, type WorkflowTask } from "../../src/workflow-grader.js";
 
 /**
  * Approval-bound e2e driver for the tau-style benchmark workspace.
@@ -47,17 +48,6 @@ function argumentsFrom(argv: readonly string[]): Map<string, string> {
   return parsed;
 }
 
-function promptFor(taskId: string): string {
-  return [
-    "You are an agent completing a retail order workflow task inside the workspace /workspace/benchmarks/tau-style-workflow.",
-    "",
-    "Steps:",
-    `1. Read the task definition at /workspace/benchmarks/tau-style-workflow/tasks/${taskId}.json.`,
-    "2. Read the written policy at /workspace/benchmarks/tau-style-workflow/tasks/policy.md and the workflow skill at /workspace/benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md. Follow them exactly.",
-    "3. Starting from the task's initial_state, process the request in the instruction and write the FINAL state as JSON to /workspace/benchmarks/tau-style-workflow/.dal/benchmark/e2e/result.json. The final state must match the task's goal_state EXACTLY: include only the fields the goal annotates and drop unannotated fields (the workflow skill explains this rule).",
-    "4. When the file is written, respond with exactly one word: DONE",
-  ].join("\n");
-}
 
 async function manifestDigest(args: Map<string, string>): Promise<string> {
   const tasks = await taskIds(args);
@@ -85,6 +75,8 @@ async function runTask(args: Map<string, string>, taskId: string): Promise<{ tas
   const prompt = promptFor(taskId);
   const resultPath = join(workspace, ".dal", "benchmark", "e2e", "result.json");
   await mkdir(join(workspace, ".dal", "benchmark", "e2e"), { recursive: true, mode: 0o700 });
+  const agentTaskPath = join(workspace, ".dal", "benchmark", "e2e", `agent-task-${taskId}.json`);
+  await writeFile(agentTaskPath, `${JSON.stringify(agentVisibleTask(task), null, 2)}\n`, "utf8");
   await writeFile(resultPath, "{}\n", "utf8");
   const started = Date.now();
   const runner = args.get("runner") ?? "docker";

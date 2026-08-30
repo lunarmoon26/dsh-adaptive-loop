@@ -37,6 +37,25 @@ export interface GraderCheck {
   gated?: { reason: string; upstream: string };
 }
 
+/**
+ * The agent-visible projection of a task: workflow facts only. The grader
+ * keeps `goal_state` and policy invariants on the evaluator-only side, so a
+ * run can never succeed by copying the oracle (audit P0-1).
+ */
+export function agentVisibleTask(task: WorkflowTask): {
+  task_id: string;
+  domain: string;
+  instruction: string;
+  initial_state: Record<string, unknown>;
+} {
+  return {
+    task_id: task.task_id,
+    domain: task.domain,
+    instruction: task.instruction,
+    initial_state: task.initial_state,
+  };
+}
+
 export interface Verdict {
   task_id: string;
   pass: boolean;

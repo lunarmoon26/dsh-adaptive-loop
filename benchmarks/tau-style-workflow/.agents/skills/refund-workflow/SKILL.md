@@ -21,5 +21,5 @@ This is the deliberately minimal v1 skill for the tau-style benchmark workspace.
 - Partial refunds: require a reason code.
 - Refusal: after 30 days, refuse and leave the order unchanged.
 - Never exceed the order total.
-- Final state shape: emit the final state to match the task's `goal_state` EXACTLY — include only the fields the goal annotates (for example a bookings record carrying only `route` and `changes`), and drop unannotated fields such as `date`, `status`, `seats`, or `items` even when the initial state has them.
-- Verification: compare the final state against `goal_state` (exact field match), never against `initial_state`; a refusal keeps the goal-annotated fields unchanged.
+- Final state shape (output convention): orders records carry only `status`; refunds records carry `order`/`amount`/`reason`; labels records carry `order`; bookings records carry only `route` and `changes` — drop auxiliary fields such as `date`, `status`, `seats`, or `items` even when the initial state has them.
+- Verification: verify the final state against the written policy and this output convention — never against any hidden grading criteria.
