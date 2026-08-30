@@ -21,7 +21,7 @@ export const EVIDENCE_GITIGNORE = `.dal/*
 
 const AGENTS_TEMPLATE = `# dal agent instructions (workspace)
 
-These workspace instructions come from the dsh-adaptive-loop (dal) scaffolding. More specific project instructions take precedence.
+These workspace instructions come from the dal scaffolding. More specific project instructions take precedence.
 
 ## End of every feature-change task
 
@@ -145,7 +145,7 @@ export async function initWorkspace(options: { dir?: string; skillName?: string 
       "Track the evidence stores in VCS (commit .dal/outbox, .dal/store, .dal/runs, .dal/clusters, .dal/resets).",
       "If .gitignore already existed, append the .dal/ evidence-store rules from the dal template.",
       "Agents now log end-of-task feedback and failure run records automatically; reconcile with `dal feedback summary` and `dal cluster run`.",
-      "Optional user-global step (human-performed, approval-gated): copy this skill to ~/.agents/skills/ and the workspace instructions to the fixed user-global ~/.dsh/AGENTS.md so every workspace gets the workflow; install the dal CLI on PATH with `npm install -g <this-package>`.",
+      "Optional user-global step (human-performed, approval-gated): copy this skill to ~/.agents/skills/ and the workspace instructions to the fixed user-global ~/.dsh/AGENTS.md so every workspace gets the workflow; install the dal CLI on PATH with `npm install -g dal`.",
     ],
   };
 }

@@ -33,8 +33,8 @@ describe("CLI", () => {
   });
 
   it("recognizes the CLI entry point through a symlinked global bin", () => {
-    const entryUrl = "file:///prefix/lib/node_modules/dsh-adaptive-loop/dist/cli.js";
-    const entryPath = "/prefix/lib/node_modules/dsh-adaptive-loop/dist/cli.js";
+    const entryUrl = "file:///prefix/lib/node_modules/dal/dist/cli.js";
+    const entryPath = "/prefix/lib/node_modules/dal/dist/cli.js";
     const realpath = (value: string): string =>
       value === "/prefix/bin/dal" ? entryPath : value;
     expect(matchesEntryPoint(entryPath, entryUrl, realpath)).toBe(true);

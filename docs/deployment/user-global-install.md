@@ -36,7 +36,7 @@ This document defines the exact scope of the user-global dal deployment. The dec
 ```sh
 rm -rf ~/.agents/skills/end-task-feedback
 rm -f ~/.dsh/AGENTS.md
-npm uninstall -g dsh-adaptive-loop
+npm uninstall -g dal
 ```
 
 Rollback restores the exact prior state: neither target path existed before this install.

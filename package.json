@@ -1,5 +1,5 @@
 {
-  "name": "dsh-adaptive-loop",
+  "name": "dal",
   "version": "0.1.0",
   "private": true,
   "description": "Local, human-governed feedback and improvement loop for DeepSeek Harness projects.",
