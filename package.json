@@ -41,7 +41,7 @@
     "schemas",
     "config"
   ],
-  "prepack": "node node_modules/typescript/bin/tsc -p tsconfig.build.json",
+  "prepack": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && chmod +x dist/cli.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git"
