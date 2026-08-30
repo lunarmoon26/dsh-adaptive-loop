@@ -148,7 +148,7 @@ Optimizing workspace skills and profile plugin runtime over logged sessions is a
 
 Inspection date: 2026-08-29. Repos cloned to `~/Workspace` and pinned: `getstackit/sortit@c523150`, `UniPat-AI/SaaS-Bench@48c22de` (Apache-2.0 + separate LICENSE-DATA, arXiv `2605.15777`), `UniPat-AI/EvoCodeBench@f8fcfaa` (arXiv `2605.24110`, Harbor official multi-step format).
 
-**"Rubic" is not in the open source.** Case-insensitive grep for `rubic`/`rubric`/`judge` across both UniPat repos finds zero judging components (the only "judge" hit is a test fixture string, `SaaS-Bench/tests/test_verify_runner.py:5`), and the unipat.ai benchmark pages carry no Rubic mention either. The real judging layer is deterministic: SaaS-Bench scores via per-task `verify.py` files inspecting live app state; EvoCodeBench scores via Harbor per-step verifier rewards. Anything named Rubic is the vendor's internal/leaderboard labeling, not shipped. The borrowable substance is the verifier protocol below.
+**"Rubic" is not in the benchmark repos — it is UniPat's rubric-search methodology, described in their Echo blog (`https://unipat.ai/blog/Echo`, fetched 2026-08-30).** Case-insensitive grep for `rubic`/`rubric`/`judge` across both UniPat benchmark repos finds zero judging components (the only "judge" hit is a test fixture string, `SaaS-Bench/tests/test_verify_runner.py:5`): the benchmark repos score deterministically — SaaS-Bench via per-task `verify.py` inspecting live app state, EvoCodeBench via Harbor per-step verifier rewards. The blog's "Rubrics Search" section documents the judge-side method (Echo/Train-on-Future): process-level LLM judging because prediction outcomes are noisy and slow to resolve; rubrics decompose trajectories into concrete dimensions (source reliability, probability calibration, …) with explicit scoring levels (5·3·1 anchors), scored dimension-by-dimension for stability; and — the decisive idea — **the rubric itself is found by search**: maximize Spearman ρ between the rubric-based model ranking and the ground-truth Elo ranking from real outcomes, per domain, with an LLM proposing rubric candidates each round, each evaluated on held-out data, top performers retained. Rubrics ship per domain (Politics/Sports, 20 dims each).
 
 | Source and identity | Directly evidenced mechanism | Fit for dal | Recommendation |
 | --- | --- | --- | --- |
@@ -165,7 +165,9 @@ Inspection date: 2026-08-29. Repos cloned to `~/Workspace` and pinned: `getstack
 5. Variance-aware aggregation (pass@k, checkpoint union, calibration matrix) — `SaaS-Bench/saas_bench/reporting.py:107-169,395-433`.
 6. Retrieval-first candidate shortlisting — `sortit/docs/scoring-search-map.md` (Tag Candidate Selection).
 
-Non-transferable: SaaS-Bench's Docker slot orchestration and browser-use plumbing; sortit's issue-tracker domain; EvoCodeBench's Harbor container coupling. None of the three ships an LLM judge; all three keep the verifier deterministic — consistent with dal's fixed-evaluator anchor.
+7. Rubric search grounded in a ground-truth ranking — `https://unipat.ai/blog/Echo` (Rubrics Search section): maximize rubric-vs-truth ranking agreement (Spearman ρ), per-domain candidate generation, held-out evaluation, top-performer retention. For dal this is strictly easier to ground than Elo: the deterministic grader's verdicts are the ground-truth labels, so any future LLM-judge rubric tier must be *searched against grader agreement on held-out cases*, never hand-designed — and the search objective itself is the freeze-able contract.
+
+Non-transferable: SaaS-Bench's Docker slot orchestration and browser-use plumbing; sortit's issue-tracker domain; EvoCodeBench's Harbor container coupling. The benchmark repos ship no LLM judge; the judge-side method (Rubic) lives in UniPat's blog, not in OSS — its verifier side stays deterministic, consistent with dal's fixed-evaluator anchor.
 
 ### Gradient-style optimizers for the skills + plugins control plane
 
