@@ -64,9 +64,8 @@ jobs:
         working-directory: ${{ steps.target.outputs.dir }}
 
       - name: Publish ${{ steps.target.outputs.package }}
-        # --provenance requires a PUBLIC source repository; add it back if
-        # this repo ever becomes public.
-        run: npm publish --access public
+        # npm sigstore provenance requires a public source repository.
+        run: npm publish --provenance --access public
         working-directory: ${{ steps.target.outputs.dir }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
