@@ -205,6 +205,8 @@ async function main(): Promise<void> {
         detail: check.detail,
         goal_sha256: goalDigest(task),
         actual_sha256: sha256(stableJson(state)),
+        ...(check.weight === undefined ? {} : { weight: check.weight }),
+        ...(check.gated === undefined ? {} : { gated: check.gated }),
       })),
       metrics: { duration_ms: durationMs, tool_calls: 0 },
       evidence: [`dsh-session://e2e-${task.task_id}`],

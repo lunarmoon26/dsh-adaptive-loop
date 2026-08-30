@@ -1,0 +1,144 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-grader-weighted-gated-20260830",
+  "change_id": "chg-grader-weighted-gated",
+  "created_at": "2026-08-30T10:16:03.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "automation",
+      "id": "dsh-agent"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "80befa8c7b82e4b3894feeaf29ca9c349cc6b989",
+      "branch": "improvements/audit-borrows",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Land the first audit borrow on the improvements branch: the weighted/gated verifier protocol (SaaS-Bench pattern) in the tau-style grader \u2014 optional per-check weights with score/earned/total partial credit, gated dependent checks excluded from totals, strict binary pass preserved, and additive run-record pass-through.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-contract",
+      "statement": "GraderCheck gains optional weight and gated fields; Verdict gains score/earned/total; aggregate() computes weighted partial credit excluding gated checks.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-gating",
+      "statement": "Refund policy checks gate on a failed goal:refunds check and are excluded from credit totals; existing fixtures keep their pass semantics.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-passthrough",
+      "statement": "Run-record checks schema and the e2e driver pass weight/gated through additively.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-gate",
+      "statement": "The full gate passes on the improvements branch.",
+      "result": "passed",
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Weighted/gated grader contract shipped on improvements/audit-borrows: partial credit with strict pass, dependent-check gating on goal:refunds, and additive run-record pass-through \u2014 gate green.",
+    "exception": null
+  },
+  "what_worked": [
+    "The contract stayed back-compatible: existing fixtures and suites pass unchanged because gating only activates on goal failures and weights default to 1."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "grader-contract",
+      "purpose": "Add weighted/gated checks and score aggregation to workflow-grader; gate refund policy checks on goal:refunds.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "passthrough",
+      "purpose": "Extend run-record checks schema and the e2e driver mapping additively.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Run the full repository verification gate on the branch.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-tests",
+      "kind": "test",
+      "uri": "repo://tests/grader-contract.test.ts",
+      "summary": "Four contract tests: partial credit, perfect score, goal:refunds gating with credit exclusion, and aggregate() weight math; 21 tests across grader/benchmark/workflow suites.",
+      "sha256": null,
+      "observed_at": "2026-08-30T10:16:03.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck, build, 138 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed on improvements/audit-borrows.",
+      "sha256": null,
+      "observed_at": "2026-08-30T10:16:03.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Deterministic grader change only; no model calls, external transfers, or approvals involved."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "feature"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

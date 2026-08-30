@@ -453,6 +453,30 @@
           },
           "actual_sha256": {
             "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "gated": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason",
+              "upstream"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "upstream": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            }
           }
         }
       }
