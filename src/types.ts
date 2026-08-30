@@ -736,6 +736,33 @@ export interface OptimizerVerdict {
   created_at: string;
 }
 
+export interface ExecutionReceipt {
+  $schema: string;
+  schema_version: "1.0.0";
+  receipt_id: string;
+  created_at: string;
+  candidate_sha256: string | null;
+  base_generation_id: string | null;
+  candidate_generation_id: string | null;
+  effective_composition_sha256: string;
+  task_handle: string;
+  model: { provider: string; model: string };
+  model_patch_sha256: string | null;
+  dsh_session_id: string | null;
+  event_log_head_sha256: string | null;
+  external_state_before_sha256: string | null;
+  external_state_after_sha256: string;
+  grader_receipt_sha256: string | null;
+  source: string;
+  business_outcome?: {
+    status: "passed" | "failed" | "unknown";
+    source: string;
+    score?: number;
+    earned?: number;
+    total?: number;
+  } | null;
+}
+
 export interface ResetReceipt {
   $schema: string;
   schema_version: "1.0.0";

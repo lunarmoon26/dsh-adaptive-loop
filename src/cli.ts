@@ -778,8 +778,8 @@ async function branchRecordCommand(argv: readonly string[], io: CliIo): Promise<
 
 async function branchEvaluateCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["branch", "task", "state", "store"]);
-  exactlyPositionals(parsed, 0, "branch evaluate --branch <id> --task <task-file> --state <state-file>");
+  assertOptions(parsed, ["branch", "task", "state", "store", "receipt"]);
+  exactlyPositionals(parsed, 0, "branch evaluate --branch <id> --task <task-file> --state <state-file> [--receipt <file>]");
   const options: Parameters<typeof evaluateBranch>[0] = {
     branchId: requiredOption(parsed, "branch"),
     taskPath: requiredOption(parsed, "task"),
@@ -788,6 +788,10 @@ async function branchEvaluateCommand(argv: readonly string[], io: CliIo): Promis
   const store = oneOption(parsed, "store");
   if (store !== undefined) {
     options.store = store;
+  }
+  const receipt = oneOption(parsed, "receipt");
+  if (receipt !== undefined) {
+    options.receiptPath = receipt;
   }
   const result = await evaluateBranch(options);
   printJson(io, {

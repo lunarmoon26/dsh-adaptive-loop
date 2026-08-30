@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/execution-receipt.v1.schema.json",
+  "title": "DSH Adaptive Loop execution receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "receipt_id",
+    "created_at",
+    "candidate_sha256",
+    "base_generation_id",
+    "candidate_generation_id",
+    "effective_composition_sha256",
+    "task_handle",
+    "model",
+    "model_patch_sha256",
+    "dsh_session_id",
+    "event_log_head_sha256",
+    "external_state_before_sha256",
+    "external_state_after_sha256",
+    "grader_receipt_sha256",
+    "source"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/execution-receipt.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^rcp-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "candidate_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "base_generation_id": { "type": ["string", "null"], "maxLength": 128 },
+    "candidate_generation_id": { "type": ["string", "null"], "maxLength": 128 },
+    "effective_composition_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "task_handle": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {
+        "provider": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "model": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        }
+      }
+    },
+    "model_patch_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "dsh_session_id": { "type": ["string", "null"], "maxLength": 128 },
+    "event_log_head_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "external_state_before_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "external_state_after_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "grader_receipt_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "source": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "business_outcome": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["status", "source"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "unknown"] },
+        "source": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "earned": { "type": "number", "minimum": 0 },
+        "total": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

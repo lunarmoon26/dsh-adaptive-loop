@@ -24,6 +24,7 @@ export const SCHEMA_IDS = {
   capsule: "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   clusterRecord: "https://recursive-dev-loop.dev/schemas/cluster-record.v1.schema.json",
   effectIntent: "https://recursive-dev-loop.dev/schemas/effect-intent.v1.schema.json",
+  executionReceipt: "https://recursive-dev-loop.dev/schemas/execution-receipt.v1.schema.json",
   effectReceipt: "https://recursive-dev-loop.dev/schemas/effect-receipt.v1.schema.json",
   evaluationScorecard: "https://recursive-dev-loop.dev/schemas/evaluation-scorecard.v1.schema.json",
   evaluationSuite: "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json",

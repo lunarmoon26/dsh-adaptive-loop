@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
+import { bindReceiptToState, readExecutionReceipt, receiptDigest } from "./execution-receipt.js";
 import { gradeTask, type WorkflowTask } from "./workflow-grader.js";
 import { DalError } from "./errors.js";
 import { prettyJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
@@ -31,6 +32,9 @@ export interface BranchEvaluation {
   score: number;
   checks: Array<{ id: string; pass: boolean }>;
   observed_at: string;
+  receipt_id?: string | null;
+  receipt_sha256?: string | null;
+  provenance_valid?: boolean;
 }
 
 export interface BranchStats {
@@ -113,6 +117,7 @@ export async function evaluateBranch(options: {
   taskPath: string;
   candidateStatePath: string;
   store?: string;
+  receiptPath?: string;
 }): Promise<{ status: "recorded" | "idempotent"; path: string; evaluation: BranchEvaluation }> {
   const policy = await loadPolicy();
   const store = branchStore(policy, options.store);
@@ -120,8 +125,22 @@ export async function evaluateBranch(options: {
 
   const taskDocument = await readJsonFile<WorkflowTask>(options.taskPath);
   const stateDocument = await readJsonFile<unknown>(options.candidateStatePath);
+  const stateDigest = sha256(stateDocument.raw.toString("utf8"));
   const verdict = gradeTask(taskDocument.value, stateDocument.value);
   const checks: Array<{ id: string; pass: boolean }> = verdict.checks.map((check) => ({ id: check.id, pass: check.pass }));
+
+  // Execution-receipt binding (audit P0-2): a provenance-valid evaluation
+  // must carry a receipt that binds this exact graded state.
+  let receiptId: string | null = null;
+  let receiptSha: string | null = null;
+  let provenanceValid = false;
+  if (options.receiptPath !== undefined) {
+    const receipt = await readExecutionReceipt(options.receiptPath);
+    bindReceiptToState(receipt, stateDigest);
+    receiptId = receipt.receipt_id;
+    receiptSha = receiptDigest(receipt);
+    provenanceValid = true;
+  }
 
   const evaluation: BranchEvaluation = {
     $schema: SCHEMA_IDS.branchEvaluation,
@@ -130,11 +149,14 @@ export async function evaluateBranch(options: {
     branch_id: options.branchId,
     task_id: verdict.task_id,
     candidate_ref: "file://" + resolve(process.cwd(), options.candidateStatePath),
-    candidate_sha256: sha256(stateDocument.raw.toString("utf8")),
+    candidate_sha256: stateDigest,
     passed: verdict.pass,
     score: verdict.pass ? 1 : 0,
     checks,
     observed_at: new Date().toISOString(),
+    receipt_id: receiptId,
+    receipt_sha256: receiptSha,
+    provenance_valid: provenanceValid,
   };
   await assertSchema(SCHEMA_IDS.branchEvaluation, evaluation, "Branch evaluation");
   const destination = resolve(store, `${evaluation.evaluation_id}.evaluation.json`);
