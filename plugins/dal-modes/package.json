@@ -1,6 +1,6 @@
 {
   "name": "@lunarmoon26/dal-modes",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "DSH Adaptive Loop plugin-mode bundle: run-mode evidence recording (on by default) and improvement-mode workbench tools (off by default; a workbench profile enables the row in its own cordis.patch.yml).",
   "license": "MIT",
