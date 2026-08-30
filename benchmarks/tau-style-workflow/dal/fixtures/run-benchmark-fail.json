@@ -1,0 +1,45 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-benchmark-fail",
+  "task_id": "tau-style-retail-001",
+  "change_id": "chg-benchmark-scaffold",
+  "started_at": "2026-08-29T16:05:00.000Z",
+  "finished_at": "2026-08-29T16:05:31.000Z",
+  "outcome": "failed",
+  "failure": {
+    "category": "test_failure",
+    "code": "grader-mismatch",
+    "fingerprint_extra": [],
+    "summary": "The refund workflow omitted the required return label, so the deterministic grader failed the full-refund policy invariant.",
+    "evidence": ["repo://benchmarks/tau-style-workflow/tasks/task-001-refund.json"]
+  },
+  "context": {
+    "task_set": "tau-style-retail",
+    "environment_snapshot": "local-node24-macos",
+    "tool_versions": [
+      { "name": "grader", "version": "tau-style-workflow-grader-v1" }
+    ],
+    "model": { "id": "synthetic-agent", "version": "2026-08" },
+    "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "harness_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "grader_version": "1.0.0",
+    "seeds": [2],
+    "context_policy_sha256": null,
+    "inference_parameters": []
+  },
+  "artifacts": [
+    {
+      "uri": "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
+      "sha256": "9870d31c1a75950b1354989ff316193adc97dc2131a67ebe22c0c412db393f80",
+      "description": "Refund workflow skill v1 used by the run"
+    }
+  ],
+  "metrics": { "duration_ms": 31000, "tool_calls": 5 },
+  "evidence": ["repo://benchmarks/tau-style-workflow/tasks/task-001-refund.json"],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

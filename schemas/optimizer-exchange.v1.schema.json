@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/optimizer-exchange.v1.schema.json",
+  "title": "Recursive Development Loop optimizer exchange v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "exchange_id",
+    "mode",
+    "provider_hint",
+    "target",
+    "objective",
+    "datasets",
+    "budget",
+    "privacy",
+    "result"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/optimizer-exchange.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "exchange_id": {
+      "type": "string",
+      "pattern": "^opt-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "mode": { "const": "prepare_only" },
+    "provider_hint": {
+      "enum": ["gepa", "skillopt", null]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "artifact_uri", "base_sha256", "format"],
+      "properties": {
+        "kind": {
+          "enum": ["prompt", "skill", "cordis_plugin", "harness_rule"]
+        },
+        "artifact_uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "base_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "format": {
+          "enum": ["complete_text", "named_components", "bounded_edits"]
+        }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goal", "metrics", "higher_is_better"],
+      "properties": {
+        "goal": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+        },
+        "metrics": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          }
+        },
+        "higher_is_better": { "type": "boolean" }
+      }
+    },
+    "datasets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["train", "validation", "test"],
+      "properties": {
+        "train": { "$ref": "#/$defs/uri_list" },
+        "validation": { "$ref": "#/$defs/uri_list" },
+        "test": { "$ref": "#/$defs/uri_list" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_evaluations", "max_candidates", "max_wall_time_seconds", "max_external_cost_usd"],
+      "properties": {
+        "max_evaluations": { "type": "integer", "minimum": 1 },
+        "max_candidates": { "type": "integer", "minimum": 1 },
+        "max_wall_time_seconds": { "type": "integer", "minimum": 1 },
+        "max_external_cost_usd": { "type": "number", "minimum": 0 }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "external_transfer_approved", "approval_ref"],
+      "properties": {
+        "classification": {
+          "enum": ["public", "internal", "restricted"]
+        },
+        "external_transfer_approved": { "const": false },
+        "approval_ref": { "type": "null" }
+      }
+    },
+    "result": { "type": "null" }
+  },
+  "$defs": {
+    "uri_list": {
+      "type": "array",
+      "maxItems": 100000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+      }
+    }
+  }
+}

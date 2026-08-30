@@ -1,0 +1,39 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-e2e-task-003-policy-refusal-baseline-e10b1f68",
+  "task_id": "task-003-policy-refusal",
+  "change_id": "chg-e2e-baseline",
+  "started_at": "2026-08-29T23:32:37.987Z",
+  "finished_at": "2026-08-29T23:33:33.365Z",
+  "outcome": "succeeded",
+  "failure": null,
+  "context": {
+    "task_set": "tau-style-workflow-e2e",
+    "environment_snapshot": "darwin arm64 node 24.19.0",
+    "tool_versions": [],
+    "model": {
+      "id": "deepseek-v4-flash",
+      "version": "deepseek-official"
+    },
+    "prompt_sha256": "2fb7f53ba6b2c301cf8dc3ae9ffc2b4d8bdc1ffde65608a07471c1acd318a1ba",
+    "harness_sha256": null,
+    "grader_version": "1.0.0",
+    "seeds": [],
+    "context_policy_sha256": "6fb265f165506b7e8bcf8744ccc9c7b2771b180c60aae915845caa9ac2bfc211",
+    "inference_parameters": []
+  },
+  "artifacts": [],
+  "metrics": {
+    "duration_ms": 55377,
+    "tool_calls": 0
+  },
+  "evidence": [
+    "dsh-session://e2e-task-003-policy-refusal"
+  ],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

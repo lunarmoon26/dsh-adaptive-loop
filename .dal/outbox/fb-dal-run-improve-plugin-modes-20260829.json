@@ -1,0 +1,185 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-run-improve-plugin-modes-20260829",
+  "change_id": "chg-dal-run-improve-plugin-modes",
+  "created_at": "2026-08-29T22:50:07.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "automation",
+      "id": "dsh-agent"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "f0431e18d77e799e8604c59510ff9334b5be499e",
+      "branch": "main",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Implement the run/improvement plugin modes: a run-mode recorder bundle row that projects dsh session events into privacy-safe run records without improvement code in the hot path, and an improvement-mode workbench tool set over the deterministic dal CLI, split by profile layer.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-mode-split",
+      "statement": "One dsh bundle (@dal/dsh-modes) ships recorder-on/tools-off so run mode records without workbench code and a workbench profile enables the tools row in its own layer.",
+      "result": "passed",
+      "evidence": [
+        "ev-bundle"
+      ]
+    },
+    {
+      "id": "ac-run-record",
+      "statement": "Run-mode records validate against the run-record schema, carry only digests/counts/codes (no raw prompt, message, argument, or result content), checkpoint on flush, and finalize on disposal.",
+      "result": "passed",
+      "evidence": [
+        "ev-plugin-tests"
+      ]
+    },
+    {
+      "id": "ac-workbench",
+      "statement": "The improvement tools run only deterministic dal operations (cluster, prepare payload, summarize, branch evaluate, reset status) and expose nothing approval-gated.",
+      "result": "passed",
+      "evidence": [
+        "ev-plugin-tests"
+      ]
+    },
+    {
+      "id": "ac-gate",
+      "statement": "The full local gate passes with the plugin packages type-checked and built.",
+      "result": "passed",
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Run/improvement plugin modes shipped under plugins/: a mode-split bundle with a privacy-safe session recorder and deterministic workbench tools, contract-verified against the dsh runtime source and gate-green.",
+    "exception": null
+  },
+  "what_worked": [
+    "The dsh contract was read from the installed harness source: bundle manifests (dsh.bundle.patch), profile composition, session/event + session/flush durability seams, and the defineTool registration API.",
+    "The recorder accumulates counters only on the hot path and writes at durability checkpoints; observer failures are contained by contract.",
+    "Structural typing keeps the recorder free of dsh runtime imports; the tools plugin peers resolve from the profile fallback, not from this repo.",
+    "Schema constraints (identifier patterns, uri evidence, literal-true required fields) were honored from the first failing run onward."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "dsh-inspection",
+      "purpose": "Read the harness plugin/profiles/session/tools contracts from the installed dsh packages.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-plugin-tests"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "implement-plugins",
+      "purpose": "Create the @dal/dsh-modes bundle, @dal/dsh-run-record recorder, and @dal/dsh-improve-tools workbench package.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-bundle",
+        "ev-plugin-tests"
+      ]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "docs-update",
+      "purpose": "Spec DAL-019, README plugin-modes section, ROADMAP workbench tick, requirement evidence.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-docs"
+      ]
+    },
+    {
+      "sequence": 4,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Run the full repository verification gate.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-plugin-tests",
+      "kind": "test",
+      "uri": "repo://tests/plugin-modes.test.ts",
+      "summary": "Eleven focused tests: schema-valid run-record projection with no raw content, flush/dispose checkpoints, malformed-event containment, Cordis wiring, the five-tool registry, cluster/prepare/branch tool executions, and bundle manifest shape.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:50:07.000Z"
+    },
+    {
+      "id": "ev-bundle",
+      "kind": "file",
+      "uri": "repo://plugins/dal-modes/cordis.patch.yml",
+      "summary": "Bundle patch ships dal-run-record enabled and dal-improve-tools disabled; a workbench profile flips the row in its own layer.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:50:07.000Z"
+    },
+    {
+      "id": "ev-docs",
+      "kind": "file",
+      "uri": "repo://docs/spec.md",
+      "summary": "DAL-019 defines the mode split, the recording policy, the deterministic tool boundary, and the approval-gated mounting posture.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:50:07.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck (root + both plugin packages), build, 122 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:50:07.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-mount-smoke",
+      "statement": "The bundle was verified against the installed dsh 0.1.1-rc.2 contracts and unit-tested, but not mounted into a real profile in this task.",
+      "level": "low",
+      "resolution": "The profile-mount smoke run is a documented human step gated by a separate install_or_mount_plugin approval.",
+      "evidence": [
+        "ev-bundle"
+      ]
+    }
+  ],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "No dsh profile was created or modified and no plugin was mounted; the bundle sources are VCS-owned and any real mount remains a separate approval-gated install_or_mount_plugin operation."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "feature"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

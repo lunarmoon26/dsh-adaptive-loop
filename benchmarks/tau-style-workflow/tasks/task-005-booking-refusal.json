@@ -1,0 +1,14 @@
+{
+  "task_id": "task-005-booking-refusal",
+  "domain": "airline",
+  "instruction": "The customer wants to change booking b-5001, but the departure date has already passed. The policy allows changes only before departure; refuse and leave the booking unchanged.",
+  "initial_state": {
+    "bookings": {
+      "b-5001": { "route": "SFO-EWR", "date": "2026-08-01", "status": "departed", "seats": 1, "changes": 0 }
+    }
+  },
+  "goal_state": {
+    "bookings": { "b-5001": { "route": "SFO-EWR", "changes": 0 } }
+  },
+  "policy_ref": "policy.md"
+}

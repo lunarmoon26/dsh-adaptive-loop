@@ -1,0 +1,514 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "title": "Recursive Development Loop feedback log v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "feedback_id",
+    "change_id",
+    "created_at",
+    "supersedes",
+    "producer",
+    "goal",
+    "acceptance_criteria",
+    "outcome",
+    "what_worked",
+    "what_failed",
+    "calls",
+    "failures_and_inefficiencies",
+    "evidence",
+    "uncertainty",
+    "human_review",
+    "privacy"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "feedback_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/feedback_id"
+    },
+    "change_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/change_id"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "supersedes": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/feedback_id" }
+      ]
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor", "harness", "repository", "task_ref"],
+      "properties": {
+        "actor": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/actor"
+        },
+        "harness": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "version", "session_id"],
+              "properties": {
+                "name": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+                },
+                "version": {
+                  "type": ["string", "null"],
+                  "maxLength": 128
+                },
+                "session_id": {
+                  "type": ["string", "null"],
+                  "maxLength": 256
+                }
+              }
+            }
+          ]
+        },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "revision", "branch", "dirty"],
+          "properties": {
+            "root": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            },
+            "revision": {
+              "oneOf": [
+                { "type": "null" },
+                { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/git_revision" }
+              ]
+            },
+            "branch": {
+              "type": ["string", "null"],
+              "maxLength": 256
+            },
+            "dirty": {
+              "type": "boolean"
+            }
+          }
+        },
+        "task_ref": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" }
+          ]
+        }
+      }
+    },
+    "goal": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement", "result", "evidence"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ac-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "statement": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "result": {
+            "enum": ["passed", "failed", "not_run", "not_applicable"]
+          },
+          "evidence": {
+            "type": "array",
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^ev-[a-z0-9][a-z0-9._-]+$",
+              "maxLength": 100
+            }
+          }
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary", "exception"],
+      "properties": {
+        "status": {
+          "enum": ["completed", "blocked", "aborted"]
+        },
+        "summary": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+        },
+        "exception": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "reason", "owner", "next_action"],
+              "properties": {
+                "kind": {
+                  "enum": ["blocked", "aborted"]
+                },
+                "reason": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+                },
+                "owner": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+                },
+                "next_action": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "what_worked": {
+      "$ref": "#/$defs/observation_list"
+    },
+    "what_failed": {
+      "$ref": "#/$defs/observation_list"
+    },
+    "calls": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sequence", "kind", "name", "purpose", "outcome", "duration_ms", "evidence"],
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "kind": {
+            "enum": ["tool", "harness", "plugin"]
+          },
+          "name": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "purpose": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "outcome": {
+            "enum": ["succeeded", "failed", "cancelled", "denied"]
+          },
+          "duration_ms": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "failures_and_inefficiencies": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "category", "summary", "impact", "recoverable", "suggested_action", "evidence"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^fi-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "category": {
+            "enum": ["tooling", "harness", "plugin", "process", "context", "verification", "performance", "coordination", "other"]
+          },
+          "summary": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "impact": {
+            "enum": ["low", "medium", "high"]
+          },
+          "recoverable": {
+            "type": "boolean"
+          },
+          "suggested_action": {
+            "type": ["string", "null"],
+            "maxLength": 8192
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "uri", "summary", "sha256", "observed_at"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ev-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "kind": {
+            "enum": ["command", "test", "file", "commit", "url", "session_event", "human_note"]
+          },
+          "uri": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          },
+          "summary": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "sha256": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+            ]
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement", "level", "resolution", "evidence"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^un-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "statement": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "level": {
+            "enum": ["low", "medium", "high"]
+          },
+          "resolution": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "human_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer", "reviewed_at", "notes", "approval_refs"],
+      "properties": {
+        "status": {
+          "enum": ["not_requested", "pending", "approved", "changes_requested", "rejected", "not_required"]
+        },
+        "reviewer": {
+          "type": ["string", "null"],
+          "maxLength": 512
+        },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "date-time" }
+          ]
+        },
+        "notes": {
+          "$ref": "#/$defs/observation_list"
+        },
+        "approval_refs": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/decision_id"
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "retention", "tags", "contains_personal_data", "redactions"],
+      "properties": {
+        "classification": {
+          "enum": ["public", "internal", "restricted"]
+        },
+        "retention": {
+          "enum": ["ephemeral", "local-only", "team"]
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          }
+        },
+        "contains_personal_data": {
+          "type": "boolean"
+        },
+        "redactions": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "reason", "marker"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1024,
+                "pattern": "^/"
+              },
+              "reason": {
+                "enum": ["credential", "personal_data", "customer_data", "licensed_content", "other"]
+              },
+              "marker": {
+                "type": "string",
+                "pattern": "^\\[REDACTED:[A-Za-z0-9._-]+\\]$",
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "observation_list": {
+      "type": "array",
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^ev-[a-z0-9][a-z0-9._-]+$",
+        "maxLength": 100
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "status": { "const": "completed" }
+            },
+            "required": ["status"]
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "exception": { "type": "null" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "status": { "const": "blocked" }
+            },
+            "required": ["status"]
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "exception": {
+                "type": "object",
+                "properties": {
+                  "kind": { "const": "blocked" }
+                },
+                "required": ["kind"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "status": { "const": "aborted" }
+            },
+            "required": ["status"]
+          }
+        }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "object",
+            "properties": {
+              "exception": {
+                "type": "object",
+                "properties": {
+                  "kind": { "const": "aborted" }
+                },
+                "required": ["kind"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

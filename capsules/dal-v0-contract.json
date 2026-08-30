@@ -1,0 +1,106 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
+  "schema_version": "1.0.0",
+  "capsule_id": "capsule-dal-v0-contract",
+  "capsule_version": "1.1.0",
+  "title": "DAL v0 safety and evidence contract",
+  "audience": "Agents and maintainers changing feedback, policy, evaluation, or approval behavior",
+  "checked_at": "2026-08-29",
+  "refresh_after": "2026-11-27",
+  "sources": [
+    {
+      "id": "src-dal-spec",
+      "kind": "local_file",
+      "uri": "repo://docs/spec.md",
+      "revision": "dal-v0-2026-08-29",
+      "sha256": "173463eebfbb4cd184563556c11694c7fdf47920dd3452b3c677ec5d9e98bc38",
+      "local_path": "../docs/spec.md",
+      "required": true
+    },
+    {
+      "id": "src-dal-governance",
+      "kind": "local_file",
+      "uri": "repo://docs/governance.md",
+      "revision": "dal-v0-2026-08-27",
+      "sha256": "da501aebe253dfb2c8f6be6d57f94e87d761c9c17c016c27c38d1b3c02b87be0",
+      "local_path": "../docs/governance.md",
+      "required": true
+    },
+    {
+      "id": "src-dal-evaluation",
+      "kind": "local_file",
+      "uri": "repo://docs/evaluation-and-guardrails.md",
+      "revision": "dal-v0-2026-08-29",
+      "sha256": "b4262e30a68d14c3150fe105054271413908b318c202b1d78f0ed20c15aaf502",
+      "local_path": "../docs/evaluation-and-guardrails.md",
+      "required": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-local-only",
+      "text": "Version 0 validates and records local evidence but has no network, plugin, shared-configuration, optimizer, or candidate-application executor.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-governance",
+        "src-dal-evaluation"
+      ]
+    },
+    {
+      "id": "claim-deterministic-authority",
+      "text": "Deterministic schema, privacy, policy, provenance, budget, and quarantine checks may block but cannot authorize a sensitive action.",
+      "source_ids": [
+        "src-dal-governance",
+        "src-dal-evaluation"
+      ]
+    },
+    {
+      "id": "claim-human-approval",
+      "text": "Shared configuration, plugin management, external transfer, and candidate application require a separate exact, current human approval at the execution boundary.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-governance"
+      ]
+    },
+    {
+      "id": "claim-scorecard-boundary",
+      "text": "A passing offline scorecard is prerequisite evidence only; a hard stop quarantines or requests manual rollback and blocks proposal progression.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-evaluation"
+      ]
+    }
+  ],
+  "retrieval_pointers": [
+    {
+      "id": "ptr-exact-syntax",
+      "when": "Changing persisted JSON fields or enum values",
+      "uri": "repo://schemas/",
+      "source_ids": [
+        "src-dal-spec"
+      ]
+    },
+    {
+      "id": "ptr-policy-authority",
+      "when": "Deciding whether evidence, review, or approval may permit an action",
+      "uri": "repo://docs/evaluation-and-guardrails.md",
+      "source_ids": [
+        "src-dal-governance",
+        "src-dal-evaluation"
+      ]
+    },
+    {
+      "id": "ptr-sensitive-action",
+      "when": "Working near shared, external, plugin, or candidate-application behavior",
+      "uri": "repo://docs/governance.md",
+      "source_ids": [
+        "src-dal-governance"
+      ]
+    }
+  ],
+  "limits": [
+    "This capsule summarizes reviewed v0 contracts and does not replace schema validation.",
+    "It provides no dsh runtime, OS sandbox, optimizer, model, or external-service proof.",
+    "Validate source digests and freshness before using these claims."
+  ]
+}

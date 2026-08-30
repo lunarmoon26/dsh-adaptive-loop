@@ -1,0 +1,191 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-container-harness-20260829",
+  "change_id": "chg-dal-container-harness",
+  "created_at": "2026-08-29T23:16:34.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "automation",
+      "id": "dsh-agent"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "7e843ccb154bdf038caf40a7a5685d3f4753ce30",
+      "branch": "main",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Container-host the deepseek-harness for local e2e/benchmark execution: a pinned dsh image with the dal runtime and bwrap/Landlock chain, and a --runner docker seam on verify run and propose run that re-executes the same fail-closed paths inside the container without touching the host's dsh state.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-image",
+      "statement": "deploy/docker/Dockerfile pins dsh 0.1.1-rc.2 + pnpm 11.7.0 on node:24-slim with bubblewrap and the linux-built dal runtime; the image builds and its digest is recorded.",
+      "result": "passed",
+      "evidence": [
+        "ev-image"
+      ]
+    },
+    {
+      "id": "ac-seam",
+      "statement": "verify run and propose run accept --runner local|docker; the docker runner hardcodes --network none, mounts only the workspace, translates workspace paths, and passes only policy-listed env names.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-fail-closed",
+      "statement": "An unreachable daemon fails with DOCKER_UNAVAILABLE and paths escaping the mount fail with DOCKER_PATH_DENIED; the in-container verifier re-validates the guardrail at the operation.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-probe",
+      "statement": "The live in-container probe passes the deterministic grader through the Linux sandbox chain (landlock-run, enforcement full) and denies an out-of-roots write in the backend's dialect.",
+      "result": "passed",
+      "evidence": [
+        "ev-probe"
+      ]
+    },
+    {
+      "id": "ac-gate",
+      "statement": "The full local gate passes with the new seam.",
+      "result": "passed",
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Container-hosted harness execution shipped and live-probed: image sha256:9e3cb523\u2026, landlock-run enforcement full in-container, denial case rejected, gate green, host dsh state untouched.",
+    "exception": null
+  },
+  "what_worked": [
+    "Re-executing the same dal CLI inside the container keeps one guardrail/sandbox code path: the host verifies the decision, the container re-verifies at the operation.",
+    "The Linux chain was proven live: the deterministic grader passed under landlock-run with full enforcement, and the outside-root write was denied in the in-container dialect.",
+    "Two Dockerfile iterations (corepack/pnpm collision; ENTRYPOINT swallowing commands) were resolved from first-run evidence; the probe tests now catch both."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "implement-seam",
+      "purpose": "Add src/docker.ts, executor/propose docker runners, CLI --runner options, and policy docker_image/run_flags/env_names fields.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "image-build",
+      "purpose": "Build the pinned harness image with the linux dal runtime and bubblewrap.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-image"
+      ]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "live-probe",
+      "purpose": "Run the in-container sandbox probes against the live docker daemon.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-probe"
+      ]
+    },
+    {
+      "sequence": 4,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Run the full repository verification gate.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-image",
+      "kind": "file",
+      "uri": "repo://deploy/docker/Dockerfile",
+      "summary": "Pinned image built and probe-verified: sha256:9e3cb523c1f90a44e49dcb49e60f84764cf4b5c113c210e0e97534dfa63b35ea (recorded in deploy/docker/README.md).",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:16:34.000Z"
+    },
+    {
+      "id": "ev-probe",
+      "kind": "test",
+      "uri": "command://dal-verify-run-docker",
+      "summary": "Live in-container probe: deterministic grader passed with sandbox.backend landlock-run, enforcement full; the out-of-roots write was denied in the backend dialect.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:16:34.000Z"
+    },
+    {
+      "id": "ev-tests",
+      "kind": "test",
+      "uri": "repo://tests/docker.test.ts",
+      "summary": "Six tests: path translation and escape refusal, command rewriting, argv isolation flags, unavailable-daemon fail-closed behavior, and the two live probes (DAL_DOCKER_PROBE-gated).",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:16:34.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck, build, 128 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:16:34.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-propose-docker",
+      "statement": "propose run --runner docker was not executed live because the container needs the model credential passed via DEEPSEEK_API_KEY; the headless-in-container path shares the verified docker seam.",
+      "level": "low",
+      "resolution": "Run one propose run --runner docker with DEEPSEEK_API_KEY set under the usual send_data_externally approval when a paid model call is next approved.",
+      "evidence": [
+        "ev-tests"
+      ]
+    }
+  ],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "No host dsh profile, ~/.dsh, or ~/.agents change was made; container execution is a local deterministic path plus the existing send_data_externally approval for model calls."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "feature"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

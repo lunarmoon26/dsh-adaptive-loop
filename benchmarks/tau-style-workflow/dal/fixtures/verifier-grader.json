@@ -1,0 +1,42 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/guardrail-action.v1.schema.json",
+  "schema_version": "1.0.0",
+  "action_id": "act-benchmark-grader-verify",
+  "created_at": "2026-08-29T16:00:00.000Z",
+  "actor": {
+    "kind": "automation",
+    "id": "benchmark-runner"
+  },
+  "input_trust": "trusted",
+  "capability": "run_local_verifier",
+  "tool": {
+    "name": "grader",
+    "operation": "test"
+  },
+  "target": {
+    "uri": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "artifact_kind": "other",
+    "artifact_id": "tau-style-workflow-grader",
+    "sha256": "3d336f117950492b5444a7a646523e0b37d171aaebbad224cb3f38809eca7ee6"
+  },
+  "data": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redacted": false
+  },
+  "sandbox": {
+    "mode": "isolated_write",
+    "network": "denied",
+    "writable_roots": [
+      "repo://.dal/benchmark/"
+    ]
+  },
+  "budget": {
+    "max_calls": 1,
+    "max_duration_ms": 60000,
+    "max_bytes_read": 1048576,
+    "max_bytes_written": 1048576,
+    "max_network_requests": 0
+  },
+  "approval_ref": null
+}

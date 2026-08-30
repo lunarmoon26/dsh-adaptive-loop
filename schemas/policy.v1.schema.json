@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/policy.v1.schema.json",
+  "title": "Recursive Development Loop policy configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "default_store",
+    "max_feedback_bytes",
+    "max_store_records",
+    "secret_ruleset_version",
+    "pii_ruleset_version",
+    "allowed_evidence_schemes",
+    "sensitive_actions",
+    "capsule_max_claims",
+    "capsule_max_retrieval_pointers",
+    "default_guardrail_audit_store",
+    "default_evaluation_store",
+    "allowed_capabilities",
+    "denied_capabilities",
+    "allowed_tool_operations",
+    "allowed_write_roots",
+    "proposal_write_root",
+    "max_policy_checks_per_window",
+    "policy_window_seconds",
+    "max_action_calls",
+    "max_action_duration_ms",
+    "max_action_bytes_read",
+    "max_action_bytes_written",
+    "max_network_requests",
+    "max_external_cost_usd",
+    "max_evaluation_cases",
+    "max_evaluation_duration_ms",
+    "max_evaluation_tool_calls"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/policy.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "default_store": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "max_feedback_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 10485760
+    },
+    "max_store_records": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "secret_ruleset_version": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "pii_ruleset_version": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "allowed_evidence_schemes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+      }
+    },
+    "sensitive_actions": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sensitive_action"
+      }
+    },
+    "capsule_max_claims": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128
+    },
+    "capsule_max_retrieval_pointers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128
+    },
+    "default_guardrail_audit_store": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "default_evaluation_store": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "default_run_store": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "default_cluster_store": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "allowed_capabilities": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["read_local", "write_local_evidence", "run_local_verifier"]
+      }
+    },
+    "denied_capabilities": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "network_access",
+          "destructive_shell",
+          "write_outside_workspace",
+          "plugin_management",
+          "shared_configuration",
+          "candidate_application",
+          "privilege_escalation"
+        ]
+      }
+    },
+    "allowed_tool_operations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+      }
+    },
+    "allowed_write_roots": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+      }
+    },
+    "proposal_write_root": { "enum": ["repo://.rdl/proposals", "repo://.dal/proposals"] },
+    "editable_surfaces": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "prompt",
+          "tool_descriptions",
+          "skills",
+          "memory_policy",
+          "routing",
+          "stop_retry_logic",
+          "harness_code"
+        ]
+      }
+    },
+    "immutable_anchors": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "evaluator",
+          "sealed_holdout",
+          "permissions",
+          "maximum_budget",
+          "promotion_policy",
+          "audit_log",
+          "rollback_mechanism"
+        ]
+      }
+    },
+    "max_policy_checks_per_window": { "type": "integer", "minimum": 1 },
+    "policy_window_seconds": { "type": "integer", "minimum": 1 },
+    "max_action_calls": { "type": "integer", "minimum": 1 },
+    "max_action_duration_ms": { "type": "integer", "minimum": 1 },
+    "max_action_bytes_read": { "type": "integer", "minimum": 0 },
+    "max_action_bytes_written": { "type": "integer", "minimum": 0 },
+    "max_network_requests": { "const": 0 },
+    "max_external_cost_usd": { "const": 0 },
+    "max_evaluation_cases": { "type": "integer", "minimum": 1 },
+    "max_evaluation_duration_ms": { "type": "integer", "minimum": 1 },
+    "max_evaluation_tool_calls": { "type": "integer", "minimum": 1 },
+    "docker_image": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "docker_run_flags": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": false,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    },
+    "docker_env_names": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 256 }
+    }
+  }
+}

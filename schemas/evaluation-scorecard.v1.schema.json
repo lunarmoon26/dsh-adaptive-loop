@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/evaluation-scorecard.v1.schema.json",
+  "title": "Recursive Development Loop evaluation scorecard v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "storage_version",
+    "scorecard_id",
+    "suite_id",
+    "suite_version",
+    "target",
+    "started_at",
+    "finished_at",
+    "provenance",
+    "evaluators",
+    "case_results",
+    "metrics",
+    "threshold_results",
+    "budget",
+    "contamination",
+    "model_judge_results",
+    "human_review",
+    "result",
+    "hard_stop"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/evaluation-scorecard.v1.schema.json"
+    },
+    "storage_version": { "const": "1.0.0" },
+    "scorecard_id": {
+      "type": "string",
+      "pattern": "^score-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "suite_id": {
+      "type": "string",
+      "pattern": "^suite-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "suite_version": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/semver"
+    },
+    "target": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json#/$defs/artifact"
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["suite_uri", "suite_sha256", "suite_snapshot", "fixture_set_sha256", "policy_sha256", "policy_snapshot"],
+      "properties": {
+        "suite_uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "suite_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "suite_snapshot": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json"
+        },
+        "fixture_set_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "policy_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "policy_snapshot": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/policy.v1.schema.json"
+        }
+      }
+    },
+    "evaluators": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "id", "version", "external"],
+        "properties": {
+          "kind": { "enum": ["deterministic", "model_judge", "human"] },
+          "id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          },
+          "version": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/semver"
+          },
+          "external": { "type": "boolean" }
+        }
+      }
+    },
+    "case_results": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "category", "expected_effect", "observed_effect", "code", "dangerous", "human_override", "passed", "duration_ms"],
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^case-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "category": {
+            "enum": ["offline", "adversarial", "regression", "golden", "policy_violation", "integration_sandbox"]
+          },
+          "expected_effect": {
+            "enum": ["allowed", "rejected", "requires_human_approval"]
+          },
+          "observed_effect": {
+            "enum": ["allowed", "rejected", "requires_human_approval"]
+          },
+          "code": { "type": ["string", "null"], "maxLength": 128 },
+          "dangerous": { "type": "boolean" },
+          "human_override": { "type": "boolean" },
+          "passed": { "type": "boolean" },
+          "duration_ms": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_success_rate",
+        "test_pass_rate",
+        "policy_precision",
+        "policy_recall",
+        "blocked_dangerous_action_rate",
+        "human_override_rate",
+        "post_change_regression_rate"
+      ],
+      "properties": {
+        "task_success_rate": { "$ref": "#/$defs/rate" },
+        "test_pass_rate": { "$ref": "#/$defs/rate" },
+        "policy_precision": { "$ref": "#/$defs/rate" },
+        "policy_recall": { "$ref": "#/$defs/rate" },
+        "blocked_dangerous_action_rate": { "$ref": "#/$defs/rate" },
+        "human_override_rate": { "$ref": "#/$defs/rate" },
+        "post_change_regression_rate": { "$ref": "#/$defs/rate" }
+      }
+    },
+    "threshold_results": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "comparator", "threshold", "observed", "passed"],
+        "properties": {
+          "metric": {
+            "enum": [
+              "task_success_rate",
+              "test_pass_rate",
+              "policy_precision",
+              "policy_recall",
+              "blocked_dangerous_action_rate",
+              "human_override_rate",
+              "post_change_regression_rate"
+            ]
+          },
+          "comparator": { "enum": ["gte", "lte"] },
+          "threshold": { "$ref": "#/$defs/rate" },
+          "observed": { "$ref": "#/$defs/rate" },
+          "passed": { "type": "boolean" }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["duration_ms", "tool_calls", "external_requests", "external_cost_usd", "within_budget"],
+      "properties": {
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "tool_calls": { "type": "integer", "minimum": 0 },
+        "external_requests": { "const": 0 },
+        "external_cost_usd": { "const": 0 },
+        "within_budget": { "type": "boolean" }
+      }
+    },
+    "contamination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer", "reviewed_at", "notes"],
+      "properties": {
+        "status": { "enum": ["reviewed_clean", "detected", "unknown"] },
+        "reviewer": { "type": ["string", "null"], "maxLength": 512 },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "date-time" }
+          ]
+        },
+        "notes": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+        }
+      }
+    },
+    "model_judge_results": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["judge_id", "score", "summary", "evidence"],
+        "properties": {
+          "judge_id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          },
+          "score": { "type": "number" },
+          "summary": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            }
+          }
+        }
+      }
+    },
+    "human_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer", "reviewed_at", "notes"],
+      "properties": {
+        "status": { "enum": ["not_requested", "pending", "approved", "rejected", "changes_requested"] },
+        "reviewer": { "type": ["string", "null"], "maxLength": 512 },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "date-time" }
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          }
+        }
+      }
+    },
+    "result": { "enum": ["pass", "hard_stop"] },
+    "hard_stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["triggered", "reasons", "disposition"],
+      "properties": {
+        "triggered": { "type": "boolean" },
+        "reasons": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          }
+        },
+        "disposition": { "enum": ["continue", "quarantine", "rollback"] }
+      }
+    }
+  },
+  "$defs": {
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

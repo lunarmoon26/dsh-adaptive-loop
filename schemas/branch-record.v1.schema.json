@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/branch-record.v1.schema.json",
+  "title": "Recursive Development Loop search branch record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "branch_id",
+    "parent_branch_id",
+    "draft_ref",
+    "draft_sha256",
+    "surface",
+    "created_at"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/branch-record.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "branch_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 100,
+      "pattern": "^brn-[a-z0-9][a-z0-9._-]+$"
+    },
+    "parent_branch_id": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 100,
+          "pattern": "^brn-[a-z0-9][a-z0-9._-]+$"
+        }
+      ]
+    },
+    "draft_ref": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "draft_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "surface": {
+      "enum": [
+        "prompt",
+        "tool_descriptions",
+        "skills",
+        "memory_policy",
+        "routing",
+        "stop_retry_logic",
+        "harness_code"
+      ]
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

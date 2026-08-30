@@ -1,0 +1,85 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-aborted-example",
+  "change_id": "chg-rdl-v0-example",
+  "created_at": "2026-08-27T12:10:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "human", "id": "maintainer-local" },
+    "harness": null,
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": null,
+      "branch": null,
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Record an explicitly cancelled local experiment.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-experiment-finish",
+      "statement": "The optional experiment reaches a result.",
+      "result": "not_run",
+      "evidence": ["ev-abort"]
+    }
+  ],
+  "outcome": {
+    "status": "aborted",
+    "summary": "The optional experiment was deliberately stopped.",
+    "exception": {
+      "kind": "aborted",
+      "reason": "The maintainer ended the optional experiment before execution.",
+      "owner": "project-maintainer",
+      "next_action": "Re-scope and authorize a new experiment if the evidence is still needed."
+    }
+  },
+  "what_worked": ["Cancellation left an explicit local record."],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "experiment-runner",
+      "purpose": "Start the optional local experiment.",
+      "outcome": "cancelled",
+      "duration_ms": 0,
+      "evidence": ["ev-abort"]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-abort",
+      "kind": "human_note",
+      "uri": "repo://docs/spec.md",
+      "summary": "The experiment was cancelled before side effects.",
+      "sha256": null,
+      "observed_at": "2026-08-27T12:10:00.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-experiment-value",
+      "statement": "The optional experiment remains unmeasured.",
+      "level": "low",
+      "resolution": "Run a newly scoped experiment only if a later decision needs it.",
+      "evidence": ["ev-abort"]
+    }
+  ],
+  "human_review": {
+    "status": "approved",
+    "reviewer": "maintainer-local",
+    "reviewed_at": "2026-08-27T12:10:00.000Z",
+    "notes": ["Cancellation was intentional."],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

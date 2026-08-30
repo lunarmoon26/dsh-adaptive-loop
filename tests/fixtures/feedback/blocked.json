@@ -1,0 +1,77 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-blocked-example",
+  "change_id": "chg-rdl-v0-example",
+  "created_at": "2026-08-27T12:05:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "agent-local" },
+    "harness": { "name": "dsh", "version": "0.1.1-rc.2", "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": null,
+      "branch": null,
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Record an explicit blocked task outcome.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-required-input",
+      "statement": "The required local signing identity is available.",
+      "result": "not_run",
+      "evidence": ["ev-blocker"]
+    }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "Work stopped before the gated operation.",
+    "exception": {
+      "kind": "blocked",
+      "reason": "The required local signing identity is unavailable.",
+      "owner": "project-maintainer",
+      "next_action": "Provide the approved local signing identity, then rerun the verifier."
+    }
+  },
+  "what_worked": ["The blocker was detected before a sensitive operation."],
+  "what_failed": ["The gated operation could not start."],
+  "calls": [],
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-missing-input",
+      "category": "coordination",
+      "summary": "A required local input was unavailable.",
+      "impact": "high",
+      "recoverable": true,
+      "suggested_action": "Provide the reviewed local input.",
+      "evidence": ["ev-blocker"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-blocker",
+      "kind": "human_note",
+      "uri": "repo://docs/governance.md",
+      "summary": "Governance requires the missing input before the gated action.",
+      "sha256": null,
+      "observed_at": "2026-08-27T12:05:00.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

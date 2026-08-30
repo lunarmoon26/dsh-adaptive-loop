@@ -1,0 +1,72 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-completed-example",
+  "change_id": "chg-rdl-v0-example",
+  "created_at": "2026-08-27T12:00:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "agent-local" },
+    "harness": { "name": "dsh", "version": "0.1.1-rc.2", "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": null,
+      "branch": null,
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Validate the local completed feedback path.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-feedback-valid",
+      "statement": "The completed feedback record validates locally.",
+      "result": "passed",
+      "evidence": ["ev-feedback-test"]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "The local feedback path passed its focused verifier.",
+    "exception": null
+  },
+  "what_worked": ["Schema and semantic checks produced a deterministic result."],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Run the focused feedback verifier.",
+      "outcome": "succeeded",
+      "duration_ms": 25,
+      "evidence": ["ev-feedback-test"]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-feedback-test",
+      "kind": "test",
+      "uri": "command://feedback-test",
+      "summary": "The focused completed-record test passed.",
+      "sha256": null,
+      "observed_at": "2026-08-27T12:00:00.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

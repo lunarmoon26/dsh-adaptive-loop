@@ -1,0 +1,145 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-awesome-list-crosscheck-20260829",
+  "ingested_at": "2026-08-30T00:13:24.594Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-awesome-list-crosscheck-20260829.json",
+    "sha256": "e98be177fa11ad1ce6ee2dbd6431a190ba5de986d77f12b99e58edd3e6388485"
+  },
+  "feedback_sha256": "e0c4e8ad9cae302ae1586aea9ecf00bcc66b0edca77c9cd858a0176ccba01ac8",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T00:13:24.594Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-awesome-list-crosscheck-20260829",
+    "change_id": "chg-awesome-list-crosscheck",
+    "created_at": "2026-08-30T00:13:21.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "49d5a46dd0537334a846d95e7cff735276d1cf92",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Cross-check the gradient-style optimizer shortlist against the Scaffolding Improvement section of the awesome-Self-Improving-Agents list and persist any decision-relevant additions.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-fetch",
+        "statement": "The list is fetched from its primary source (raw README at main) and the scaffolding section is inspected.",
+        "result": "passed",
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "id": "ac-delta",
+        "statement": "Decision-relevant additions are recorded: SkillOpt's arXiv pin, Trace/AutoOpt, semantic backprop attribution, metaTextGrad/momentum, VASO, SePO/SAGE, APO.",
+        "result": "passed",
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "id": "ac-docs",
+        "statement": "Capsule digests are refreshed and the gate passes.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Cross-check completed: the primary decision is unchanged (SkillOpt seam + GEPA for plugin/prompt candidates); the list adds second-tier watch/experiment entries and re-confirms that run-record trace deltas come first.",
+      "exception": null
+    },
+    "what_worked": [
+      "The raw README fetch gave the full curated section in one step, including the SkillOpt arXiv identity (2605.23904) that upgrades our earlier secondary-source pin.",
+      "The trace-first ordering already in our roadmap is independently confirmed by Trace (microsoft/trace) and the semantic-backprop attribution work."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "list-fetch",
+        "purpose": "Fetch and inspect the Scaffolding Improvement section of the awesome list.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "docs-update",
+        "purpose": "Record the cross-check table, refresh capsule digests, and run the gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research",
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-research",
+        "kind": "file",
+        "uri": "repo://docs/research-evidence.md",
+        "summary": "Awesome-list cross-check subsection added with pinned identities and per-source recommendations; SkillOpt arXiv pin upgraded.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:13:21.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 129 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:13:21.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Research and documentation only; no model calls, code changes, or external transfers."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "research"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

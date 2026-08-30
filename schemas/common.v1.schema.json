@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json",
+  "title": "Recursive Development Loop common definitions v1",
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "feedback_id": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 100,
+      "pattern": "^fb-[a-z0-9][a-z0-9._-]+$"
+    },
+    "change_id": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 100,
+      "pattern": "^chg-[a-z0-9][a-z0-9._-]+$"
+    },
+    "proposal_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 100,
+      "pattern": "^prop-[a-z0-9][a-z0-9._-]+$"
+    },
+    "decision_id": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 100,
+      "pattern": "^dec-[a-z0-9][a-z0-9._-]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "git_revision": {
+      "type": "string",
+      "minLength": 7,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9._/-]+$"
+    },
+    "non_empty_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192,
+      "pattern": "\\S"
+    },
+    "short_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "\\S"
+    },
+    "uri": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 2048,
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://\\S+$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": {
+          "enum": ["human", "dsh-agent", "automation", "import"]
+        },
+        "id": {
+          "$ref": "#/$defs/short_text"
+        }
+      }
+    },
+    "sensitive_action": {
+      "enum": [
+        "change_shared_harness_config",
+        "install_or_mount_plugin",
+        "send_data_externally",
+        "apply_optimization_candidate"
+      ]
+    }
+  }
+}

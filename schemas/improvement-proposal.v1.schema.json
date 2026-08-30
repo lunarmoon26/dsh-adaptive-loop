@@ -1,0 +1,310 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/improvement-proposal.v1.schema.json",
+  "title": "Recursive Development Loop improvement proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "proposal_id",
+    "title",
+    "created_at",
+    "source_feedback_ids",
+    "objective",
+    "target",
+    "stage",
+    "prediction",
+    "candidate",
+    "evaluation",
+    "decision_ref",
+    "history",
+    "measurements"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/improvement-proposal.v1.schema.json"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "proposal_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/proposal_id"
+    },
+    "title": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_feedback_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/feedback_id"
+      }
+    },
+    "objective": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "uri", "base_sha256", "surface"],
+      "properties": {
+        "kind": {
+          "enum": ["prompt", "skill", "cordis_plugin", "harness_rule", "shared_config"]
+        },
+        "uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "base_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "surface": {
+          "enum": [
+            "prompt",
+            "tool_descriptions",
+            "skills",
+            "memory_policy",
+            "routing",
+            "stop_retry_logic",
+            "harness_code",
+            "evaluator",
+            "sealed_holdout",
+            "permissions",
+            "maximum_budget",
+            "promotion_policy",
+            "audit_log",
+            "rollback_mechanism"
+          ]
+        }
+      }
+    },
+    "stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "prediction": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["statement", "improvements", "regressions"],
+          "properties": {
+            "statement": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+            },
+            "improvements": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["metric", "expected_delta"],
+                "properties": {
+                  "metric": {
+                    "enum": [
+                      "task_success_rate",
+                      "test_pass_rate",
+                      "policy_precision",
+                      "policy_recall",
+                      "blocked_dangerous_action_rate",
+                      "human_override_rate",
+                      "post_change_regression_rate"
+                    ]
+                  },
+                  "expected_delta": { "type": "number" }
+                }
+              }
+            },
+            "regressions": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["summary", "severity"],
+                "properties": {
+                  "summary": {
+                    "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+                  },
+                  "severity": {
+                    "enum": ["low", "medium", "high"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "candidate": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["format", "artifact_uri", "sha256", "edit_count"],
+          "properties": {
+            "format": {
+              "enum": ["complete_text", "bounded_edits"]
+            },
+            "artifact_uri": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            },
+            "sha256": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+            },
+            "edit_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 128
+            }
+          }
+        }
+      ]
+    },
+    "evaluation": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["environment", "receipt_uri", "scorecard_uri", "scorecard_sha256", "scorecard_result", "metric", "baseline_score", "candidate_score", "regression_detected", "evidence"],
+          "properties": {
+            "environment": { "const": "sandbox" },
+            "receipt_uri": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            },
+            "scorecard_uri": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            },
+            "scorecard_sha256": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+            },
+            "scorecard_result": {
+              "enum": ["pass", "hard_stop"]
+            },
+            "metric": {
+              "enum": [
+                "task_success_rate",
+                "test_pass_rate",
+                "policy_precision",
+                "policy_recall",
+                "blocked_dangerous_action_rate",
+                "human_override_rate",
+                "post_change_regression_rate"
+              ]
+            },
+            "baseline_score": { "type": "number" },
+            "candidate_score": { "type": "number" },
+            "regression_detected": { "type": "boolean" },
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 128,
+              "uniqueItems": true,
+              "items": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "decision_ref": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/decision_id" }
+      ]
+    },
+    "history": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "actor", "at", "evidence", "notes"],
+        "properties": {
+          "from": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/stage" }
+            ]
+          },
+          "to": {
+            "$ref": "#/$defs/stage"
+          },
+          "actor": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/actor"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            }
+          },
+          "notes": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          }
+        }
+      }
+    },
+    "measurements": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric", "before", "after", "measured_at", "evidence"],
+        "properties": {
+          "metric": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "before": { "type": "number" },
+          "after": { "type": "number" },
+          "measured_at": { "type": "string", "format": "date-time" },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 128,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stage": {
+      "enum": [
+        "observed",
+        "normalized",
+        "human_reviewed",
+        "proposed",
+        "sandbox_evaluated",
+        "awaiting_decision",
+        "approved",
+        "rejected",
+        "applied",
+        "measured"
+      ]
+    }
+  }
+}

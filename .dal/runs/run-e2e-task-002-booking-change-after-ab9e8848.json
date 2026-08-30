@@ -1,0 +1,39 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-e2e-task-002-booking-change-after-ab9e8848",
+  "task_id": "task-002-booking-change",
+  "change_id": "chg-e2e-after",
+  "started_at": "2026-08-29T23:40:18.805Z",
+  "finished_at": "2026-08-29T23:40:35.362Z",
+  "outcome": "succeeded",
+  "failure": null,
+  "context": {
+    "task_set": "tau-style-workflow-e2e",
+    "environment_snapshot": "darwin arm64 node 24.19.0",
+    "tool_versions": [],
+    "model": {
+      "id": "deepseek-v4-flash",
+      "version": "deepseek-official"
+    },
+    "prompt_sha256": "ca623204d62506b586d424d8f7a897deb8cc927fffc63494502b9bf4d4869699",
+    "harness_sha256": null,
+    "grader_version": "1.0.0",
+    "seeds": [],
+    "context_policy_sha256": "6fb265f165506b7e8bcf8744ccc9c7b2771b180c60aae915845caa9ac2bfc211",
+    "inference_parameters": []
+  },
+  "artifacts": [],
+  "metrics": {
+    "duration_ms": 16557,
+    "tool_calls": 0
+  },
+  "evidence": [
+    "dsh-session://e2e-task-002-booking-change"
+  ],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

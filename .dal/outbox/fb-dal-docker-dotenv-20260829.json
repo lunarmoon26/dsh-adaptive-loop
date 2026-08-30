@@ -1,0 +1,135 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-docker-dotenv-20260829",
+  "change_id": "chg-dal-docker-dotenv",
+  "created_at": "2026-08-29T23:18:56.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "automation",
+      "id": "dsh-agent"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "00bdedbb5def52e1638ea6deb77cd67540424869",
+      "branch": "main",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Let the operator supply the local DEEPSEEK_API_KEY to the docker-hosted harness through a workspace-root .env file: parse it in the docker runner, pass through only policy-listed names, and ship a committed .env.example with .env gitignored.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-dotenv",
+      "statement": "The docker runner reads the workspace-root .env (KEY=VALUE, export prefix, quotes, comments) and passes policy-listed names to the container; the host process environment wins over .env.",
+      "result": "passed",
+      "evidence": [
+        "ev-tests"
+      ]
+    },
+    {
+      "id": "ac-template",
+      "statement": ".env.example is committed with the documented DEEPSEEK_API_KEY template and .env / .env.* are gitignored so local keys never enter VCS.",
+      "result": "passed",
+      "evidence": [
+        "ev-template"
+      ]
+    },
+    {
+      "id": "ac-gate",
+      "statement": "The full local gate passes.",
+      "result": "passed",
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": ".env passthrough for the docker runner shipped: host env wins, .env falls back, only docker_env_names pass through, and the template plus gitignore keep keys out of VCS.",
+    "exception": null
+  },
+  "what_worked": [
+    "Values flow into the container only through -e NAME=VALUE arguments built from the policy allowlist; nothing is logged.",
+    "The parser handles the common dotenv conventions without adding a dependency."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "implement-dotenv",
+      "purpose": "Add loadDotEnv and env passthrough precedence to src/docker.ts; ship .env.example and gitignore rules; update the deploy runbook.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-tests",
+        "ev-template"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Run the full repository verification gate.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-tests",
+      "kind": "test",
+      "uri": "repo://tests/docker.test.ts",
+      "summary": "New dotenv unit test: parsing, host-env precedence, and value-only passthrough for .env-sourced names; 7 tests in the file (2 live probes gated).",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:18:56.000Z"
+    },
+    {
+      "id": "ev-template",
+      "kind": "file",
+      "uri": "repo://.env.example",
+      "summary": "Committed template documents the cp-to-.env flow and the docker_env_names allowlist; .env and .env.* are gitignored.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:18:56.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck, build, 129 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:18:56.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Secret-handling change only; no model call, external transfer, profile change, or plugin mount was performed."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "feature"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

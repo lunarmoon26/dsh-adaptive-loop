@@ -1,0 +1,30 @@
+{
+  "name": "@lunarmoon26/dal-improve-tools",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+  "description": "DSH Adaptive Loop improvement mode: workbench tools that run the deterministic dal CLI (cluster, prepare payload, summarize, evaluate branch, reset status). Never approval-gated operations: no propose run, no reset execute.",
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-tools": "^0.1.1-rc.2"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-tools": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git",
+    "directory": "plugins/dal-improve-tools"
+  }
+}

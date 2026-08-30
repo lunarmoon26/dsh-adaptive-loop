@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-e2e-run-batch-subset-20260829",
+  "request_id": "req-e2e-run-batch-subset-20260829",
+  "action": "send_data_externally",
+  "scope": {
+    "kind": "data_transfer",
+    "value": "3945c9457133d7b6e68d952b02d97ceb28e39a1b57f7d6bb08470ae91e74f9e3",
+    "sha256": "487a9f0e96c0310fda614091b6b2456b9329767c41bb960cf956eea43ac6851a"
+  },
+  "decision": "approved",
+  "reviewer": {
+    "kind": "human",
+    "id": "haochuanzhang"
+  },
+  "decided_at": "2026-08-29T23:32:23.000Z",
+  "expires_at": "2026-08-30T05:32:23.000Z",
+  "rationale": "Operator-approved continuation of the closed-loop e2e demonstration: the remaining three baseline tasks (003, 004, 005) that were not ingested in the full-batch run; scope binds exactly these prompts.",
+  "evidence": [
+    "repo://benchmarks/tau-style-workflow/run-e2e.ts"
+  ],
+  "candidate_sha256": null
+}

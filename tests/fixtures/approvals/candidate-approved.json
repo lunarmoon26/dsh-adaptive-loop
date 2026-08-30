@@ -1,0 +1,19 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-candidate-approve",
+  "request_id": "req-candidate-approve",
+  "action": "apply_optimization_candidate",
+  "scope": {
+    "kind": "proposal",
+    "value": "prop-eval-safety",
+    "sha256": "961bf0c025735e10e6024fc01f0af7a53106fd1b807410468c4d64985a54c23b"
+  },
+  "decision": "approved",
+  "reviewer": { "kind": "human", "id": "maintainer-local" },
+  "decided_at": "2026-08-27T12:30:00.000Z",
+  "expires_at": "2027-08-27T12:30:00.000Z",
+  "rationale": "Permit exact-candidate verification without enabling execution in v0.",
+  "evidence": ["repo://tests/fixtures/guardrail/approved-candidate.json"],
+  "candidate_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+}
