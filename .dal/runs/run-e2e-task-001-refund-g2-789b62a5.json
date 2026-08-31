@@ -1,0 +1,89 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-e2e-task-001-refund-g2-789b62a5",
+  "task_id": "task-001-refund",
+  "change_id": "chg-e2e-g2",
+  "started_at": "2026-08-31T00:23:43.917Z",
+  "finished_at": "2026-08-31T00:26:02.522Z",
+  "outcome": "succeeded",
+  "failure": null,
+  "context": {
+    "task_set": "tau-style-workflow-e2e",
+    "environment_snapshot": "darwin arm64 node 24.19.0",
+    "tool_versions": [],
+    "model": {
+      "id": "deepseek-v4-flash",
+      "version": "deepseek-official"
+    },
+    "prompt_sha256": "e66c22c1f1e72fa219cc68b5469cc3ad4fef725126aa03cf7ad0ba01ba47ba7e",
+    "harness_sha256": null,
+    "grader_version": "1.0.0",
+    "seeds": [],
+    "context_policy_sha256": "6fb265f165506b7e8bcf8744ccc9c7b2771b180c60aae915845caa9ac2bfc211",
+    "inference_parameters": [],
+    "harness_pins": [
+      {
+        "surface": "skills",
+        "uri": "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
+        "sha256": "715ea6a4702f78450a93fe934627c1823db31b7b43981f1cf70a9847dde078a2"
+      },
+      {
+        "surface": "prompt",
+        "uri": "repo://benchmarks/tau-style-workflow/run-e2e.ts",
+        "sha256": "e66c22c1f1e72fa219cc68b5469cc3ad4fef725126aa03cf7ad0ba01ba47ba7e"
+      },
+      {
+        "surface": "model_patch",
+        "uri": "repo://benchmarks/tau-style-workflow/.dal/benchmark/e2e/model-patch.yml",
+        "sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0"
+      }
+    ],
+    "model_patch_sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0"
+  },
+  "artifacts": [],
+  "batch_id": "g2",
+  "checks": [
+    {
+      "id": "goal:orders",
+      "pass": true,
+      "detail": "state matches the annotated goal",
+      "goal_sha256": "887396e9a1ad8553514ff9b8759bf948ecd5aa9468b4aaab7415e30046fed53e",
+      "actual_sha256": "74ed08a9b38db2336da88913c8efb543ae930ae19464b82783f8faf19827eada"
+    },
+    {
+      "id": "goal:refunds",
+      "pass": true,
+      "detail": "state matches the annotated goal",
+      "goal_sha256": "887396e9a1ad8553514ff9b8759bf948ecd5aa9468b4aaab7415e30046fed53e",
+      "actual_sha256": "74ed08a9b38db2336da88913c8efb543ae930ae19464b82783f8faf19827eada"
+    },
+    {
+      "id": "goal:labels",
+      "pass": true,
+      "detail": "state matches the annotated goal",
+      "goal_sha256": "887396e9a1ad8553514ff9b8759bf948ecd5aa9468b4aaab7415e30046fed53e",
+      "actual_sha256": "74ed08a9b38db2336da88913c8efb543ae930ae19464b82783f8faf19827eada"
+    }
+  ],
+  "business_outcome": {
+    "status": "passed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 1,
+    "earned": 3,
+    "total": 3
+  },
+  "metrics": {
+    "duration_ms": 138605,
+    "tool_calls": 0
+  },
+  "evidence": [
+    "dsh-session://e2e-task-001-refund",
+    "repo://.dal/check/e2e-receipts/rcp-task-001-refund-cd70bb0d.json"
+  ],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

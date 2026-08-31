@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/seal-commitment.v1.schema.json",
+  "title": "Recursive Development Loop sealed-holdout commitment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "seal_id",
+    "protocol_version",
+    "created_at",
+    "case_count",
+    "observed_count",
+    "holdout_count",
+    "dataset_digest",
+    "seed_commitment"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/seal-commitment.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "seal_id": {
+      "type": "string",
+      "minLength": 9,
+      "maxLength": 100,
+      "pattern": "^seal-[a-z0-9][a-z0-9._-]+$"
+    },
+    "protocol_version": { "const": "rdl-seal-v1" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "case_count": { "type": "integer", "minimum": 2 },
+    "observed_count": { "type": "integer", "minimum": 1 },
+    "holdout_count": { "type": "integer", "minimum": 1 },
+    "dataset_digest": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "seed_commitment": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    }
+  }
+}

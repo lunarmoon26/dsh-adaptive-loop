@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/optimizer-verdict.v1.schema.json",
+  "title": "DSH Adaptive Loop optimizer verdict v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "verdict_id",
+    "candidate_id",
+    "exchange_id",
+    "verdict",
+    "checks",
+    "candidate_sha256",
+    "base_sha256",
+    "created_at"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/optimizer-verdict.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "verdict_id": {
+      "type": "string",
+      "pattern": "^vrd-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^cand-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "exchange_id": {
+      "type": "string",
+      "pattern": "^opt-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "verdict": { "enum": ["valid", "invalid"] },
+    "checks": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "pass", "detail"],
+        "properties": {
+          "id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          },
+          "pass": { "type": "boolean" },
+          "detail": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+          }
+        }
+      }
+    },
+    "candidate_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
+    "base_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

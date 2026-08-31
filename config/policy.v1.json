@@ -1,0 +1,99 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/policy.v1.schema.json",
+  "schema_version": "1.0.0",
+  "default_store": ".dal/store",
+  "max_feedback_bytes": 262144,
+  "max_store_records": 100000,
+  "secret_ruleset_version": "secret-ruleset-2026-08-27-v1",
+  "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+  "allowed_evidence_schemes": [
+    "command",
+    "commit",
+    "dsh-session",
+    "file",
+    "https",
+    "repo"
+  ],
+  "sensitive_actions": [
+    "change_shared_harness_config",
+    "install_or_mount_plugin",
+    "send_data_externally",
+    "apply_optimization_candidate"
+  ],
+  "capsule_max_claims": 24,
+  "capsule_max_retrieval_pointers": 24,
+  "default_guardrail_audit_store": ".dal/guardrail-audit",
+  "default_evaluation_store": ".dal/evaluations-v2",
+  "default_run_store": ".dal/runs",
+  "default_cluster_store": ".dal/clusters",
+  "allowed_capabilities": [
+    "read_local",
+    "write_local_evidence",
+    "run_local_verifier"
+  ],
+  "denied_capabilities": [
+    "network_access",
+    "destructive_shell",
+    "write_outside_workspace",
+    "plugin_management",
+    "shared_configuration",
+    "candidate_application",
+    "privilege_escalation"
+  ],
+  "allowed_tool_operations": [
+    "approval-verify",
+    "build",
+    "capsule-check",
+    "evaluation-run",
+    "feedback-ingest",
+    "feedback-query",
+    "feedback-validate",
+    "pii-scan",
+    "policy-check",
+    "schema-validate",
+    "secret-scan",
+    "test",
+    "typecheck"
+  ],
+  "allowed_write_roots": [
+    "repo://.dal/"
+  ],
+  "proposal_write_root": "repo://.dal/proposals",
+  "editable_surfaces": [
+    "prompt",
+    "tool_descriptions",
+    "skills",
+    "memory_policy",
+    "routing",
+    "stop_retry_logic",
+    "harness_code"
+  ],
+  "immutable_anchors": [
+    "evaluator",
+    "sealed_holdout",
+    "permissions",
+    "maximum_budget",
+    "promotion_policy",
+    "audit_log",
+    "rollback_mechanism"
+  ],
+  "max_policy_checks_per_window": 120,
+  "policy_window_seconds": 60,
+  "max_action_calls": 64,
+  "max_action_duration_ms": 120000,
+  "max_action_bytes_read": 10485760,
+  "max_action_bytes_written": 1048576,
+  "max_network_requests": 0,
+  "max_external_cost_usd": 0,
+  "max_evaluation_cases": 1000,
+  "max_evaluation_duration_ms": 300000,
+  "max_evaluation_tool_calls": 1000,
+  "docker_image": "dsh-adaptive-loop/dsh:0.1.1-rc.2",
+  "docker_run_flags": [
+    "--security-opt",
+    "seccomp=unconfined"
+  ],
+  "docker_env_names": [
+    "DEEPSEEK_API_KEY"
+  ]
+}

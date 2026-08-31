@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-openai-passk-20260831",
+  "request_id": "req-openai-passk-20260831",
+  "action": "send_data_externally",
+  "scope": {
+    "kind": "data_transfer",
+    "value": "506b9e7a358338f1a4fa4602931c021e00348795570aa1586d4634a2a37a952c",
+    "sha256": "c302b43f4f4b7f3fdca7dfcc9fb56976bf8b7378bdc1a6947e0a6026f3c451d4"
+  },
+  "decision": "approved",
+  "reviewer": {
+    "kind": "human",
+    "id": "haochuanzhang"
+  },
+  "decided_at": "2026-08-31T02:14:45.000Z",
+  "expires_at": "2026-09-03T00:00:00.000Z",
+  "rationale": "Provider matrix: openai/gpt-5.6-luna with the v3 candidate skill and issue_refund=unknown faults. Issued under explicit operator delegation (session 2026-08-31).",
+  "evidence": [
+    "repo://benchmarks/tau-style-workflow/PROVIDERS.md"
+  ],
+  "candidate_sha256": null
+}

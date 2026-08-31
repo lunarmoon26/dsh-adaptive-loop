@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/branch-evaluation.v1.schema.json",
+  "title": "Recursive Development Loop branch evaluation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "evaluation_id",
+    "branch_id",
+    "task_id",
+    "candidate_ref",
+    "candidate_sha256",
+    "passed",
+    "score",
+    "checks",
+    "observed_at"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/branch-evaluation.v1.schema.json"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "evaluation_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 100,
+      "pattern": "^bev-[a-z0-9][a-z0-9._-]+$"
+    },
+    "branch_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 100,
+      "pattern": "^brn-[a-z0-9][a-z0-9._-]+$"
+    },
+    "task_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "candidate_ref": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "candidate_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "checks": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "pass"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "pass": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "receipt_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 100
+    },
+    "receipt_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 64
+    },
+    "provenance_valid": {
+      "type": "boolean"
+    }
+  }
+}

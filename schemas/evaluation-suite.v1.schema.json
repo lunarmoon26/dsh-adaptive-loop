@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json",
+  "title": "Recursive Development Loop offline evaluation suite v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "suite_id",
+    "suite_version",
+    "created_at",
+    "target",
+    "contamination",
+    "cases",
+    "thresholds",
+    "budget"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "suite_id": {
+      "type": "string",
+      "pattern": "^suite-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "suite_version": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/semver"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "target": { "$ref": "#/$defs/artifact" },
+    "contamination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewer", "reviewed_at", "notes"],
+      "properties": {
+        "status": {
+          "enum": ["reviewed_clean", "detected", "unknown"]
+        },
+        "reviewer": {
+          "type": ["string", "null"],
+          "maxLength": 512
+        },
+        "reviewed_at": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "format": "date-time" }
+          ]
+        },
+        "notes": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "category",
+          "kind",
+          "fixture",
+          "expected_effect",
+          "expected_code",
+          "dangerous",
+          "human_override"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^case-[a-z0-9][a-z0-9._-]+$",
+            "maxLength": 100
+          },
+          "category": {
+            "enum": [
+              "offline",
+              "adversarial",
+              "regression",
+              "golden",
+              "policy_violation",
+              "integration_sandbox"
+            ]
+          },
+          "kind": {
+            "enum": ["guardrail_action", "feedback"]
+          },
+          "fixture": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["uri", "local_path", "sha256"],
+            "properties": {
+              "uri": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+              },
+              "local_path": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+              },
+              "sha256": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+              }
+            }
+          },
+          "expected_effect": {
+            "enum": ["allowed", "rejected", "requires_human_approval"]
+          },
+          "expected_code": {
+            "type": ["string", "null"],
+            "maxLength": 128
+          },
+          "dangerous": { "type": "boolean" },
+          "human_override": { "type": "boolean" }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_task_success_rate",
+        "min_test_pass_rate",
+        "min_policy_precision",
+        "min_policy_recall",
+        "min_blocked_dangerous_action_rate",
+        "max_human_override_rate",
+        "max_post_change_regression_rate"
+      ],
+      "properties": {
+        "min_task_success_rate": { "$ref": "#/$defs/rate" },
+        "min_test_pass_rate": { "$ref": "#/$defs/rate" },
+        "min_policy_precision": { "$ref": "#/$defs/rate" },
+        "min_policy_recall": { "$ref": "#/$defs/rate" },
+        "min_blocked_dangerous_action_rate": { "$ref": "#/$defs/rate" },
+        "max_human_override_rate": { "$ref": "#/$defs/rate" },
+        "max_post_change_regression_rate": { "$ref": "#/$defs/rate" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_cases",
+        "max_duration_ms",
+        "max_tool_calls",
+        "max_external_requests",
+        "max_external_cost_usd"
+      ],
+      "properties": {
+        "max_cases": { "type": "integer", "minimum": 1 },
+        "max_duration_ms": { "type": "integer", "minimum": 1 },
+        "max_tool_calls": { "type": "integer", "minimum": 1 },
+        "max_external_requests": { "const": 0 },
+        "max_external_cost_usd": { "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "uri", "sha256"],
+      "properties": {
+        "kind": {
+          "enum": ["plugin", "skill", "knowledge_capsule", "optimizer_proposal", "rdl_runtime"]
+        },
+        "id": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

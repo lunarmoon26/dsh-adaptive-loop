@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/optimizer-training-set.v1.schema.json",
+  "title": "DSH Adaptive Loop optimizer training set v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "training_set_id",
+    "created_at",
+    "target",
+    "episodes"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/optimizer-training-set.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "training_set_id": {
+      "type": "string",
+      "pattern": "^train-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "artifact_uri", "base_sha256", "format"],
+      "properties": {
+        "kind": { "const": "skill" },
+        "artifact_uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "base_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "format": { "const": "bounded_edits" }
+      }
+    },
+    "episodes": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "batch_id", "outcome", "failure", "checks", "trace", "harness_pins", "metrics"],
+        "properties": {
+          "run_id": { "type": "string", "minLength": 8, "maxLength": 128 },
+          "batch_id": { "type": ["string", "null"], "maxLength": 128 },
+          "outcome": { "enum": ["succeeded", "failed", "blocked", "aborted"] },
+          "failure": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "required": ["category", "code", "summary"],
+            "properties": {
+              "category": { "type": "string", "maxLength": 64 },
+              "code": { "type": "string", "maxLength": 128 },
+              "summary": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+              }
+            }
+          },
+          "checks": {
+            "type": "array",
+            "maxItems": 128,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "pass", "goal_sha256", "actual_sha256"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+                "pass": { "type": "boolean" },
+                "detail": { "type": ["string", "null"], "maxLength": 4096 },
+                "goal_sha256": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+                },
+                "actual_sha256": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+                }
+              }
+            }
+          },
+          "trace": {
+            "type": "array",
+            "maxItems": 1024,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["seq", "turn", "step", "tool", "outcome"],
+              "properties": {
+                "seq": { "type": "integer", "minimum": 0 },
+                "turn": { "type": "integer", "minimum": 0 },
+                "step": { "type": "integer", "minimum": 0 },
+                "tool": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+                },
+                "outcome": { "enum": ["ok", "failed", "timeout", "denied", "unknown"] },
+                "code": { "type": ["string", "null"], "maxLength": 128 }
+              }
+            }
+          },
+          "harness_pins": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["surface", "uri", "sha256"],
+              "properties": {
+                "surface": { "type": "string", "minLength": 1, "maxLength": 64 },
+                "uri": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+                },
+                "sha256": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+                }
+              }
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["duration_ms", "tool_calls"],
+            "properties": {
+              "duration_ms": { "type": "integer", "minimum": 0 },
+              "tool_calls": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

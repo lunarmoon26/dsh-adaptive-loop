@@ -1,0 +1,46 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-fixture-test-failure-2",
+  "task_id": "guardrail regression run",
+  "change_id": "chg-fixture-example",
+  "started_at": "2026-08-28T01:05:00.000Z",
+  "finished_at": "2026-08-28T01:05:41.000Z",
+  "outcome": "failed",
+  "failure": {
+    "category": "test_failure",
+    "code": "assertion-mismatch",
+    "fingerprint_extra": [],
+    "summary": "A second seed rollout of the same case failed the same assertion.",
+    "evidence": ["repo://tests/fixtures/guardrail/adversarial-read.json"]
+  },
+  "context": {
+    "task_set": "held-in",
+    "environment_snapshot": "local-node24-macos",
+    "tool_versions": [
+      { "name": "node", "version": "24.19.0" },
+      { "name": "pnpm", "version": "11.7.0" }
+    ],
+    "model": { "id": "deepseek-v4-pro", "version": "2026-08" },
+    "prompt_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "harness_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "grader_version": "1.0.0",
+    "seeds": [4, 5, 6],
+    "context_policy_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "inference_parameters": [{ "name": "temperature", "value": "0.2" }]
+  },
+  "artifacts": [
+    {
+      "uri": "repo://src/guardrail.ts",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "description": "Candidate harness change under evaluation"
+    }
+  ],
+  "metrics": { "duration_ms": 41000, "tool_calls": 9 },
+  "evidence": ["repo://tests/fixtures/feedback/completed.json"],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

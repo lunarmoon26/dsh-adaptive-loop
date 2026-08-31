@@ -1,0 +1,144 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-plugin-npm-rename-20260829",
+  "ingested_at": "2026-08-30T00:38:01.035Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-plugin-npm-rename-20260829.json",
+    "sha256": "ef50ef00f5e588937b0887b891ff8949423c08d2a8c38d2e44d86ce3fe178e86"
+  },
+  "feedback_sha256": "9f521c2f929756f44522aba3dc70d08024332a2f90a23a56fc05d40f270ab1d9",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T00:38:01.035Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-plugin-npm-rename-20260829",
+    "change_id": "chg-plugin-npm-rename",
+    "created_at": "2026-08-30T00:37:58.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "1e78954385821db36aba86d305a186ce6f5e0545",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Rename the plugin packages from the scoped @dal/* names to unscoped dal-* names for publishing to the user's npm account, and make them publish-ready (private removed, files and prepack configured).",
+    "acceptance_criteria": [
+      {
+        "id": "ac-names",
+        "statement": "The four packages are renamed dal-modes / dal-run-record / dal-improve-tools / dal-workflow-tools with every code, bundle-patch, test, and doc reference updated and no @dal/ leftovers.",
+        "result": "passed",
+        "evidence": [
+          "ev-rename"
+        ]
+      },
+      {
+        "id": "ac-publish",
+        "statement": "Publishing hygiene lands: private removed, files lists added, prepack builds lib for the two TypeScript plugins.",
+        "result": "passed",
+        "evidence": [
+          "ev-rename"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Capsule digests are refreshed and the full gate passes.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Plugins renamed to unscoped dal-* names and made publish-ready; all references updated; gate green.",
+      "exception": null
+    },
+    "what_worked": [
+      "The rename touched exactly the package manifests, the bundle patch rows, the two test assertions, and the four doc files — no runtime code changed.",
+      "prepack uses each plugin's own tsconfig so npm publish builds lib from the checkout before packing."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "rename-packages",
+        "purpose": "Rename the plugin package names, patch bundle rows, update tests and docs, add publishing hygiene.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-rename"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Refresh capsule digests and run the full gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-rename",
+        "kind": "file",
+        "uri": "repo://plugins/dal-modes/package.json",
+        "summary": "All four packages renamed to unscoped dal-* names; cordis.patch.yml rows reference dal-run-record and dal-improve-tools; files/prepack added; tests and docs updated with no scoped leftovers.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:37:58.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 134 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:37:58.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Naming/packaging change only; no runtime behavior, model call, or external transfer."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "packaging"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/reset-receipt.v1.schema.json",
+  "schema_version": "1.0.0",
+  "reset_id": "reset-7f97e7f1-618a-4723-9ddd-001f7b6ad7f1",
+  "action": "reset",
+  "repository": {
+    "root": "repo://recursive-dev-loop",
+    "revision": "8c180bfd90dd5b4f2018d49a1ce2528fd88d426f",
+    "branch": "main",
+    "dirty": false
+  },
+  "stores_digest": "2133761305755d9150c114d5e461e78f8af238b7cd2951a149009d9b824bff4a",
+  "removed": {
+    "total_files": 98,
+    "outbox": 31,
+    "store": 26,
+    "runs": 0,
+    "clusters": 1,
+    "other": 40
+  },
+  "reason": "Operator reset: the accumulated v0 evidence is no longer needed in this project; the current committed snapshot becomes the new baseline.",
+  "actor": "haochuanzhang",
+  "created_at": "2026-08-29T22:30:09.494Z"
+}

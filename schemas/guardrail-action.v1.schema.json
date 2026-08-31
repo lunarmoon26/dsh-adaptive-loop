@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/guardrail-action.v1.schema.json",
+  "title": "Recursive Development Loop guardrail action request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "action_id",
+    "created_at",
+    "actor",
+    "input_trust",
+    "capability",
+    "tool",
+    "target",
+    "data",
+    "sandbox",
+    "budget",
+    "approval_ref"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/guardrail-action.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "action_id": {
+      "type": "string",
+      "pattern": "^act-[a-z0-9][a-z0-9._-]+$",
+      "maxLength": 100
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "actor": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/actor"
+    },
+    "input_trust": {
+      "enum": ["trusted", "untrusted_repo", "external"]
+    },
+    "capability": {
+      "$ref": "#/$defs/capability"
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "operation"],
+      "properties": {
+        "name": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+        },
+        "operation": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uri", "artifact_kind", "artifact_id", "sha256"],
+      "properties": {
+        "uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "artifact_kind": {
+          "enum": ["plugin", "skill", "knowledge_capsule", "optimizer_proposal", "other", null]
+        },
+        "artifact_id": {
+          "type": ["string", "null"],
+          "maxLength": 512
+        },
+        "sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+          ]
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "contains_personal_data", "redacted"],
+      "properties": {
+        "classification": {
+          "enum": ["public", "internal", "restricted"]
+        },
+        "contains_personal_data": { "type": "boolean" },
+        "redacted": { "type": "boolean" }
+      }
+    },
+    "sandbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "network", "writable_roots"],
+      "properties": {
+        "mode": {
+          "enum": ["none", "read_only", "isolated_write"]
+        },
+        "network": {
+          "enum": ["denied", "allowlisted", "unrestricted"]
+        },
+        "writable_roots": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          }
+        }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_calls",
+        "max_duration_ms",
+        "max_bytes_read",
+        "max_bytes_written",
+        "max_network_requests"
+      ],
+      "properties": {
+        "max_calls": { "type": "integer", "minimum": 1 },
+        "max_duration_ms": { "type": "integer", "minimum": 1 },
+        "max_bytes_read": { "type": "integer", "minimum": 0 },
+        "max_bytes_written": { "type": "integer", "minimum": 0 },
+        "max_network_requests": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "approval_ref": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/decision_id" }
+      ]
+    }
+  },
+  "$defs": {
+    "capability": {
+      "enum": [
+        "read_local",
+        "write_local_evidence",
+        "run_local_verifier",
+        "network_access",
+        "destructive_shell",
+        "write_outside_workspace",
+        "plugin_management",
+        "shared_configuration",
+        "candidate_application",
+        "privilege_escalation"
+      ]
+    }
+  }
+}

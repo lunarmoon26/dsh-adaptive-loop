@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/effect-intent.v1.schema.json",
+  "title": "Recursive Development Loop effect intent v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "intent_id",
+    "action",
+    "payload_ref",
+    "payload_sha256",
+    "created_at"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/effect-intent.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "intent_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 100,
+      "pattern": "^int-[a-z0-9][a-z0-9._-]+$"
+    },
+    "action": {
+      "enum": [
+        "ingest_feedback",
+        "ingest_run",
+        "publish_cluster",
+        "publish_scorecard",
+        "record_decision",
+        "publish_proposal",
+        "reveal_seal"
+      ]
+    },
+    "payload_ref": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "payload_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

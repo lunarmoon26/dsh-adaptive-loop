@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+plugins/*/lib/
+.dal/*
+!.dal/outbox/
+!.dal/store/
+!.dal/runs/
+!.dal/clusters/
+!.dal/resets/
+.DS_Store
+.pnpm-store/
+.env
+.env.*
+!.env.example
+benchmarks/tau-style-workflow/.dal/
+
+# transient dsh home scratch from local harness runs
+benchmarks/tau-style-workflow/.tmp-dsh-home/

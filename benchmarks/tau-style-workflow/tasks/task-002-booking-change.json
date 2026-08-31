@@ -1,0 +1,14 @@
+{
+  "task_id": "task-002-booking-change",
+  "domain": "airline",
+  "instruction": "The customer wants to move booking b-2001 from SFO-EWR to SFO-JFK before departure. Apply the policy and record the change on the booking.",
+  "initial_state": {
+    "bookings": {
+      "b-2001": { "route": "SFO-EWR", "date": "2026-09-01", "status": "confirmed", "seats": 2, "changes": 0 }
+    }
+  },
+  "goal_state": {
+    "bookings": { "b-2001": { "route": "SFO-JFK", "changes": 1 } }
+  },
+  "policy_ref": "policy.md"
+}

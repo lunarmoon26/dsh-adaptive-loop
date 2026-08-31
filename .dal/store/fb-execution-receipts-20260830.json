@@ -1,0 +1,154 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-execution-receipts-20260830",
+  "ingested_at": "2026-08-30T22:03:06.641Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-execution-receipts-20260830.json",
+    "sha256": "62025d6dece1cc92914e08abe45d5784014a2e6fc772cc156b8235ee697d7dfb"
+  },
+  "feedback_sha256": "9fd7e27917f0237dd145f2f6effbe4bcfc54c2af88c0e6dccf668a2cf6fae6da",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T22:03:06.641Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-execution-receipts-20260830",
+    "change_id": "chg-execution-receipts",
+    "created_at": "2026-08-30T22:03:03.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "2bee27030b44b3d11b18f9420c3621f22bb71967",
+        "branch": "improvements/audit-borrows",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Close audit P0-2: branch evaluations must bind to an execution-receipt chain (candidate digest, generation ids, composition digest, session identity, external state digests, grader receipt) instead of accepting arbitrary state files.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-schema",
+        "statement": "execution-receipt.v1 schema lands with the full digest chain; validation is secret/PII-scanned.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-binding",
+        "statement": "evaluateBranch accepts --receipt, requires the receipt's external_state_after_sha256 to equal the graded state digest (BRANCH_RECEIPT_MISMATCH otherwise), and records receipt_id/receipt_sha256/provenance_valid; receipt-less evaluations are provenance-invalid.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Additive schema changes; the full gate passes on the branch.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Execution receipts shipped: branch evaluations now distinguish provenance-valid (receipt-bound) from unbound scores, closing the hand-written-perfect-JSON loophole the review identified.",
+      "exception": null
+    },
+    "what_worked": [
+      "The binding rule is a single digest equality (receipt.external_state_after_sha256 == graded state digest), which keeps the security argument small and testable.",
+      "The CLI change is one optional flag; every existing branch evaluation keeps working but is now honestly marked provenance-invalid."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "receipt-chain",
+        "purpose": "Add the execution-receipt schema, validator, evaluateBranch binding, CLI option, and evaluation schema fields.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the full repository verification gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/execution-receipt.test.ts",
+        "summary": "Three tests: receipt schema validation, bound evaluation with provenance fields, mismatch rejection, and receipt-less provenance-invalid marking.",
+        "sha256": null,
+        "observed_at": "2026-08-30T22:03:03.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 151 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed on improvements/audit-borrows.",
+        "sha256": null,
+        "observed_at": "2026-08-30T22:03:03.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-producer",
+        "statement": "Nothing produces receipts yet; the e2e driver must emit them (candidate skill digest, composition digest, service state before/after digests, grader verdict digest) during the G0/G1 demo.",
+        "level": "medium",
+        "resolution": "The driver-side receipt production is the demo-round wiring, using the schema and binding rule now in place.",
+        "evidence": [
+          "ev-tests"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Deterministic implementation and tests only; no model calls, external transfers, or approvals this round."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "feature"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

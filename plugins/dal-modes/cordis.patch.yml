@@ -1,0 +1,23 @@
+# DSH Adaptive Loop modes bundle, applied as one insert over the profile's
+# empty root. Later bundle patches and the profile's own cordis.patch.yml
+# address these rows by id, with the last write winning per row.
+#
+# Run mode (evidence recording) is the default posture: enabled here. The
+# improvement-mode workbench tools ship disabled; a workbench profile enables
+# the row in its own layer:
+#
+#   - id: dal-improve-tools
+#     name: '@lunarmoon26/dal-improve-tools'
+#
+# Mounting this bundle into a profile is an approval-gated
+# install_or_mount_plugin operation.
+
+- insert:
+    - id: dal-run-record
+      name: '@lunarmoon26/dal-run-record'
+      config:
+        storeRoot: .dal/runs
+
+    - id: dal-improve-tools
+      name: '@lunarmoon26/dal-improve-tools'
+      disabled: true

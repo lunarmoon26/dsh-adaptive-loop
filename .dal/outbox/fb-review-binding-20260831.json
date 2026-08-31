@@ -1,0 +1,191 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-review-binding-20260831",
+  "change_id": "chg-review-binding-20260831",
+  "created_at": "2026-08-31T02:30:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "dsh-agent",
+      "id": "agent-local"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": "0.1.1-rc.2",
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "1c81689",
+      "branch": "main",
+      "dirty": false
+    },
+    "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/commit/b4a0ed83825917fbb8177ee0442502caad310b4d"
+  },
+  "goal": "Close the receipt-binding and approval-digest findings of the external static review of b4a0ed8 without disturbing the in-flight G0/G1 demonstration.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-session-binding",
+      "statement": "Receipts carry the real dsh headless session id and its event-log head digest; the business effect log moves to its own field.",
+      "result": "passed",
+      "evidence": [
+        "ev-receipt-schema",
+        "ev-driver-typecheck"
+      ]
+    },
+    {
+      "id": "ac-composition-binding",
+      "statement": "effective_composition_sha256 digests the patch, skill, workflow-tools plugin tree, and container image; receipts record the image digest.",
+      "result": "passed",
+      "evidence": [
+        "ev-receipt-schema",
+        "ev-driver-typecheck"
+      ]
+    },
+    {
+      "id": "ac-branch-admission",
+      "statement": "evaluateBranch rejects receipts whose task_handle or grader_receipt_sha256 does not match the graded task/verdict; branchStats counts only provenance-valid evaluations.",
+      "result": "passed",
+      "evidence": [
+        "ev-branch-tests"
+      ]
+    },
+    {
+      "id": "ac-manifest-binding",
+      "statement": "The approval manifest digest binds provider, model, runner, fault profile, container image, agent-visible task contents, policy, skill, workflow-tools source, and exact prompts.",
+      "result": "passed",
+      "evidence": [
+        "ev-manifest-implementation"
+      ]
+    },
+    {
+      "id": "ac-resilience",
+      "statement": "The driver recovers once from a docker transport failure: kill lingering containers, reseed service state, relaunch Docker Desktop when the daemon is down.",
+      "result": "passed",
+      "evidence": [
+        "ev-driver-typecheck"
+      ]
+    },
+    {
+      "id": "ac-full-gate",
+      "statement": "Repository-wide gate passes after the changes.",
+      "result": "passed",
+      "evidence": [
+        "ev-full-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Receipts now bind the actual dsh session and event log, split the business effect log into its own field, and digest the full effective composition; branch evaluations admit only receipts matching the graded task and verdict, and provenance-invalid evaluations no longer count in branch stats; the approval manifest binds the full transmission. Focused tests and the full gate pass.",
+    "exception": null
+  },
+  "what_worked": [
+    "Additive optional schema fields kept every historical receipt valid.",
+    "The dsh headless runner persists sessions under a batch-local DSH_HOME, making session capture deterministic per attempt."
+  ],
+  "what_failed": [
+    "One earlier full-gate run failed only because the concurrently running demo had temporarily swapped the benchmark skill; re-run after restore passed."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Focused branch/receipt/summary/provider tests.",
+      "outcome": "succeeded",
+      "duration_ms": 600,
+      "evidence": [
+        "ev-branch-tests",
+        "ev-receipt-schema"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "pnpm run check",
+      "purpose": "Repository-wide gate.",
+      "outcome": "succeeded",
+      "duration_ms": 300000,
+      "evidence": [
+        "ev-full-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-branch-tests",
+      "kind": "test",
+      "uri": "command://vitest-run-tests-branch-execution-receipt",
+      "summary": "tests/branch.test.ts and tests/execution-receipt.test.ts pass, including new task-handle and grader-receipt mismatch rejections and receipt-bound stats.",
+      "sha256": null,
+      "observed_at": "2026-08-31T02:05:00.000Z"
+    },
+    {
+      "id": "ev-receipt-schema",
+      "kind": "test",
+      "uri": "command://vitest-run-tests-execution-receipt",
+      "summary": "Receipt schema accepts the new optional fields; historical fixtures still validate.",
+      "sha256": null,
+      "observed_at": "2026-08-31T02:05:00.000Z"
+    },
+    {
+      "id": "ev-driver-typecheck",
+      "kind": "command",
+      "uri": "command://tsc-noEmit",
+      "summary": "Typecheck passes over the driver changes (manifest, session capture, resilience).",
+      "sha256": null,
+      "observed_at": "2026-08-31T02:05:00.000Z"
+    },
+    {
+      "id": "ev-manifest-implementation",
+      "kind": "file",
+      "uri": "repo://benchmarks/tau-style-workflow/run-e2e.ts",
+      "summary": "manifestDigest now digests provider, model, runner, faults, container image, policy, skill, workflow-tools tree, agent-visible tasks, and prompts.",
+      "sha256": null,
+      "observed_at": "2026-08-31T02:05:00.000Z"
+    },
+    {
+      "id": "ev-full-gate",
+      "kind": "command",
+      "uri": "command://pnpm-run-check",
+      "summary": "pnpm run check passed after the demo skill was restored.",
+      "sha256": null,
+      "observed_at": "2026-08-31T02:10:00.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-patch-text-binding",
+      "statement": "The approval manifest does not yet bind the rendered composition patch text itself (it binds the patch inputs plus the tools source).",
+      "level": "low",
+      "resolution": "Follow-up: include the rendered patch digest in the manifest before the next decision issuance.",
+      "evidence": []
+    },
+    {
+      "id": "un-deferred-review-items",
+      "statement": "Physical oracle isolation (three-container topology) and the harness/business outcome split remain open review items deferred to avoid confounding the running demonstration.",
+      "level": "medium",
+      "resolution": "Land after the demo: grader/tool semantic changes bump GRADER_VERSION and require a rebaseline decision.",
+      "evidence": []
+    }
+  ],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

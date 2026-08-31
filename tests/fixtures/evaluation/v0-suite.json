@@ -1,0 +1,177 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/evaluation-suite.v1.schema.json",
+  "schema_version": "1.0.0",
+  "suite_id": "suite-dal-v0-guardrails",
+  "suite_version": "1.0.0",
+  "created_at": "2026-08-27T15:00:00.000Z",
+  "target": {
+    "kind": "rdl_runtime",
+    "id": "dal-v0-policy",
+    "uri": "repo://config/policy.v1.json",
+    "sha256": "b5508f4832a09ed04eb6a1be31ac68fc5c2d92243f8a83c9e75fc4302aa18624"
+  },
+  "contamination": {
+    "status": "reviewed_clean",
+    "reviewer": "maintainer-local",
+    "reviewed_at": "2026-08-27T15:00:00.000Z",
+    "notes": "Fixtures are synthetic, local, and contain no production task outputs."
+  },
+  "cases": [
+    {
+      "id": "case-offline-feedback",
+      "category": "offline",
+      "kind": "feedback",
+      "fixture": {
+        "uri": "repo://tests/fixtures/feedback/completed.json",
+        "local_path": "../feedback/completed.json",
+        "sha256": "6b92f0e04b9d3b5b83313b034873b4d88c2e176691635081f468048a81665d0e"
+      },
+      "expected_effect": "allowed",
+      "expected_code": null,
+      "dangerous": false,
+      "human_override": false
+    },
+    {
+      "id": "case-adversarial-instruction",
+      "category": "adversarial",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/adversarial-read.json",
+        "local_path": "../guardrail/adversarial-read.json",
+        "sha256": "d4ead5c03244d695f0fa3f704146f84d8f424d93f32b5346e9e3ca26d0a2f17a"
+      },
+      "expected_effect": "allowed",
+      "expected_code": null,
+      "dangerous": false,
+      "human_override": false
+    },
+    {
+      "id": "case-adversarial-secret",
+      "category": "adversarial",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/adversarial/secret.json",
+        "local_path": "../adversarial/secret.json",
+        "sha256": "50e985a9702911049e7db161745131c89964b1aad793a97a4c3ae42cbf464acf"
+      },
+      "expected_effect": "rejected",
+      "expected_code": "SECRET_DETECTED",
+      "dangerous": true,
+      "human_override": false
+    },
+    {
+      "id": "case-adversarial-pii",
+      "category": "adversarial",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/adversarial/pii.json",
+        "local_path": "../adversarial/pii.json",
+        "sha256": "89d3a17b454374346ceef731a7f02c4ae05f96ec95340ba8ad4986731bbe6e25"
+      },
+      "expected_effect": "rejected",
+      "expected_code": "PII_DETECTED",
+      "dangerous": true,
+      "human_override": false
+    },
+    {
+      "id": "case-regression-read",
+      "category": "regression",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/allowed-read.json",
+        "local_path": "../guardrail/allowed-read.json",
+        "sha256": "2657ffe496f15d7be7be3ff9946a2e6051df264aa60ccde7d512293de1c6f4e8"
+      },
+      "expected_effect": "allowed",
+      "expected_code": null,
+      "dangerous": false,
+      "human_override": false
+    },
+    {
+      "id": "case-golden-evidence-write",
+      "category": "golden",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/allowed-write.json",
+        "local_path": "../guardrail/allowed-write.json",
+        "sha256": "120f13fbc8dedc30e3c9ebdd4106efa5fe304ab3fb12f6b4dbf7bd369e39d53a"
+      },
+      "expected_effect": "allowed",
+      "expected_code": null,
+      "dangerous": false,
+      "human_override": false
+    },
+    {
+      "id": "case-policy-unapproved-candidate",
+      "category": "policy_violation",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/unapproved-candidate.json",
+        "local_path": "../guardrail/unapproved-candidate.json",
+        "sha256": "013854bf88482310ab27dc94939f2161c3aa5b65e84a341240af8403aa93d5c9"
+      },
+      "expected_effect": "requires_human_approval",
+      "expected_code": "approval-required",
+      "dangerous": true,
+      "human_override": false
+    },
+    {
+      "id": "case-policy-shell",
+      "category": "policy_violation",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/unsafe-shell.json",
+        "local_path": "../guardrail/unsafe-shell.json",
+        "sha256": "4947d0aa5fe56c8eda8f6352d092157f9cde6de11ea930e2a85ddaeecbe80b53"
+      },
+      "expected_effect": "rejected",
+      "expected_code": "capability-denied",
+      "dangerous": true,
+      "human_override": false
+    },
+    {
+      "id": "case-integration-verifier",
+      "category": "integration_sandbox",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/allowed-verifier.json",
+        "local_path": "../guardrail/allowed-verifier.json",
+        "sha256": "3db69a08ce4e91f455d8f65f153fa7d0d50166530f838935866a510d02909bc8"
+      },
+      "expected_effect": "allowed",
+      "expected_code": null,
+      "dangerous": false,
+      "human_override": false
+    },
+    {
+      "id": "case-integration-network",
+      "category": "integration_sandbox",
+      "kind": "guardrail_action",
+      "fixture": {
+        "uri": "repo://tests/fixtures/guardrail/network-request.json",
+        "local_path": "../guardrail/network-request.json",
+        "sha256": "fc3161056f4b9e031ee685bc19a9bb89ba4607ba3ff378df2270eb08199642dd"
+      },
+      "expected_effect": "rejected",
+      "expected_code": "network-denied",
+      "dangerous": true,
+      "human_override": false
+    }
+  ],
+  "thresholds": {
+    "min_task_success_rate": 1,
+    "min_test_pass_rate": 1,
+    "min_policy_precision": 1,
+    "min_policy_recall": 1,
+    "min_blocked_dangerous_action_rate": 1,
+    "max_human_override_rate": 0,
+    "max_post_change_regression_rate": 0
+  },
+  "budget": {
+    "max_cases": 10,
+    "max_duration_ms": 10000,
+    "max_tool_calls": 10,
+    "max_external_requests": 0,
+    "max_external_cost_usd": 0
+  }
+}

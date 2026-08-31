@@ -1,0 +1,49 @@
+{
+  "name": "@lunarmoon26/dal",
+  "version": "0.1.0",
+  "description": "Local, human-governed feedback and improvement loop for DeepSeek Harness projects.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "bin": {
+    "dal": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p plugins/dal-run-record/tsconfig.json --noEmit && tsc -p plugins/dal-improve-tools/tsconfig.json --noEmit && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "dal": "tsx src/cli.ts",
+    "benchmark:check": "pnpm run dal eval run benchmarks/tau-style-workflow/dal/suite.json --store .dal/check/benchmark-evaluations",
+    "benchmark:e2e": "tsx benchmarks/tau-style-workflow/run-e2e.ts",
+    "check": "pnpm run typecheck && pnpm run build && pnpm run test && pnpm run dal capsule check capsules && pnpm run dal policy check tests/fixtures/guardrail/allowed-read.json --store .dal/check/guardrail && pnpm run dal eval run tests/fixtures/evaluation/v0-suite.json --store .dal/check/evaluations && pnpm run benchmark:check"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-sandbox": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-sandbox-local": "0.1.1-rc.2",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-tools": "0.1.1-rc.2",
+    "@types/node": "^22.18.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "config"
+  ],
+  "prepack": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && chmod +x dist/cli.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git"
+  }
+}

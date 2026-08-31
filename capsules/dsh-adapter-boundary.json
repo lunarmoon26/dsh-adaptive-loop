@@ -1,0 +1,139 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
+  "schema_version": "1.0.0",
+  "capsule_id": "capsule-dsh-adapter-boundary",
+  "capsule_version": "1.1.0",
+  "title": "dsh and future optimizer adapter boundary",
+  "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
+  "checked_at": "2026-08-29",
+  "refresh_after": "2026-11-27",
+  "sources": [
+    {
+      "id": "src-dal-architecture",
+      "kind": "local_file",
+      "uri": "repo://docs/architecture.md",
+      "revision": "dal-v0-2026-08-29",
+      "sha256": "0b0ad60871740a234ab4556487c166247897f9b903d20ddf80e4652234faebae",
+      "local_path": "../docs/architecture.md",
+      "required": true
+    },
+    {
+      "id": "src-dal-research",
+      "kind": "local_file",
+      "uri": "repo://docs/research-evidence.md",
+      "revision": "dal-v0-2026-08-29",
+      "sha256": "6dec1620e823fda16ffc9a5f14e72af855301eb5adf581dfac7f9cab2e5e2251",
+      "local_path": "../docs/research-evidence.md",
+      "required": true
+    },
+    {
+      "id": "src-dal-roadmap",
+      "kind": "local_file",
+      "uri": "repo://ROADMAP.md",
+      "revision": "dal-v0-2026-08-29",
+      "sha256": "55f76f4375507cc3d3de23f7cd12ae2b47eb75cf096d799fe60fce1f199e5d5f",
+      "local_path": "../ROADMAP.md",
+      "required": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-project-integration",
+      "text": "Current dsh integration uses repository instructions and project-local skill discovery; it does not require a shared profile edit or mounted Cordis plugin.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research"
+      ]
+    },
+    {
+      "id": "claim-future-cordis",
+      "text": "A future Cordis integration must be opt-in, lifecycle-owned, disposal-safe, flush-aware, and separately approved for installation or mounting.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "claim-provider-neutral",
+      "text": "GEPA and SkillOpt remain future providers behind a provider-neutral exchange; neither optimizer nor candidate application runs in v0.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research",
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "claim-evaluation-options",
+      "text": "Promptfoo is the primary future CI experiment candidate; PyRIT and Langfuse or Phoenix remain optional red-team or observability adapters, not installed v0 dependencies or authority sources.",
+      "source_ids": [
+        "src-dal-research",
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "claim-dsh-tool-hooks",
+      "text": "The inspected DSH version has pre-execute, execute, and post-execute tool waterfalls; its final tools/result notification is observation-only, not a fourth enforcement waterfall.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research"
+      ]
+    },
+    {
+      "id": "claim-dsh-trajectory",
+      "text": "A future DSH evaluation adapter must flush and pin the selected Turn, Step, tool, and approval event range and verify external side effects independently; event replay is not side-effect reproduction.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research",
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "claim-dsh-sandbox-limits",
+      "text": "DSH sandbox evidence is runner-, platform-, and mode-specific and does not by itself establish network isolation; future DAL claims remain limited to the controls actually exercised.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research"
+      ]
+    }
+  ],
+  "retrieval_pointers": [
+    {
+      "id": "ptr-current-integration",
+      "when": "Changing how dal participates in a dsh project",
+      "uri": "repo://docs/architecture.md",
+      "source_ids": [
+        "src-dal-architecture"
+      ]
+    },
+    {
+      "id": "ptr-pinned-evidence",
+      "when": "Making a claim about dsh, Cordis, GEPA, SkillOpt, or evaluated OSS options",
+      "uri": "repo://docs/research-evidence.md",
+      "source_ids": [
+        "src-dal-research"
+      ]
+    },
+    {
+      "id": "ptr-future-only",
+      "when": "Proposing a plugin, sandbox, optimizer, provider, or supply-chain integration",
+      "uri": "repo://ROADMAP.md",
+      "source_ids": [
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "ptr-dsh-guardrail-design",
+      "when": "Designing DSH tool interception, permission escalation, trajectory evaluation, or telemetry export",
+      "uri": "repo://docs/architecture.md",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-research"
+      ]
+    }
+  ],
+  "limits": [
+    "Pinned upstream interfaces are pre-stable and require fresh source inspection before integration.",
+    "The unavailable expected local SkillOpt checkout remains an evidence gap.",
+    "No plugin, optimizer, model, external evaluator, or dsh runtime integration is proved by this capsule."
+  ]
+}

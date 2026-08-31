@@ -1,0 +1,18 @@
+{
+  "task_id": "task-001-refund",
+  "domain": "retail",
+  "instruction": "The customer bought order o-1001 (2 items, $120, delivered 12 days ago). One item arrived damaged and they want a full refund. Follow the written policy and complete the refund.",
+  "initial_state": {
+    "orders": {
+      "o-1001": { "status": "delivered", "total": 120, "days_since_delivery": 12, "items": ["sku-a", "sku-b"] }
+    },
+    "refunds": [],
+    "labels": []
+  },
+  "goal_state": {
+    "orders": { "o-1001": { "status": "refunded" } },
+    "refunds": [{ "order": "o-1001", "amount": 120, "reason": "damaged" }],
+    "labels": [{ "order": "o-1001" }]
+  },
+  "policy_ref": "policy.md"
+}

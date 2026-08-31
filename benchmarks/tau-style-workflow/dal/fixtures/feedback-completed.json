@@ -1,0 +1,61 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-benchmark-scaffold",
+  "change_id": "chg-benchmark-scaffold",
+  "created_at": "2026-08-29T16:00:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "benchmark-runner" },
+    "harness": { "name": "synthetic", "version": null, "session_id": null },
+    "repository": { "root": "repo://tau-style-workflow", "revision": null, "branch": null, "dirty": false },
+    "task_ref": null
+  },
+  "goal": "Complete the tau-style refund task deterministically and grade the final state.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-final-state",
+      "statement": "The final state matches the annotated goal and passes every policy invariant.",
+      "result": "passed",
+      "evidence": ["ev-grader-verdict"]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "The refund task completed and the deterministic grader passed the final state.",
+    "exception": null
+  },
+  "what_worked": ["Deterministic grading replaced any judge."],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "grader",
+      "purpose": "Verify the final state against the annotated goal and policy.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-grader-verdict"]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-grader-verdict",
+      "kind": "command",
+      "uri": "command://tau-style-grader",
+      "summary": "Grader verdict: pass, all goal checks and policy invariants hold.",
+      "sha256": null,
+      "observed_at": "2026-08-29T16:00:30.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "not_requested", "reviewer": null, "reviewed_at": null, "notes": [], "approval_refs": [] },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets", "benchmark"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

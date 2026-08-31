@@ -1,0 +1,178 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-upstream-audit-20260829",
+  "ingested_at": "2026-08-30T10:10:00.215Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-upstream-audit-20260829.json",
+    "sha256": "2a5ab01d397fd586b20eafac0962ce9964956ff7d656f063516536aaa886f135"
+  },
+  "feedback_sha256": "bc9783f3c7e3a7b4f0ade7a508e27a3a643cbe2b0d40e145cc4d274a24edd37d",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T10:10:00.215Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-upstream-audit-20260829",
+    "change_id": "chg-upstream-audit",
+    "created_at": "2026-08-30T10:09:57.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "6eb3b09225f0bf232ba8bb1aa64d30cf95117ceb",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Audit getstackit/sortit, UniPat-AI/SaaS-Bench, and UniPat-AI/EvoCodeBench for proposer and evaluation inspiration, with pinned identities and file:line evidence, and persist a decision-grade synthesis plus roadmap hooks.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-clone",
+        "statement": "The three repos are cloned into ~/Workspace and pinned (sortit@c523150, SaaS-Bench@48c22de, EvoCodeBench@f8fcfaa).",
+        "result": "passed",
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "id": "ac-rubic",
+        "statement": "The Rubic question is resolved with negative evidence: no Rubic/judge component exists in either UniPat repo or the benchmark pages; judging is deterministic per-task/per-step verifiers.",
+        "result": "passed",
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "id": "ac-synthesis",
+        "statement": "A ranked borrow list with file:line anchors lands in the research note (weighted/gated verifier protocol, evaluator-artifact isolation checklist, soft relevance+negation+specificity proposer ranking, pass@k unions, retrieval shortlisting) plus roadmap hooks.",
+        "result": "passed",
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Capsule digests refreshed and the full gate passes.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Audit completed and persisted: sortit contributes proposer ranking ideas (soft relevance, negation, specificity, retrieval shortlisting); SaaS-Bench contributes the weighted/gated deterministic verifier protocol and variance-aware aggregation; EvoCodeBench contributes a citable evaluator-isolation incident. Rubic itself is not open-sourced.",
+      "exception": null
+    },
+    "what_worked": [
+      "Parallel read-only deep dives plus main-thread source reading converged on the same mechanism claims with file:line anchors.",
+      "The Rubic gap was established as negative evidence rather than assumed away.",
+      "The EvoCodeBench Harbor verifier leak is now a citable real-world precedent for our evaluator-isolation anchor."
+    ],
+    "what_failed": [
+      "Two of three parallel investigators were still running after three goal rounds and were interrupted; the synthesis used the delivered SaaS-Bench report plus main-thread evidence for sortit and EvoCodeBench."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "clone-and-inspect",
+        "purpose": "Clone the three repos at pinned commits and read the core scoring/evaluation files.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "docs-update",
+        "purpose": "Persist the audit section and roadmap hooks; refresh capsule digests; run the gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research",
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-investigator-latency",
+        "category": "tooling",
+        "summary": "The sortit and EvoCodeBench investigators exceeded three goal rounds without delivering; interrupted and replaced with main-thread evidence.",
+        "impact": "low",
+        "recoverable": true,
+        "suggested_action": "Their claims were covered independently by main-thread reads with file:line anchors; no evidence gap remains for the memo.",
+        "evidence": [
+          "ev-research"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-research",
+        "kind": "file",
+        "uri": "repo://docs/research-evidence.md",
+        "summary": "New audit section: pinned identities, the Rubic negative-evidence finding, per-source mechanism tables, and a ranked borrow list with file:line anchors.",
+        "sha256": null,
+        "observed_at": "2026-08-30T10:09:57.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 134 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+        "sha256": null,
+        "observed_at": "2026-08-30T10:09:57.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-rubic-location",
+        "statement": "Rubic could exist in UniPat's non-public tooling or under a different name; the audit establishes only that it is absent from the public repos and pages.",
+        "level": "low",
+        "resolution": "If Rubic is ever open-sourced, re-audit it against the same evidence contract; the verifier-protocol borrow list stands regardless.",
+        "evidence": [
+          "ev-research"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Research and documentation only; no model calls, code behavior changes, or external transfers."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "research"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

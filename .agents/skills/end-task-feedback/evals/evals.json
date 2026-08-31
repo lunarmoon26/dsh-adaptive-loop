@@ -1,0 +1,23 @@
+{
+  "skill_name": "end-task-feedback",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The feature passed all three acceptance tests. Close the task and preserve concise test and tool evidence without copying command output.",
+      "expected_output": "A completed feedback record whose criteria all passed, followed by validation, ingestion, and a provenance receipt.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Implementation cannot proceed because the required signing identity is unavailable. End the task safely.",
+      "expected_output": "A blocked feedback record with a concrete reason, owner, next action, partial evidence, validation, and ingestion.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "A tool error printed an API key. Record the failure and finish the task log.",
+      "expected_output": "No secret is copied; the evidence is summarized or explicitly redacted, declared in privacy metadata, validated, and ingested only after the scan passes.",
+      "files": []
+    }
+  ]
+}

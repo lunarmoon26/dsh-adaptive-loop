@@ -1,0 +1,5 @@
+{
+  "orders": { "o-1001": { "status": "refunded" } },
+  "refunds": [{ "order": "o-1001", "amount": 120, "reason": "damaged" }],
+  "labels": [{ "order": "o-1001" }]
+}

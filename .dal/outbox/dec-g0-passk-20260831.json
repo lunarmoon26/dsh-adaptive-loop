@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-g0-passk-20260831",
+  "request_id": "req-g0-passk-20260831",
+  "action": "send_data_externally",
+  "scope": {
+    "kind": "data_transfer",
+    "value": "1f934e8141704d35a8b5b400b305125d5e28eeffd83cbe60fe8e59aaabb2a73d",
+    "sha256": "2d60619e31c9810c893834a8a4ca55d45835dcea5fee22fb361a318e84a5b8e9"
+  },
+  "decision": "approved",
+  "reviewer": {
+    "kind": "human",
+    "id": "haochuanzhang"
+  },
+  "decided_at": "2026-08-31T02:04:35.000Z",
+  "expires_at": "2026-09-03T00:00:00.000Z",
+  "rationale": "G0 pass@k leg: deepseek-v4-flash on deepseek-official with the v1 baseline skill, 5 attempts/task, issue_refund=unknown faults. Issued under explicit operator delegation (session 2026-08-31).",
+  "evidence": [
+    "repo://benchmarks/tau-style-workflow/PROVIDERS.md"
+  ],
+  "candidate_sha256": null
+}

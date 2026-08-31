@@ -1,0 +1,150 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-passk-cluster-20260831",
+  "change_id": "chg-passk-cluster-20260831",
+  "created_at": "2026-08-31T02:10:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "dsh-agent",
+      "id": "agent-local"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": "0.1.1-rc.2",
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "e9a4698",
+      "branch": "main",
+      "dirty": false
+    },
+    "task_ref": null
+  },
+  "goal": "Upgrade the tau-style demo into a statistical claim: per-batch cluster identity so iterative loops re-cluster cleanly, and a multi-seed pass@k driver with a paired comparison gate.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-cluster-batch-identity",
+      "statement": "Cluster identity binds the failure fingerprint to the run batch; records carry batch_id; dal cluster run filters by batch.",
+      "result": "passed",
+      "evidence": [
+        "ev-clustering-tests"
+      ]
+    },
+    {
+      "id": "ac-passk-summary",
+      "statement": "The driver repeats each task N times with unique run/receipt ids and writes a per-batch summary with per-task mean, pass@1, checkpoint-union, and overall mean/variance.",
+      "result": "passed",
+      "evidence": [
+        "ev-e2e-summary-tests"
+      ]
+    },
+    {
+      "id": "ac-compare-gate",
+      "statement": "--compare pairs two summaries and passes only when the task set matches, no overall or per-task mean regresses, and every receipt is digest-valid and binds its recorded state digest.",
+      "result": "passed",
+      "evidence": [
+        "ev-e2e-summary-tests"
+      ]
+    },
+    {
+      "id": "ac-full-gate",
+      "statement": "Repository-wide gate passes with the change.",
+      "result": "passed",
+      "evidence": [
+        "ev-full-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Cluster identity now includes the batch (additive batch_id on cluster records, --batch filter in the CLI), and the e2e driver gained --attempts/--compare with receipt-bound pass@k summaries. Focused tests and the full gate pass.",
+    "exception": null
+  },
+  "what_worked": [
+    "Fingerprint+batch cluster ids keep iterative loops re-clusterable without CLUSTER_ID_CONFLICT.",
+    "The compare gate validates every receipt against its recorded state digest (BRANCH_RECEIPT_MISMATCH fails the gate)."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Focused clustering + pass@k summary tests.",
+      "outcome": "succeeded",
+      "duration_ms": 600,
+      "evidence": [
+        "ev-clustering-tests",
+        "ev-e2e-summary-tests"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "pnpm run check",
+      "purpose": "Repository-wide gate (typecheck, build, tests, capsule, policy, v0-suite, benchmark).",
+      "outcome": "succeeded",
+      "duration_ms": 300000,
+      "evidence": [
+        "ev-full-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-clustering-tests",
+      "kind": "test",
+      "uri": "command://vitest-run-tests-clustering",
+      "summary": "tests/clustering.test.ts: 9/9 passed, including per-batch identity and --batch filtering.",
+      "sha256": null,
+      "observed_at": "2026-08-31T01:00:00.000Z"
+    },
+    {
+      "id": "ev-e2e-summary-tests",
+      "kind": "test",
+      "uri": "command://vitest-run-tests-e2e-summary",
+      "summary": "tests/e2e-summary.test.ts: 6/6 passed, covering gate pass, mean/task regressions, and receipt binding failures.",
+      "sha256": null,
+      "observed_at": "2026-08-31T01:00:00.000Z"
+    },
+    {
+      "id": "ev-full-gate",
+      "kind": "command",
+      "uri": "command://pnpm-run-check",
+      "summary": "pnpm run check passed (guardrails + benchmark scorecards status pass).",
+      "sha256": null,
+      "observed_at": "2026-08-31T01:05:00.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-passk-demo-unrun",
+      "statement": "The live multi-seed G0/G1 demonstration has not completed yet; the statistical claim itself is not yet produced.",
+      "level": "medium",
+      "resolution": "Run both legs once the per-skill approval decisions exist, then judge G1 against G0 with --compare.",
+      "evidence": []
+    }
+  ],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Live pass@k demo and per-provider approval decisions remain human-issued steps."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

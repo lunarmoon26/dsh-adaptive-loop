@@ -1,0 +1,126 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-evidence-reset-baseline-20260829",
+  "change_id": "chg-dal-evidence-reset-baseline",
+  "created_at": "2026-08-29T22:30:35.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "human",
+      "id": "haochuanzhang"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "8c180bfd90dd5b4f2018d49a1ce2528fd88d426f",
+      "branch": "main",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Reset this project's accumulated dal evidence: remove the .dal stores and treat the current committed snapshot as the new baseline, per the operator request.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-reset",
+      "statement": "dal reset execute removes all 98 evidence files, re-scaffolds the empty stores, and writes a validated reset receipt recording the pre-reset revision 8c180bf.",
+      "result": "passed",
+      "evidence": [
+        "ev-receipt"
+      ]
+    },
+    {
+      "id": "ac-gate",
+      "statement": "The full local gate passes from the new baseline.",
+      "result": "passed",
+      "evidence": [
+        "ev-gate"
+      ]
+    },
+    {
+      "id": "ac-restart",
+      "statement": "The loop restarts cleanly: this record ingests into the fresh .dal/store as the first record of the new baseline.",
+      "result": "passed",
+      "evidence": [
+        "ev-receipt"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Evidence reset executed (receipt reset-7f97e7f1-618a-4723-9ddd-001f7b6ad7f1); the workspace passes its gate from the new baseline and this record starts the new evidence chain.",
+    "exception": null
+  },
+  "what_worked": [
+    "The fail-closed checks passed cleanly (committed evidence, token, clean reason) and the receipt captured the pre-reset revision plus the digest manifest of everything removed.",
+    "The gate regenerates only gitignored runtime caches, so the new baseline commits just the removal, the receipt, and this record."
+  ],
+  "what_failed": [],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "dal-reset",
+      "purpose": "Execute the governed reset/rebaseline on this workspace.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-receipt"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Verify the workspace passes its full gate from the new baseline.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {
+      "id": "ev-receipt",
+      "kind": "file",
+      "uri": "repo://.dal/resets/reset-7f97e7f1-618a-4723-9ddd-001f7b6ad7f1.json",
+      "summary": "Reset receipt: stores digest 21337613..., removed counts 31/26/0/1/40, pre-reset revision 8c180bfd90dd5b4f2018d49a1ce2528fd88d426f.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:30:35.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck, 111 tests (3 sandbox probes skipped), build, capsule checks, policy check, v0 suite, and benchmark suite all passed after the reset.",
+      "sha256": null,
+      "observed_at": "2026-08-29T22:30:35.000Z"
+    }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "not_required",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Reset is not a sensitive action; the operator's explicit request plus the acknowledgement token authorized it, and all removed evidence remains in VCS history."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "operations"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

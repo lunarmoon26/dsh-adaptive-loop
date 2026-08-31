@@ -1,0 +1,65 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
+  "schema_version": "1.0.0",
+  "capsule_id": "capsule-dsh-plugin-contract",
+  "capsule_version": "1.0.0",
+  "title": "dsh plugin contract for the proposer",
+  "audience": "Proposer models and maintainers changing skills or plugin sources",
+  "checked_at": "2026-08-29",
+  "refresh_after": "2027-02-27",
+  "sources": [
+    {
+      "id": "src-dsh-plugin-contract",
+      "kind": "local_file",
+      "uri": "repo://docs/dsh-plugin-contract.md",
+      "revision": "dsh-plugin-contract-v1-2026-08-30",
+      "sha256": "8a9aa334e12a3f2d7998b49fde536d5f8fb23e1da334db0e690d83162c14b9a3",
+      "local_path": "../docs/dsh-plugin-contract.md",
+      "required": true
+    }
+  ],
+  "claims": [
+    {
+      "id": "claim-bundle-patch",
+      "text": "Plugins load as packages in a patch-composed Cordis tree; bundles declare dsh.bundle.patch entry rows with stable ids, and later layers restate rows with last-write-wins semantics.",
+      "source_ids": [
+        "src-dsh-plugin-contract"
+      ]
+    },
+    {
+      "id": "claim-tools",
+      "text": "Tools register through ctx.tools.register(defineTool(...)) with dsh's JSON-schema vocabulary (required: true, type json, oneOf, additionalProperties false); output is the canonical value and render is model-facing.",
+      "source_ids": [
+        "src-dsh-plugin-contract"
+      ]
+    },
+    {
+      "id": "claim-events",
+      "text": "Session events form an append-only log; recorder plugins subscribe to session/event and drain on session/flush and session/disposed with contained failures; projections store digests and counts, never raw arguments or results.",
+      "source_ids": [
+        "src-dsh-plugin-contract"
+      ]
+    },
+    {
+      "id": "claim-anchors",
+      "text": "Proposals may target editable surfaces only; the evaluator, sealed holdout, permissions, budget, promotion policy, audit log, and rollback are immutable anchors, and profile mounting stays approval-gated.",
+      "source_ids": [
+        "src-dsh-plugin-contract"
+      ]
+    }
+  ],
+  "retrieval_pointers": [
+    {
+      "id": "ptr-plugin-work",
+      "when": "Proposing harness_code or skills changes",
+      "uri": "repo://docs/dsh-plugin-contract.md",
+      "source_ids": [
+        "src-dsh-plugin-contract"
+      ]
+    }
+  ],
+  "limits": [
+    "Condensed for proposer context; the canonical source evidence is docs/research-evidence.md with pinned identities.",
+    "No runtime proof: the contract is documentation of the inspected harness identity."
+  ]
+}

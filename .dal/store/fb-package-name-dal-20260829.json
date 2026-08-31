@@ -1,0 +1,135 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-package-name-dal-20260829",
+  "ingested_at": "2026-08-30T01:16:03.166Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-package-name-dal-20260829.json",
+    "sha256": "0f304908a5a5ef8c4d52de3f12414ac7d22f18ae925e740164dd073673b3dede"
+  },
+  "feedback_sha256": "ba58877644cbd85bb45271aafe624d34be949bdf8a403ed783865458dea4039a",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T01:16:03.166Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-package-name-dal-20260829",
+    "change_id": "chg-package-name-dal",
+    "created_at": "2026-08-30T01:16:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "1d4a485d0c0a906adb5f28a99a507576e3099118",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Rename the root npm package from dsh-adaptive-loop to dal and update every package-name reference (entry-point test paths, scaffolding text, README install wording, deployment rollback).",
+    "acceptance_criteria": [
+      {
+        "id": "ac-name",
+        "statement": "package.json name is dal; the matchesEntryPoint test paths, init scaffolding text, README install line, and deployment rollback all reference dal with no dsh-adaptive-loop package-name leftovers.",
+        "result": "passed",
+        "evidence": [
+          "ev-rename"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "The full local gate passes after the rename.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Root package renamed to dal; gate green. The package is still private, so registry install arrives when it is published; checkout install keeps working.",
+      "exception": null
+    },
+    "what_worked": [
+      "The rename is scoped to the npm package identity: repo name, docker image, and historical evidence identifiers stay untouched."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "package-rename",
+        "purpose": "Rename the root package to dal across package.json, tests, scaffolding, README, and the deployment doc; run the gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-rename",
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-rename",
+        "kind": "file",
+        "uri": "repo://package.json",
+        "summary": "Root package name dal with matching references in tests/cli.test.ts, src/init.ts, README.md, and docs/deployment/user-global-install.md.",
+        "sha256": null,
+        "observed_at": "2026-08-30T01:16:00.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 134 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+        "sha256": null,
+        "observed_at": "2026-08-30T01:16:00.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-npm-availability",
+        "statement": "The unscoped npm name dal may already be taken; registry install (npm install -g dal) only works once the root package is published under an available name.",
+        "level": "medium",
+        "resolution": "Check availability (npm view dal) before publishing the root package; if taken, publish under a scope such as @lunarmoon26/dal.",
+        "evidence": [
+          "ev-rename"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Naming change only; no runtime behavior change."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "packaging"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

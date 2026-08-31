@@ -1,0 +1,29 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/execution-receipt.v1.schema.json",
+  "schema_version": "1.0.0",
+  "receipt_id": "rcp-task-005-booking-refusal-6741aa79",
+  "created_at": "2026-08-31T00:18:21.956Z",
+  "candidate_sha256": "715ea6a4702f78450a93fe934627c1823db31b7b43981f1cf70a9847dde078a2",
+  "base_generation_id": "g1",
+  "candidate_generation_id": "g1",
+  "effective_composition_sha256": "84b2972cd6b2136904920a4c783393d61bc1c445463fb0031ffec3f51cb52531",
+  "task_handle": "task-005-booking-refusal",
+  "model": {
+    "provider": "deepseek-official",
+    "model": "deepseek-v4-flash"
+  },
+  "model_patch_sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0",
+  "dsh_session_id": null,
+  "event_log_head_sha256": "2627e32157a7f0cd3ddf43581a2c749169c461c03f8067fc400a7053807387ac",
+  "external_state_before_sha256": "a0936838eed97be5d96e217ceff1acac028cd7fa63c8dbe529068bbae512b569",
+  "external_state_after_sha256": "2d590e340cfbd70c334aebca511b887c855ce0e554d22a7e0fadfe98f64ed645",
+  "grader_receipt_sha256": "58459b2582e47da56b738b863e217a0ca4e75ff74ae9d92365a7940f14e3755f",
+  "source": "repo://benchmarks/tau-style-workflow/run-e2e.ts",
+  "business_outcome": {
+    "status": "passed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 1,
+    "earned": 1,
+    "total": 1
+  }
+}

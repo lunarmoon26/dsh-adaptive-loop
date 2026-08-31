@@ -1,0 +1,174 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-skillopt-adapter-20260829",
+  "ingested_at": "2026-08-30T00:28:13.830Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-skillopt-adapter-20260829.json",
+    "sha256": "ef9862addce1391c135d5a92cc4013a5b60b47d8ea2bc282cedf1f44f02e7d6c"
+  },
+  "feedback_sha256": "b18a3b3e9184e3c0a475c3be88b6d7b477915e66172f128e26d4a97882de8de0",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T00:28:13.830Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-skillopt-adapter-20260829",
+    "change_id": "chg-skillopt-adapter",
+    "created_at": "2026-08-30T00:28:11.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "4be86259146ae0da906444672d5da65f573b01b4",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Implement the SkillOpt-shaped prepare/evaluate-only optimizer adapter behind the existing exchange: dal optimize prepare builds a sanitized training set from stored run records and emits the skillopt exchange envelope; dal optimize evaluate runs the deterministic bounded-edits validation gate (surface, target, base digest, edit bounds, anchors, reconstructed digest) with no model calls and no application.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-prepare",
+        "statement": "optimize prepare emits a schema-valid exchange envelope (provider_hint skillopt, prepare_only, no external transfer) and a sanitized training set with capped episodes carrying failure facts, check deltas, traces, harness pins, and batch linkage.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-evaluate",
+        "statement": "optimize evaluate validates bounded-edits candidates deterministically: exchange match, skills-only surface, target/base digests, edit count/size clipping, sequential anchor resolution, reconstructed candidate digest; secrets rejected before checks.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-boundary",
+        "statement": "Neither half calls a model, sends data, or applies anything; the no-optimizer v0 boundary (optimizer.optimize/apply disabled) stays intact.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Spec DAL-021, README, ROADMAP, requirement evidence updated; capsule digests refreshed; full gate green.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The SkillOpt-shaped prepare/evaluate-only adapter shipped: deterministic training-set preparation from the trace-populated run store and a bounded-edits validation gate with gradient clipping, anchor resolution, and reconstructed candidate digests — 134 tests green, no model or application path added.",
+      "exception": null
+    },
+    "what_worked": [
+      "The existing optimizer-exchange schema already carried provider_hint skillopt and mode prepare_only, so the adapter filled the contract instead of inventing one.",
+      "The validation gate mirrors SkillOpt's clipping and validation semantics with pure string operations: every check is deterministic and testable.",
+      "Candidate documents are secret/PII-scanned before any check runs, matching the privacy-before-persistence rule."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "implement-adapter",
+        "purpose": "Add the three optimizer schemas, src/optimizer-adapter.ts, and the optimize prepare/evaluate CLI commands.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "docs-update",
+        "purpose": "Spec DAL-021, README row, ROADMAP tick, requirement evidence, capsule digests.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the full repository verification gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/optimizer-adapter.test.ts",
+        "summary": "Five tests: training-set preparation with episode fidelity, valid candidate reconstruction digest, lost-anchor/base-digest/exchange-mismatch rejections, secret rejection, and CLI exposure.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:28:11.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 134 tests (5 sandbox/docker probes skipped), capsule checks, policy check, v0 suite, and benchmark suite all passed.",
+        "sha256": null,
+        "observed_at": "2026-08-30T00:28:11.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-reflect-step",
+        "statement": "The reflect step (optimizer model producing the bounded edits) is not implemented; candidates currently come from humans or a future approval-gated reflect command.",
+        "level": "low",
+        "resolution": "The next increment adds an approval-bound optimize reflect behind the send_data_externally decision, producing candidates that flow straight into the validation gate.",
+        "evidence": [
+          "ev-tests"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Deterministic-only feature: no model calls, external transfers, profile changes, or candidate application."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "feature"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

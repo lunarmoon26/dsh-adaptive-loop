@@ -1,0 +1,172 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-workflow-tools-20260830",
+  "ingested_at": "2026-08-30T22:00:40.014Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-workflow-tools-20260830.json",
+    "sha256": "280b60650dfa38c70c5e3adf32a66defaa00b122858572c37a5db67b63bf6072"
+  },
+  "feedback_sha256": "248122563e3fa6d27686190a4ec8a7db850924de9432f15ad85b05009414fe2d",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-08-30T22:00:40.014Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-workflow-tools-20260830",
+    "change_id": "chg-workflow-tools",
+    "created_at": "2026-08-30T22:00:37.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "dsh-agent"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "5d2a58525f47af1881a0f43cb0c682d90ae8cf29",
+        "branch": "improvements/audit-borrows",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Close audit P0-3: replace state synthesis with typed domain tools over a mock order/booking service — append-only effect log, idempotency keys, policy enforcement at the service boundary, simulated success/definite-failure/unknown outcomes, and an evaluator-side state projection for the grader.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-service",
+        "statement": "The mock service owns the state and the append-only effect log; effects carry idempotency keys and receipts; the written policy is enforced at the service boundary.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-faults",
+        "statement": "Per-effect fault injection supports success, definite failure, and timeout-unknown; unknown outcomes never mutate state and are queryable by idempotency key.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-tools",
+        "statement": "Seven typed tools register on ctx.tools (get_order, get_booking, issue_refund, create_return_label, change_booking, refuse_request, get_effect_status) with dsh-tools schemas; the plugin builds as part of the repo build chain.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-build"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "The full gate passes on the branch.",
+        "result": "passed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Typed workflow tools and the mock service shipped: the agent's effect path is now tool-mediated with receipts, fault simulation, and policy enforcement in the service — the grader reads service state via an evaluator-side projection.",
+      "exception": null
+    },
+    "what_worked": [
+      "Keeping the service core free of dsh imports made it directly unit-testable; the tool layer is a thin typed wrapper.",
+      "dsh-tools' schema vocabulary (json type, no union arrays) was resolved with an explicit found flag plus json payloads."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "implement-service",
+        "purpose": "Build the mock service core, the tool registrations, plugin build wiring, and the state projection.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests",
+          "ev-build"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the full repository verification gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/workflow-tools.test.ts",
+        "summary": "Five service tests: refund success plus idempotent replay, policy-boundary denials, unknown-outcome simulation with status query, labels/booking/refusal flows, and the evaluator-side projection.",
+        "sha256": null,
+        "observed_at": "2026-08-30T22:00:37.000Z"
+      },
+      {
+        "id": "ev-build",
+        "kind": "file",
+        "uri": "repo://benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/lib/index.js",
+        "summary": "The plugin compiles into lib/ as part of the repo build chain (typecheck and build both cover it).",
+        "sha256": null,
+        "observed_at": "2026-08-30T22:00:37.000Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 148 tests, capsule checks, policy check, v0 suite, and benchmark suite all passed on improvements/audit-borrows.",
+        "sha256": null,
+        "observed_at": "2026-08-30T22:00:37.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-mount",
+        "statement": "The tools have not been mounted into a real dsh profile yet; execution through an actual headless session is the G0 demo step.",
+        "level": "medium",
+        "resolution": "The image bake plus the patch overlay enabling the tools row are the next increment, followed by the G0/G1 paired demo.",
+        "evidence": [
+          "ev-build"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Deterministic implementation and unit tests only; no model calls, external transfers, or profile mounts this round."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "feature"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

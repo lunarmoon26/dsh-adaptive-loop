@@ -1,0 +1,49 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-e2e-task-005-booking-refusal-baseline-53e0c15a",
+  "task_id": "task-005-booking-refusal",
+  "change_id": "chg-e2e-baseline",
+  "started_at": "2026-08-29T23:34:32.970Z",
+  "finished_at": "2026-08-29T23:34:45.596Z",
+  "outcome": "failed",
+  "failure": {
+    "category": "test_failure",
+    "code": "check-goal-bookings",
+    "fingerprint_extra": [
+      "goal:bookings"
+    ],
+    "summary": "check goal:bookings",
+    "evidence": [
+      "repo://benchmarks/tau-style-workflow/grader/grade.ts"
+    ]
+  },
+  "context": {
+    "task_set": "tau-style-workflow-e2e",
+    "environment_snapshot": "darwin arm64 node 24.19.0",
+    "tool_versions": [],
+    "model": {
+      "id": "deepseek-v4-flash",
+      "version": "deepseek-official"
+    },
+    "prompt_sha256": "15cd10758f1611d1f0b49e5ceb56d6ebed63b81f205a08f27634fb53717fff47",
+    "harness_sha256": null,
+    "grader_version": "1.0.0",
+    "seeds": [],
+    "context_policy_sha256": "6fb265f165506b7e8bcf8744ccc9c7b2771b180c60aae915845caa9ac2bfc211",
+    "inference_parameters": []
+  },
+  "artifacts": [],
+  "metrics": {
+    "duration_ms": 12626,
+    "tool_calls": 0
+  },
+  "evidence": [
+    "dsh-session://e2e-task-005-booking-refusal"
+  ],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

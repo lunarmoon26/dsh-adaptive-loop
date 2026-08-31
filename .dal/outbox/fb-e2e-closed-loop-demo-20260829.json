@@ -1,0 +1,238 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-e2e-closed-loop-demo-20260829",
+  "change_id": "chg-e2e-closed-loop-demo",
+  "created_at": "2026-08-29T23:42:34.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {
+      "kind": "automation",
+      "id": "dsh-agent"
+    },
+    "harness": {
+      "name": "dsh",
+      "version": null,
+      "session_id": null
+    },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "b26bc925f0aba89d47c5d7bf385f61edfb24896c",
+      "branch": "main",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Prove the closed self-improvement loop end to end on the tau-style benchmark: run the five synthetic tasks with deepseek-v4-flash through dsh headless in the pinned container, cluster the failures, run the governed proposer, apply its diagnosis as the human, re-run, and report the honest measured before/after delta with model, grader, and policy fixed.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-baseline",
+      "statement": "Baseline batch runs all five tasks with approval-bound model calls, deterministic grading, and immutable run-record ingestion; measured baseline is recorded.",
+      "result": "passed",
+      "evidence": [
+        "ev-baseline"
+      ]
+    },
+    {
+      "id": "ac-loop",
+      "statement": "The failure clusters, the governed proposer (docker runner, verified send_data_externally) emits a schema-valid draft targeting an editable surface, and the branch is archived.",
+      "result": "passed",
+      "evidence": [
+        "ev-draft"
+      ]
+    },
+    {
+      "id": "ac-apply",
+      "statement": "The human applies the proposed skill rule plus the diagnosed prompt-instruction fix; the after-batch re-runs all five tasks with a fresh exact approval.",
+      "result": "passed",
+      "evidence": [
+        "ev-after"
+      ]
+    },
+    {
+      "id": "ac-delta",
+      "statement": "Measured task success rate is reported honestly: baseline 4/5, after 5/5, with the previously failing task flipped and no regressions on the four passing tasks; full gate stays green.",
+      "result": "passed",
+      "evidence": [
+        "ev-baseline",
+        "ev-after",
+        "ev-gate"
+      ]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Closed-loop demonstration completed with honest measured evidence: baseline 4/5 (task-005 failed goal:bookings), proposer diagnosed the exact-goal-shape defect plus a conflicting prompt instruction, human applied both harness fixes, after-batch 5/5 with no regressions and the full gate green.",
+    "exception": null
+  },
+  "what_worked": [
+    "Every model call in the loop was approval-bound: two run-batch decisions (full set and subset) plus one proposer decision, each verified against an exact manifest or payload digest at the operation.",
+    "The container-hosted harness ran the whole demonstration: task agents and the proposer both executed dsh headless in the pinned image with the .env key.",
+    "The proposer's draft (drf-b7dc1420) not only isolated the grader failure (goal:bookings deepEqual vs extra fields) but also caught the e2e prompt's contradictory 'keep the same shape as initial_state' instruction \u2014 a real harness defect.",
+    "The applied change is two harness surfaces (skill rule + run-prompt instruction), both recorded; the measured claim is therefore harness improvement under a fixed model and grader, not skill-only attribution."
+  ],
+  "what_failed": [
+    "The new e2e driver needed three schema/arg iterations before the batch completed.",
+    "Docker Desktop stopped mid-demonstration; the batch was relaunched once the daemon returned.",
+    "The first propose attempt hit the hardcoded --network none posture; the runner now takes an explicit network option."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "e2e-baseline",
+      "purpose": "Run the five-task baseline batch in the container and ingest run records.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-baseline"
+      ]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "loop-stages",
+      "purpose": "Cluster the failures, prepare the sanitized payload, run the governed proposer in the container, archive the branch.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-draft"
+      ]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "apply-and-after",
+      "purpose": "Apply the proposed skill rule and prompt fix as the human promotion, then re-run all five tasks under a fresh approval.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-after"
+      ]
+    },
+    {
+      "sequence": 4,
+      "kind": "tool",
+      "name": "pnpm-check",
+      "purpose": "Verify the full gate stays green with the applied change.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": [
+        "ev-gate"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-baseline",
+      "kind": "test",
+      "uri": "command://pnpm-run-benchmark-e2e",
+      "summary": "Baseline batch (docker runner, deepseek-v4-flash, fixed prompts): task-001, -002, -003, -004 passed; task-005 failed goal:bookings (state kept extra unannotated fields). 4/5. Five immutable run records in .dal/runs.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:42:34.000Z"
+    },
+    {
+      "id": "ev-draft",
+      "kind": "file",
+      "uri": "repo://.dal/outbox/draft-e2e-drf-b7dc1420-20260829.json",
+      "summary": "Proposer draft (drf-b7dc1420, dsh-headless-docker, payload digest bce25636...): exact-goal-shape skill rule, verification against goal_state, and diagnosis of the conflicting e2e prompt instruction; predicted +0.2 task_success_rate with no regression.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:42:34.000Z"
+    },
+    {
+      "id": "ev-after",
+      "kind": "test",
+      "uri": "command://pnpm-run-benchmark-e2e",
+      "summary": "After-batch (same model, grader, policy; skill rule + prompt instruction applied): all five tasks passed, task-005 flipped, no regression on 001-004. 5/5.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:42:34.000Z"
+    },
+    {
+      "id": "ev-gate",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Full gate green with the applied harness change: typecheck, build, 129 tests, capsule checks, policy check, v0 suite, benchmark suite.",
+      "sha256": null,
+      "observed_at": "2026-08-29T23:42:34.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-attribution",
+      "statement": "The applied change spans two harness surfaces (skill rule and run-prompt instruction), so the measured gain is attributed to the harness edit set, not to the skill alone.",
+      "level": "medium",
+      "resolution": "The exact changed lines are in the commit; a future skill-only ablation can isolate the skill contribution by reverting only the prompt line and re-running.",
+      "evidence": [
+        "ev-draft"
+      ]
+    },
+    {
+      "id": "un-single-seed",
+      "statement": "One seed per task per batch: the 0.80 to 1.00 delta is single-run evidence, per the project's own stochastic evaluation discipline this is a demonstration, not a statistical claim.",
+      "level": "medium",
+      "resolution": "Multi-seed rollouts and paired comparison belong to the future evaluation tier (ROADMAP statistical discipline).",
+      "evidence": [
+        "ev-baseline"
+      ]
+    }
+  ],
+  "human_review": {
+    "status": "approved",
+    "reviewer": "haochuanzhang",
+    "reviewed_at": "2026-08-29T23:42:34.000Z",
+    "notes": [
+      "Operator requested the e2e demonstration; three send_data_externally decisions (dec-e2e-run-batch-20260829, dec-e2e-run-batch-subset-20260829, dec-e2e-run-after-20260829) and one proposer decision (dec-e2e-propose-20260829) were verified at each operation.",
+      "The skill and prompt edits were applied by the agent on the operator's standing instruction and are committed here for review."
+    ],
+    "approval_refs": [
+      "dec-e2e-run-batch-20260829",
+      "dec-e2e-propose-20260829",
+      "dec-e2e-run-after-20260829"
+    ]
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": [
+      "no-secrets",
+      "evaluation"
+    ],
+    "contains_personal_data": false,
+    "redactions": []
+  },
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-driver-iterations",
+      "category": "tooling",
+      "summary": "The new e2e driver needed three iterations (approval-before-manifest-digest, ingest object-vs-path, run-record schema fields) before the batch completed.",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "Driver bugs were fixed in-place; the fixed fields (semver grader_version, uri evidence, non-empty failure summary) are now schema-conformant and the batch is reproducible.",
+      "evidence": [
+        "ev-baseline"
+      ]
+    },
+    {
+      "id": "fi-docker-desktop-stall",
+      "category": "tooling",
+      "summary": "Docker Desktop stopped mid-demonstration; the baseline batch hit a stale daemon socket once and was relaunched after restarting the daemon.",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "One duplicate task-001 run resulted; its extra record was not ingested, and the recorded baseline evidence is exactly the five batch records.",
+      "evidence": [
+        "ev-baseline"
+      ]
+    },
+    {
+      "id": "fi-propose-network",
+      "category": "tooling",
+      "summary": "The first propose attempt failed because the docker runner hardcoded --network none; the runner now takes an explicit network posture (none for verifiers, default for model-egress proposers).",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "Network posture is now a per-runner option covered by tests; the fix shipped in the same session.",
+      "evidence": [
+        "ev-draft"
+      ]
+    }
+  ]
+}

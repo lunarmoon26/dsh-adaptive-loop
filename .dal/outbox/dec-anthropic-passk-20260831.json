@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-anthropic-passk-20260831",
+  "request_id": "req-anthropic-passk-20260831",
+  "action": "send_data_externally",
+  "scope": {
+    "kind": "data_transfer",
+    "value": "1ced79a28623b06cae38d0bbc334c0e8edce3dbd07709651754f42b396275ba0",
+    "sha256": "d1b853dde4296c088b0474e335e763bb67e85a97716f8ae96419f51fe0a2676d"
+  },
+  "decision": "approved",
+  "reviewer": {
+    "kind": "human",
+    "id": "haochuanzhang"
+  },
+  "decided_at": "2026-08-31T02:14:45.000Z",
+  "expires_at": "2026-09-03T00:00:00.000Z",
+  "rationale": "Provider matrix: anthropic/claude-sonnet-5 with the v3 candidate skill and issue_refund=unknown faults. Issued under explicit operator delegation (session 2026-08-31).",
+  "evidence": [
+    "repo://benchmarks/tau-style-workflow/PROVIDERS.md"
+  ],
+  "candidate_sha256": null
+}

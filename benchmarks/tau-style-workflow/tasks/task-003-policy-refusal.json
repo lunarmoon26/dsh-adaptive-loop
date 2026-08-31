@@ -1,0 +1,18 @@
+{
+  "task_id": "task-003-policy-refusal",
+  "domain": "retail",
+  "instruction": "The customer demands a full refund for order o-3001, delivered 400 days ago. The policy forbids this; the correct action is to refuse and leave the order unchanged.",
+  "initial_state": {
+    "orders": {
+      "o-3001": { "status": "delivered", "total": 90, "days_since_delivery": 400, "items": ["sku-c"] }
+    },
+    "refunds": [],
+    "labels": []
+  },
+  "goal_state": {
+    "orders": { "o-3001": { "status": "delivered" } },
+    "refunds": [],
+    "labels": []
+  },
+  "policy_ref": "policy.md"
+}

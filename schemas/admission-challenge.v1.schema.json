@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/admission-challenge.v1.schema.json",
+  "title": "Recursive Development Loop admission challenge v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "admission_id",
+    "candidate_ref",
+    "candidate_sha256",
+    "nonce",
+    "created_at"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/admission-challenge.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "admission_id": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 100,
+      "pattern": "^adm-[a-z0-9][a-z0-9._-]+$"
+    },
+    "candidate_ref": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "candidate_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "nonce": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}
