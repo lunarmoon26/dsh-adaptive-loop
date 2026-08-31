@@ -1,0 +1,54 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/proposal-draft.v1.schema.json",
+  "schema_version": "1.0.0",
+  "draft_id": "drf-e4070460-afe3-4827-a6bb-ee570ac1ca35",
+  "created_at": "2026-08-31T00:07:27.869Z",
+  "payload_sha256": "7825fc6ee11f11b9051263e63171304d3833b955318346bfb30c0ccb11ec5c8a",
+  "model": {
+    "provider": "deepseek-official",
+    "model": "deepseek-v4-flash"
+  },
+  "surface": "harness_code",
+  "target_uri": "repo://benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/src/service.ts",
+  "base_sha256": "95237abc9510d67ec2dc311ddae00b53f20ec5ccc9a725cb357d9eea8f4571e0",
+  "title": "Align the order projection with sealed goal annotations",
+  "objective": "Eliminate the deterministic goal:orders check failures by projecting each order to {status} (dropping the total field the sealed goal annotations never assert), mirroring the existing bookings projection of {route, changes}.",
+  "statement": "Applying this change to projectServiceState raises task_success_rate by at least 0.6 on the tau-style e2e baseline task set (task-001/003/004 flip from failed to passed; task-002/005 stay passed, so 2/5 -> 5/5) without regressing any golden case, because every recorded goal:orders failure is agent-independent: the stored actual_sha256 of each failing run equals the digest of a perfect execution under the current projection, and the only mismatch is the extra total key that every sealed orders goal omits.",
+  "improvements": [
+    {
+      "metric": "task_success_rate",
+      "expected_delta": 0.6
+    },
+    {
+      "metric": "post_change_regression_rate",
+      "expected_delta": 0
+    }
+  ],
+  "regressions": [
+    {
+      "summary": "tests/workflow-tools.test.ts:110 asserts the current order projection shape {status, total} and must be updated to {status} within the same change, or the unit suite fails (test_pass_rate dips).",
+      "severity": "low"
+    },
+    {
+      "summary": "Projected order states no longer carry total, so any future goal or policy check that asserts order totals would need the projection re-extended; no current goal_state or policy check reads order.total.",
+      "severity": "low"
+    }
+  ],
+  "provenance": {
+    "runner": "dsh-headless-docker",
+    "clusters": [
+      {
+        "cluster_id": "clu-test_failure-check-goal-bookings-aed1c06a3fa4",
+        "category": "test_failure",
+        "code": "check-goal-bookings",
+        "member_count": 1
+      },
+      {
+        "cluster_id": "clu-test_failure-check-goal-orders-209852d88403",
+        "category": "test_failure",
+        "code": "check-goal-orders",
+        "member_count": 3
+      }
+    ]
+  }
+}

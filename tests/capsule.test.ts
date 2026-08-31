@@ -19,6 +19,7 @@ describe("knowledge capsules", () => {
     expect(results.map((result) => result.capsule_id)).toEqual([
       "capsule-dal-v0-contract",
       "capsule-dsh-adapter-boundary",
+      "capsule-dsh-plugin-contract",
     ]);
   });
 

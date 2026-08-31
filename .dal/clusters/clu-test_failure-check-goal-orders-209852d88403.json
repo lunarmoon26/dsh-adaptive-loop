@@ -1,0 +1,37 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/cluster-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "cluster_id": "clu-test_failure-check-goal-orders-209852d88403",
+  "created_at": "2026-08-30T22:22:44.628Z",
+  "evaluator": "rdl-deterministic-clustering-v1",
+  "tier": "fingerprint",
+  "fingerprint": {
+    "category": "test_failure",
+    "code": "check-goal-orders",
+    "signature": "209852d88403e0373cd96e06b1ebedb8ae154925585a71fed513090bfb8d1f86"
+  },
+  "members": [
+    {
+      "run_id": "run-e2e-task-001-refund-baseline-4603ef76",
+      "record_uri": "repo://.dal/runs/run-e2e-task-001-refund-baseline-4603ef76.json",
+      "sha256": "be634a00e5cb56f912ce7433ca5fd5088ab14a2f056a05046e6a57fe0c6990f5"
+    },
+    {
+      "run_id": "run-e2e-task-003-policy-refusal-baseline-b27af481",
+      "record_uri": "repo://.dal/runs/run-e2e-task-003-policy-refusal-baseline-b27af481.json",
+      "sha256": "46ba95cf7d8cc5e75c3fcd075603ca93f84074cc2599cb6d9266601d44e55ee7"
+    },
+    {
+      "run_id": "run-e2e-task-004-partial-refund-baseline-d89ccbcc",
+      "record_uri": "repo://.dal/runs/run-e2e-task-004-partial-refund-baseline-d89ccbcc.json",
+      "sha256": "40b0799b2f67d6ae86dfc4e959adafb92188a4c6228d345878549e340872d3a0"
+    }
+  ],
+  "representative": {
+    "run_id": "run-e2e-task-001-refund-baseline-4603ef76",
+    "record_uri": "repo://.dal/runs/run-e2e-task-001-refund-baseline-4603ef76.json",
+    "sha256": "be634a00e5cb56f912ce7433ca5fd5088ab14a2f056a05046e6a57fe0c6990f5"
+  },
+  "member_count": 3,
+  "summary": "Deterministic test_failure/check-goal-orders failure cluster with 3 member runs"
+}

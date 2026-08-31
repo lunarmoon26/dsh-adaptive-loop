@@ -25,7 +25,7 @@ import { agentVisibleTask, gradeTask, GRADER_VERSION, stableJson, type WorkflowT
 
 const workspace = resolve(import.meta.dirname);
 const repoRoot = resolve(workspace, "..", "..");
-const DEFAULT_IMAGE = "dsh-adaptive-loop/dsh:0.1.1-rc.2";
+const DEFAULT_IMAGE = "dsh-adaptive-loop/dsh:0.1.1-rc.2-demo";
 
 interface RunTask {
   task_id: string;
@@ -86,6 +86,16 @@ async function runTask(
 
   const provider = args.get("provider") ?? "deepseek-official";
   const model = args.get("model") ?? "deepseek-v4-flash";
+  const faults: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">> = {};
+  const rawFaults = args.get("faults");
+  if (rawFaults !== undefined) {
+    for (const pair of rawFaults.split(",")) {
+      const [kind, outcome] = pair.split("=");
+      if (kind !== undefined && (outcome === "success" || outcome === "definite_failure" || outcome === "unknown")) {
+        faults[kind as keyof typeof faults] = outcome;
+      }
+    }
+  }
   const stateRootHost = join(workspace, SERVICE_ROOT);
   await mkdir(stateRootHost, { recursive: true, mode: 0o700 });
   const seedState = { orders: (task.initial_state.orders ?? {}) as Record<string, unknown>, refunds: (task.initial_state.refunds ?? []) as unknown[], labels: (task.initial_state.labels ?? []) as unknown[], bookings: (task.initial_state.bookings ?? {}) as Record<string, unknown> };
@@ -95,7 +105,7 @@ async function runTask(
 
   const containerStateRoot = "/workspace/benchmarks/tau-style-workflow/.dal/benchmark/service";
   const modelPatch = buildModelPatch(provider, model);
-  const compositionPatch = buildCompositionPatch(provider, model, containerStateRoot);
+  const compositionPatch = buildCompositionPatch(provider, model, containerStateRoot, faults);
   const patchPath = join(workspace, ".dal", "benchmark", "e2e", "model-patch.yml");
   await writeFile(patchPath, compositionPatch, "utf8");
   const containerPatch = "/workspace/benchmarks/tau-style-workflow/.dal/benchmark/e2e/model-patch.yml";

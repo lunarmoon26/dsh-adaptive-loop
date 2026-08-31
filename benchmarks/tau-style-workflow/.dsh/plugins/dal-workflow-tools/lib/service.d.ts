@@ -14,7 +14,7 @@ export type EffectKind = "issue_refund" | "create_return_label" | "change_bookin
 export type EffectOutcome = "success" | "definite_failure" | "unknown";
 export interface OrderRecord {
     status: string;
-    total: number;
+    total?: number;
     days_since_delivery?: number;
     items?: string[];
 }

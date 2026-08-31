@@ -103,11 +103,21 @@ describe("mock order/booking service", () => {
     expect((await loadState(env)).refunds).toHaveLength(1);
   });
 
+
+  it("keeps the order status unchanged on partial refunds", async () => {
+    const env = await seeded();
+    const partial = await issueRefund(env, { order_id: "o-1001", amount: 30, reason: "faulty-item", idempotency_key: "r-6" });
+    expect(partial.outcome).toBe("success");
+    const state = await loadState(env);
+    expect(state.orders["o-1001"]?.status).toBe("delivered");
+    expect(state.refunds).toHaveLength(1);
+  });
+
   it("projects the service state through the output convention for grading", async () => {
     const env = await seeded();
     await issueRefund(env, { order_id: "o-1001", amount: 120, reason: "damaged", idempotency_key: "r-4" });
     const projected = projectServiceState(await loadState(env));
-    expect(projected.orders["o-1001"]).toEqual({ status: "refunded", total: 120 });
+    expect(projected.orders["o-1001"]).toEqual({ status: "refunded" });
     expect(projected.bookings["b-5001"]).toEqual({ route: "SFO-EWR", changes: 0 });
   });
 });

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-e2e-task-002-booking-change-baseline-c8784d73",
+  "task_id": "task-002-booking-change",
+  "change_id": "chg-e2e-baseline",
+  "started_at": "2026-08-30T22:15:27.632Z",
+  "finished_at": "2026-08-30T22:17:11.919Z",
+  "outcome": "succeeded",
+  "failure": null,
+  "context": {
+    "task_set": "tau-style-workflow-e2e",
+    "environment_snapshot": "darwin arm64 node 24.19.0",
+    "tool_versions": [],
+    "model": {
+      "id": "deepseek-v4-flash",
+      "version": "deepseek-official"
+    },
+    "prompt_sha256": "d1a19185a3d99f25617402003fc984a0b61551050178ed79b5b6123eceaad2b4",
+    "harness_sha256": null,
+    "grader_version": "1.0.0",
+    "seeds": [],
+    "context_policy_sha256": "6fb265f165506b7e8bcf8744ccc9c7b2771b180c60aae915845caa9ac2bfc211",
+    "inference_parameters": [],
+    "harness_pins": [
+      {
+        "surface": "skills",
+        "uri": "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
+        "sha256": "715ea6a4702f78450a93fe934627c1823db31b7b43981f1cf70a9847dde078a2"
+      },
+      {
+        "surface": "prompt",
+        "uri": "repo://benchmarks/tau-style-workflow/run-e2e.ts",
+        "sha256": "d1a19185a3d99f25617402003fc984a0b61551050178ed79b5b6123eceaad2b4"
+      },
+      {
+        "surface": "model_patch",
+        "uri": "repo://benchmarks/tau-style-workflow/.dal/benchmark/e2e/model-patch.yml",
+        "sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0"
+      }
+    ],
+    "model_patch_sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0"
+  },
+  "artifacts": [],
+  "batch_id": "baseline",
+  "checks": [
+    {
+      "id": "goal:bookings",
+      "pass": true,
+      "detail": "state matches the annotated goal",
+      "goal_sha256": "871d60a0a62eafaa2ae7b3534951c255641581e70862eb966fae78ee1654a6a4",
+      "actual_sha256": "c082744f5e4b0d38f2569761cdc9774b9d6ab657a443e2cd0b1a053239eb7cb3"
+    }
+  ],
+  "business_outcome": {
+    "status": "passed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 1,
+    "earned": 1,
+    "total": 1
+  },
+  "metrics": {
+    "duration_ms": 104287,
+    "tool_calls": 0
+  },
+  "evidence": [
+    "dsh-session://e2e-task-002-booking-change",
+    "repo://.dal/check/e2e-receipts/rcp-task-002-booking-change-aebbefe0.json"
+  ],
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

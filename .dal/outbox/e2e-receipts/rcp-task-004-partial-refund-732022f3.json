@@ -1,0 +1,29 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/execution-receipt.v1.schema.json",
+  "schema_version": "1.0.0",
+  "receipt_id": "rcp-task-004-partial-refund-732022f3",
+  "created_at": "2026-08-30T22:22:44.627Z",
+  "candidate_sha256": "715ea6a4702f78450a93fe934627c1823db31b7b43981f1cf70a9847dde078a2",
+  "base_generation_id": "g0",
+  "candidate_generation_id": "g0",
+  "effective_composition_sha256": "84b2972cd6b2136904920a4c783393d61bc1c445463fb0031ffec3f51cb52531",
+  "task_handle": "task-004-partial-refund",
+  "model": {
+    "provider": "deepseek-official",
+    "model": "deepseek-v4-flash"
+  },
+  "model_patch_sha256": "249b32b8f5b53bdefc03e111f6ca37dfe5a8dce0971b63f81b76ba5f6b65fee0",
+  "dsh_session_id": null,
+  "event_log_head_sha256": "428ae599932c4ec4489087241f76c9d4530cd53f0677817570d66ba2cd54c46d",
+  "external_state_before_sha256": "b700bd499d3b59288d718e6f2914c5b763fdfc4dc7231c4e08401e1d51273c85",
+  "external_state_after_sha256": "c69462be36324bf3f05bb5db24143c3b12accd52d87fb21a9e21e47cf828a021",
+  "grader_receipt_sha256": "037643c9228bebf099b85cabf06e1654594e0493282955bec8733cb1b7ce280b",
+  "source": "repo://benchmarks/tau-style-workflow/run-e2e.ts",
+  "business_outcome": {
+    "status": "failed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 0.6666666666666666,
+    "earned": 2,
+    "total": 3
+  }
+}

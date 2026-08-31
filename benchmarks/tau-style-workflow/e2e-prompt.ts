@@ -23,11 +23,23 @@ export function buildModelPatch(provider: string, model: string): string {
 }
 
 /** The tools row mounting the mock-service workflow tools in the container. */
-export function buildToolsRow(stateRoot: string): string {
-  return `- id: dal-workflow-tools\n  name: 'dal-workflow-tools'\n  config:\n    stateRoot: ${stateRoot}\n`;
+export function buildToolsRow(
+  stateRoot: string,
+  faults: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">> = {},
+): string {
+  const faultLines = Object.entries(faults)
+    .map(([kind, outcome]) => `      ${kind}: ${outcome}`)
+    .join("\n");
+  const faultBlock = faultLines === "" ? "" : `\n    faults:\n${faultLines}`;
+  return `- id: dal-workflow-tools\n  name: 'dal-workflow-tools'\n  config:\n    stateRoot: ${stateRoot}${faultBlock}\n`;
 }
 
 /** The full composition patch: model route plus the typed workflow tools. */
-export function buildCompositionPatch(provider: string, model: string, stateRoot: string): string {
-  return `${buildModelPatch(provider, model)}${buildToolsRow(stateRoot)}`;
+export function buildCompositionPatch(
+  provider: string,
+  model: string,
+  stateRoot: string,
+  faults: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">> = {},
+): string {
+  return `${buildModelPatch(provider, model)}${buildToolsRow(stateRoot, faults)}`;
 }

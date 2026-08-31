@@ -22,6 +22,7 @@ export interface ProposePayload {
     member_count: number;
     representative_failure: string;
   }>;
+  harness_contract: { uri: string; sha256: string };
   output_contract: string;
 }
 
@@ -48,7 +49,7 @@ export type ProposalRunner = (prompt: string) => Promise<string>;
 const SUMMARY_CAP = 512;
 const MAX_CLUSTERS = 24;
 
-const OUTPUT_CONTRACT = `Respond with exactly one JSON object and nothing else. Required keys:
+const OUTPUT_CONTRACT = `You are proposing a change to a DeepSeek Harness workspace. Before proposing a harness_code or skills change, read the pinned dsh plugin contract at repo://docs/dsh-plugin-contract.md (digest provided in the payload's harness_contract field) so the proposal respects bundle patches, tool registration, and the editable-surface boundaries. Respond with exactly one JSON object and nothing else. Required keys:
 surface (one of the editable surfaces listed), target_uri (a repo:// URI of the artifact you propose to change),
 base_sha256 (the current artifact digest), title (short), objective (one sentence),
 statement (one falsifiable prediction, e.g. "applying this change raises <metric> by at least <delta> on the held-out cases without regressing golden cases"),
@@ -102,10 +103,16 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
     });
   }
 
+  const contractText = await readFile(resolve(process.cwd(), "docs", "dsh-plugin-contract.md"), "utf8").catch(() => "");
+  const contractDigest = sha256(contractText);
   const payload: ProposePayload = {
     task: "propose_one_falsifiable_change",
     editable_surfaces: EDITABLE_SURFACES,
     clusters,
+    harness_contract: {
+      uri: "repo://docs/dsh-plugin-contract.md",
+      sha256: contractDigest,
+    },
     output_contract: OUTPUT_CONTRACT,
   };
   const json = prettyJson(payload);
