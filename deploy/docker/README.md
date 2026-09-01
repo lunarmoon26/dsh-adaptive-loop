@@ -25,12 +25,17 @@ The benchmark-v2 tag bakes the typed workflow client/service and the remote
 grader entry point. The e2e approval manifest and receipts digest the image
 and workflow-tools bytes *inside* it, so rebuilding the image invalidates
 every prior batch decision. Record the new digest and rerun the sandbox and
-topology probes after each rebuild. Current local build (2026-08-31):
+topology probes after each rebuild. Current local build (2026-09-01):
 `dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2`, image id
-`sha256:df7173dfcf8edbd1c68623286a2451900b3f7e50f31f4ac33d2c737f28bf0ef3`.
+`sha256:1adcf95dedf922eaf182fefee0d4ddcaf90fed00eaa2eb947bfe99f7f97f64d9`.
 The service/grader topology probe and Linux sandbox probes passed for this
 image; the verifier reported `landlock-run` with full enforcement, and the
-out-of-workspace write probe was denied by the backend.
+out-of-workspace write probe was denied by the backend. The in-image
+workflow-tools tree digest is
+`7e6ea2a4a1ce8f9a688472e8209da11fd1e347b10e62e3357c00fbc46b212905`.
+The local plugin installation in this build was authorized by
+`dec-dal-workflow-tools-image-20260901` for the exact source digest and
+isolated-image scope; it did not install or mount a host profile.
 
 Resolved `node:24-slim` parent manifest for this local build:
 `sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.

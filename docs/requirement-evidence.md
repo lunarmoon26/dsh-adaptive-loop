@@ -1,10 +1,10 @@
 # Requirement Evidence
 
-Status: Repository gate passed; blocked feedback validated/ingested; final benchmark-image rebuild awaits independent human approval
+Status: Repository and latest-image gates passed; completed artifact-refresh feedback validated and ingested
 Change: `chg-benchmark-integrity-g2-20260831`
 Evidence date: 2026-09-01
 
-This matrix maps canonical requirements to executable or inspectable evidence. “Pass” means the named evidence was observed in the current workspace. A blocked artifact refresh does not invalidate the passing source gate, but it prevents claiming that the current source was rebuilt into the documented image.
+This matrix maps canonical requirements to executable or inspectable evidence. “Pass” means the named evidence was observed in the current workspace; it does not imply model-backed benchmark quality or candidate promotion.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ This matrix maps canonical requirements to executable or inspectable evidence. �
 | DAL-010 self-improvement loop core | Run/cluster schemas, `src/runs.ts`, `src/clustering.ts`, proposal rules | Clustering, workflow, and run fixtures | Pass |
 | DAL-018 evidence reset and rebaseline | Reset schema, `src/reset.ts`, `.dal/resets/` receipts | `tests/reset.test.ts` | Pass |
 | DAL-019 run and improvement plugin modes | `plugins/dal-modes/`, `plugins/dal-run-record/`, `plugins/dal-improve-tools/` | `tests/plugin-modes.test.ts` | Pass |
-| DAL-020 container-hosted harness execution | `src/docker.ts`, `deploy/docker/`, Docker policy seams | `tests/docker.test.ts`; live Landlock and denial probes | Pass for existing image; rebuild blocked |
+| DAL-020 container-hosted harness execution | `src/docker.ts`, `deploy/docker/`, Docker policy seams | `tests/docker.test.ts`; approved image build; live Landlock and denial probes | Pass |
 | DAL-021 SkillOpt-shaped optimizer adapter | `src/optimizer-adapter.ts`, optimizer schemas | `tests/optimizer-adapter.test.ts` | Pass |
 | DAL-022 benchmark measurement integrity | Workflow task/receipt/run schemas; grader/service/e2e driver; disabled G2 source | Grader, service, topology, receipt, summary, branch, clustering, and G2 tests | Pass |
 
@@ -42,7 +42,7 @@ This matrix maps canonical requirements to executable or inspectable evidence. �
 | Frozen-context comparison rejects benchmark drift and model/candidate confounding | Summary comparison tests | Pass |
 | Arbitrary or G2 execution labels cannot claim an ordinary run | Driver and summary validation tests | Pass |
 | G2 unknown-effect guard remains source-only and retains same-key locks until terminal evidence | Disabled bundle row and G2 unit tests | Pass |
-| Current source is rebuilt into the benchmark image and re-probed | Exact `install_or_mount_plugin` decision required by the Dockerfile’s local plugin installation | Blocked |
+| Current source is rebuilt into the benchmark image and re-probed | `dec-dal-workflow-tools-image-20260901`; image identity plus live topology/Landlock/denial probes | Pass |
 
 ## Observed commands
 
@@ -52,6 +52,8 @@ CI=true pnpm exec vitest run tests/e2e-summary.test.ts tests/e2e-topology.test.t
 pnpm dal capsule check capsules/dal-v0-contract.json
 pnpm dal capsule check capsules/dsh-adapter-boundary.json
 CI=true pnpm run check
+pnpm dal approval verify .dal/outbox/dec-dal-workflow-tools-image-20260901.json --action install_or_mount_plugin --scope <exact-isolated-image-scope>
+docker build -f deploy/docker/Dockerfile -t dsh-adaptive-loop/dsh:0.1.1-rc.2 -t dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 .
 CI=true DAL_E2E_TOPOLOGY_PROBE=1 pnpm exec vitest run tests/e2e-topology.test.ts
 pnpm dal verify run --runner docker --action benchmarks/tau-style-workflow/dal/fixtures/verifier-grader.json --command <deterministic-grader-command>
 pnpm dal verify run --runner docker --action benchmarks/tau-style-workflow/dal/fixtures/verifier-grader.json --command <out-of-workspace-denial-command>
@@ -59,15 +61,15 @@ pnpm dal verify run --runner docker --action benchmarks/tau-style-workflow/dal/f
 
 Observed source-gate result: typecheck and build passed; 31 test files passed with 187 tests and 6 opt-in skips; all capsules validated; policy, core evaluation, and benchmark scorecards passed with no hard stop. Focused e2e integrity proof passed 24 tests with one opt-in skip, and final scoped/full diff reviews reported no findings.
 
-Required task feedback validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json`; feedback digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`. The clean-CI portability follow-up supersedes it at `.dal/store/fb-benchmark-integrity-g2-ci-20260901.json`; digest `9e667c5e61f68110e20774bca792fe21dcd4c139b1a3743ee2aee54fd66b1e5c`.
+Required task feedback validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json`; feedback digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`. The clean-CI portability follow-up superseded it at `.dal/store/fb-benchmark-integrity-g2-ci-20260901.json`; digest `9e667c5e61f68110e20774bca792fe21dcd4c139b1a3743ee2aee54fd66b1e5c`. The completed artifact refresh now supersedes both at `.dal/store/fb-benchmark-integrity-g2-image-20260901.json`; digest `ae06da3bd906852f0701ba9ba7f19d9c4a89e576242f2ed56f691de99dbcec24`.
 
-Observed existing-image result: the live three-container service/grader topology passed; the deterministic grader passed under `landlock-run` with full enforcement; an attempted `/root` write was denied. These probes exercised the previously built image `sha256:df7173dfcf8edbd1c68623286a2451900b3f7e50f31f4ac33d2c737f28bf0ef3`, not a rebuild of the latest source.
+Observed latest-image result: image `sha256:1adcf95dedf922eaf182fefee0d4ddcaf90fed00eaa2eb947bfe99f7f97f64d9` was rebuilt from the current source after exact approval verification. The live three-container service/grader topology passed; the deterministic grader passed under `landlock-run` with full enforcement; an attempted `/root` write was denied. The in-image workflow-tools tree digest is `7e6ea2a4a1ce8f9a688472e8209da11fd1e347b10e62e3357c00fbc46b212905`.
 
-## Blocked artifact refresh
+## Completed artifact refresh
 
-The Dockerfile installs `dal-workflow-tools@0.1.0` globally into the isolated image. Project governance requires an independent, exact, unexpired `install_or_mount_plugin` decision at that operation. No such decision file was supplied, and an agent-authored “human” decision would falsify the authority record. The source gate and existing-image probes therefore completed, but no image rebuild or new image digest is claimed.
+The Dockerfile installs `dal-workflow-tools@0.1.0` globally into the isolated image. The user explicitly approved the previously stated exact scope, recorded as `dec-dal-workflow-tools-image-20260901`; `pnpm dal approval verify` passed immediately before the Docker build. The decision authorized only the local isolated image and did not authorize a shared host profile, G2 mounting, optimization-candidate application, or external data transfer.
 
-Required scope for a later human decision:
+Approved scope:
 
 ```text
 install dal-workflow-tools@0.1.0 source-sha256=a026f79e4dc063c0e2e583a2238fc5f10bcf6c854ded05f8e6c9ecc8934ae7e7 into isolated Docker image dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 via deploy/docker/Dockerfile; no shared host profile
@@ -75,10 +77,11 @@ install dal-workflow-tools@0.1.0 source-sha256=a026f79e4dc063c0e2e583a2238fc5f10
 
 Scope SHA-256: `85af710aa467e4a339020be249b522f509e5f95ada5ec201db08939209087d55`.
 
+Resolved parent manifest: `node:24-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`. The Dockerfile still names the mutable tag; pin the digest in source before distributing the image.
+
 ## Explicit non-evidence
 
 - No model-backed benchmark batch or provider request was run.
 - No G2 plugin was installed, mounted, or applied, and no optimization candidate was applied.
-- No new benchmark image was built from the latest source.
 - Candidate provider egress remains not destination-allowlisted; topology proof is not credential-egress confinement.
-- The existing-image probes do not establish model compliance, a general OS-sandbox guarantee, or latest-image provenance.
+- The latest-image probes do not establish model compliance or a general OS-sandbox guarantee beyond the exercised Linux container.

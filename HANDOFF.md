@@ -2,14 +2,14 @@
 
 ## Current state
 
-- Repository: `/Users/haochuanzhang/Workspace/dsh-adaptive-loop`, branch `main`.
+- Repository: `/Users/haochuanzhang/Workspace/dsh-adaptive-loop`, branch `feat/benchmark-integrity-g2`, tracking `origin/feat/benchmark-integrity-g2`.
 - Change: `chg-benchmark-integrity-g2-20260831`.
-- The worktree is intentionally dirty with the complete modified/untracked feature set; no commit was requested.
-- Source implementation, focused tests, canonical docs, capsules, and the repository gate are complete.
-- Final benchmark-image rebuild is blocked because the Dockerfile installs a local dsh plugin and no independent `install_or_mount_plugin` decision file exists.
+- PR: <https://github.com/lunarmoon26/dsh-adaptive-loop/pull/2>. Commits `3737106` and `ffc6b9b` are pushed; the approved artifact-refresh evidence is pending its follow-up commit.
+- Source implementation, focused tests, canonical docs, capsules, repository gate, approved benchmark-image rebuild, and latest-image probes are complete.
+- User approval for the exact isolated-image plugin installation is recorded in `.dal/outbox/dec-dal-workflow-tools-image-20260901.json`; it was verified at the Docker operation.
 - Required blocked feedback was validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json` with digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`.
 - A follow-up record for the hermetic hosted-CI fix supersedes it at `.dal/store/fb-benchmark-integrity-g2-ci-20260901.json` with digest `9e667c5e61f68110e20774bca792fe21dcd4c139b1a3743ee2aee54fd66b1e5c`.
-- Do not fabricate a human approval or treat chat delegation, policy output, tests, or this handoff as authority.
+- Completed artifact-refresh feedback supersedes the immutable blocked records at `.dal/store/fb-benchmark-integrity-g2-image-20260901.json`; digest `ae06da3bd906852f0701ba9ba7f19d9c4a89e576242f2ed56f691de99dbcec24`.
 
 ## Implemented
 
@@ -31,38 +31,30 @@
 - Capsules: all valid; `capsule-dal-v0-contract` and `capsule-dsh-adapter-boundary` are `1.2.0`.
 - Focused e2e/receipt/branch proof: 24 tests passed, one opt-in skip.
 - Static and live three-container topology: pass.
-- Existing-image deterministic grader: pass under `landlock-run`, full enforcement.
-- Existing-image out-of-workspace write: denied as expected.
+- Latest-image deterministic grader: pass under `landlock-run`, full enforcement.
+- Latest-image out-of-workspace write: denied as expected.
 - Final scoped and full worktree reviews: no findings after including untracked additions.
 - No model call, provider request, G2 mount/application, or optimization-candidate application occurred.
 
-## Image blocker
+## Final image evidence
 
-Current documented image:
+Current local image:
 
 ```text
 dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2
-sha256:df7173dfcf8edbd1c68623286a2451900b3f7e50f31f4ac33d2c737f28bf0ef3
+sha256:1adcf95dedf922eaf182fefee0d4ddcaf90fed00eaa2eb947bfe99f7f97f64d9
 ```
 
-It passed the live topology and Linux sandbox probes, but it predates the latest schema/types/e2e evidence changes and is not final provenance for this source tree.
+It was rebuilt from the current source after `pnpm dal approval verify` accepted decision `dec-dal-workflow-tools-image-20260901`. It passed the live topology and Linux sandbox probes. The in-image workflow-tools tree digest is `7e6ea2a4a1ce8f9a688472e8209da11fd1e347b10e62e3357c00fbc46b212905`.
 
-The blocked Docker build would execute `npm install -g /opt/dal/plugins/dal-workflow-tools`. A later independent human decision must approve this exact scope:
+Approved scope:
 
 ```text
 install dal-workflow-tools@0.1.0 source-sha256=a026f79e4dc063c0e2e583a2238fc5f10bcf6c854ded05f8e6c9ecc8934ae7e7 into isolated Docker image dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 via deploy/docker/Dockerfile; no shared host profile
 ```
 
 Scope SHA-256: `85af710aa467e4a339020be249b522f509e5f95ada5ec201db08939209087d55`.
-
-After receiving the decision file:
-
-1. Verify it at the operation with `pnpm dal approval verify <decision-file> --action install_or_mount_plugin --scope '<exact-scope>'`.
-2. Run `pnpm run build` and build both Docker tags from `deploy/docker/Dockerfile`.
-3. Inspect and record the new immutable image ID in `deploy/docker/README.md`.
-4. Rerun the live topology, deterministic grader, and denial probes.
-5. Rerun `CI=true pnpm run check` if any source or canonical documentation changes.
-6. Emit a new completed feedback record for the artifact-refresh follow-up; do not alter the blocked record for this session.
+The decision did not authorize a shared host profile, G2 installation or mounting, optimization-candidate application, or external data transfer. Reuse outside that exact operation and scope requires a new decision.
 
 ## Capsule pins
 
@@ -75,5 +67,5 @@ After receiving the decision file:
 ## Residual limits
 
 - Candidate provider egress is not destination-allowlisted. Use a dedicated short-lived key; oracle isolation is not credential confinement.
-- The Dockerfile parent remains the mutable `node:24-slim` tag; the previously resolved parent manifest was `sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
+- The Dockerfile parent remains the mutable `node:24-slim` tag; this build resolved parent manifest `sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
 - No full model batch was run, so there is no model-behavior or latest-batch quality claim.

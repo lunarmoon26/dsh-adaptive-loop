@@ -1,0 +1,280 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-benchmark-integrity-g2-image-20260901",
+  "ingested_at": "2026-09-01T21:24:26.884Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-benchmark-integrity-g2-image-20260901.json",
+    "sha256": "f74ae0516a9ce63d585b0a6496d6803225bc5f47b61f722aa8713f9f57adc3f1"
+  },
+  "feedback_sha256": "ae06da3bd906852f0701ba9ba7f19d9c4a89e576242f2ed56f691de99dbcec24",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-01T21:24:26.884Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-benchmark-integrity-g2-image-20260901",
+    "change_id": "chg-benchmark-integrity-g2-20260831",
+    "created_at": "2026-09-01T21:21:34Z",
+    "supersedes": "fb-benchmark-integrity-g2-ci-20260901",
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": "0.1.1-rc.2",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "ffc6b9b",
+        "branch": "feat/benchmark-integrity-g2",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/pull/2"
+    },
+    "goal": "Complete the exact-approved benchmark-image artifact refresh and verify the rebuilt image without mounting a host profile, enabling G2, applying a candidate, or sending provider data.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-exact-image-approval",
+        "statement": "An approved, unexpired install_or_mount_plugin decision binds the exact workflow-tools source digest and isolated-image scope at the Docker operation.",
+        "result": "passed",
+        "evidence": [
+          "ev-image-approval"
+        ]
+      },
+      {
+        "id": "ac-final-image",
+        "statement": "The latest source is rebuilt into an immutable benchmark image with recorded image, parent, and in-image workflow-tools identities.",
+        "result": "passed",
+        "evidence": [
+          "ev-final-image",
+          "ev-image-parent",
+          "ev-in-image-tools"
+        ]
+      },
+      {
+        "id": "ac-live-topology",
+        "statement": "The rebuilt image passes the live isolated candidate, service, and grader topology probe.",
+        "result": "passed",
+        "evidence": [
+          "ev-live-topology"
+        ]
+      },
+      {
+        "id": "ac-sandbox-proof",
+        "statement": "The rebuilt image passes the deterministic grader under full Landlock enforcement and denies an out-of-workspace write.",
+        "result": "passed",
+        "evidence": [
+          "ev-landlock-grader",
+          "ev-write-denial"
+        ]
+      },
+      {
+        "id": "ac-repository-gate",
+        "statement": "The complete repository gate remains green after the artifact refresh and evidence reconciliation.",
+        "result": "passed",
+        "evidence": [
+          "ev-full-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The exact plugin-installation decision was verified, the benchmark image was rebuilt from current source, immutable identities were recorded, live topology and sandbox probes passed, and the complete repository gate remained green.",
+      "exception": null
+    },
+    "what_worked": [
+      "Binding the approval to the workflow-tools source digest and isolated-image scope allowed the governed build without authorizing a host-profile installation.",
+      "The rebuilt image passed the live principal-isolation topology, deterministic grader, and expected write-denial probes.",
+      "The complete repository gate passed 31 test files and 187 tests after the artifact refresh."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "dal approval verify",
+        "purpose": "Verify exact human authority for the isolated-image plugin installation at the governed operation.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-image-approval"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "Docker build",
+        "purpose": "Build the benchmark image from the current source under the verified approval.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-final-image",
+          "ev-image-parent",
+          "ev-in-image-tools"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "vitest live topology",
+        "purpose": "Exercise the rebuilt image with isolated service and grader principals.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-live-topology"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "dal verify run",
+        "purpose": "Run the deterministic grader under the configured Docker sandbox.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-landlock-grader"
+        ]
+      },
+      {
+        "sequence": 5,
+        "kind": "tool",
+        "name": "dal verify run",
+        "purpose": "Confirm the sandbox denies an out-of-workspace write.",
+        "outcome": "denied",
+        "duration_ms": null,
+        "evidence": [
+          "ev-write-denial"
+        ]
+      },
+      {
+        "sequence": 6,
+        "kind": "tool",
+        "name": "pnpm run check",
+        "purpose": "Run the complete repository verification gate after the artifact refresh.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-full-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-image-approval",
+        "kind": "human_note",
+        "uri": "repo://.dal/outbox/dec-dal-workflow-tools-image-20260901.json",
+        "summary": "The workspace user approved the exact isolated-image plugin-installation scope; local verification accepted the decision at the Docker operation.",
+        "sha256": null,
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-final-image",
+        "kind": "file",
+        "uri": "repo://deploy/docker/README.md",
+        "summary": "The rebuilt local benchmark image identity is recorded with the successful probe results.",
+        "sha256": "1adcf95dedf922eaf182fefee0d4ddcaf90fed00eaa2eb947bfe99f7f97f64d9",
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-image-parent",
+        "kind": "session_event",
+        "uri": "dsh-session://docker-parent-resolution",
+        "summary": "The image build resolved the documented Node parent manifest.",
+        "sha256": "ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e",
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-in-image-tools",
+        "kind": "command",
+        "uri": "command://docker-in-image-workflow-tools-digest",
+        "summary": "A deterministic walk of installed workflow-tools files produced the recorded in-image tree digest.",
+        "sha256": "7e6ea2a4a1ce8f9a688472e8209da11fd1e347b10e62e3357c00fbc46b212905",
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-live-topology",
+        "kind": "test",
+        "uri": "command://vitest-live-e2e-topology",
+        "summary": "The opt-in live topology suite passed all three tests against the rebuilt image.",
+        "sha256": null,
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-landlock-grader",
+        "kind": "command",
+        "uri": "command://dal-verify-deterministic-grader",
+        "summary": "The deterministic grader passed with the Landlock backend reporting full enforcement.",
+        "sha256": null,
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-write-denial",
+        "kind": "command",
+        "uri": "command://dal-verify-out-of-workspace-denial",
+        "summary": "The sandbox denied the attempted write outside the configured workspace.",
+        "sha256": null,
+        "observed_at": "2026-09-01T21:21:34Z"
+      },
+      {
+        "id": "ev-full-gate",
+        "kind": "command",
+        "uri": "command://pnpm-run-check-artifact-refresh",
+        "summary": "The complete gate passed typecheck, build, 31 test files with 187 tests, capsule validation, policy evaluation, and benchmark evaluation.",
+        "sha256": null,
+        "observed_at": "2026-09-01T21:21:34Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-followup-ci",
+        "statement": "The artifact-refresh follow-up commit has not yet completed hosted CI.",
+        "level": "medium",
+        "resolution": "Push the evidence commit and wait for PR checks to finish.",
+        "evidence": [
+          "ev-full-gate"
+        ]
+      },
+      {
+        "id": "un-mutable-parent-tag",
+        "statement": "The Dockerfile still names a mutable parent tag even though this build's resolved parent manifest is recorded.",
+        "level": "low",
+        "resolution": "Pin the resolved parent digest in a separately reviewed source change before distributing the image.",
+        "evidence": [
+          "ev-image-parent"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The recorded human approval covers only the exact isolated-image plugin installation and does not represent code review or broader operational authority."
+      ],
+      "approval_refs": [
+        "dec-dal-workflow-tools-image-20260901"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "artifact-refresh",
+        "isolated-image"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
