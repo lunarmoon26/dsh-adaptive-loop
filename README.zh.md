@@ -66,8 +66,9 @@ pnpm run check
 
 - **Run 模式**（`@lunarmoon26/dal-run-record`）——默认开启：把会话事件投影为 `.dal/runs` 下隐私安全的运行记录（只有计数、摘要、结果与失败码；绝不包含提示词文本、消息内容、工具参数或结果）。
 - **Improvement 模式**（`@lunarmoon26/dal-improve-tools`）——默认关闭：基于确定性 dal CLI 的工作台工具（聚类、准备载荷、摘要、分支评估、重置状态）。不暴露任何受审批门控的操作——`propose run` 与 `reset execute` 仅限 CLI。
+- **G2 候选项**（`@lunarmoon26/dal-unknown-effect-guard`）——默认关闭：对结果未知的工作流副作用实施按智能体隔离的重试锁。当前只有源码与单元测试，既未安装，也未应用为新一代配置。
 
-把 bundle 挂载进 profile（`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools`，然后在 profile 的 `cordis.patch.yml` 中启用工具行）属于受审批门控的 `install_or_mount_plugin` 操作；见 [`docs/spec.md`](docs/spec.md) DAL-019。
+把 bundle 挂载进 profile（`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools`，然后在 profile 的 `cordis.patch.yml` 中启用工具行）属于受审批门控的 `install_or_mount_plugin` 操作；见 [`docs/spec.md`](docs/spec.md) DAL-019。G2 包不在此命令中；挂载它与把它应用为优化候选项分别需要精确且独立的审批。
 
 ## 有意拒绝的示例
 
@@ -105,7 +106,7 @@ dal init                             # 在任意工作区内：存储、技能�
 
 ## 自我改进边界
 
-改进提案只能修改可编辑表面（`prompt`、`tool_descriptions`、`skills`、`memory_policy`、`routing`、`stop_retry_logic`、`harness_code`），且自 `proposed` 阶段起必须携带可证伪的预测。不可变锚点（`evaluator`、`sealed_holdout`、`permissions`、`maximum_budget`、`promotion_policy`、`audit_log`、`rollback_mechanism`）永远不是提案目标。运行记录与确定性失败聚类为循环供料；基于模型的聚类、提案器集成与 run/improvement 插件模式仍属未来工作。
+改进提案只能修改可编辑表面（`prompt`、`tool_descriptions`、`skills`、`memory_policy`、`routing`、`stop_retry_logic`、`harness_code`），且自 `proposed` 阶段起必须携带可证伪的预测。不可变锚点（`evaluator`、`sealed_holdout`、`permissions`、`maximum_budget`、`promotion_policy`、`audit_log`、`rollback_mechanism`）永远不是提案目标。运行记录、确定性失败聚类和默认关闭的源码候选项为循环供料；基于模型的聚类与自主应用候选项仍属未来工作。
 
 ## 预期的使用方式
 

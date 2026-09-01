@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 # DSH Adaptive Loop — pinned container-hosted deepseek-harness.
-# Build: docker build -f deploy/docker/Dockerfile -t dsh-adaptive-loop/dsh:0.1.1-rc.2 .
+# Build: pnpm run build && docker build -f deploy/docker/Dockerfile \
+#   -t dsh-adaptive-loop/dsh:0.1.1-rc.2 \
+#   -t dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 .
 # The workspace is bind-mounted at /workspace; dal runs inside the container as
 # /opt/dal (dist + schemas + config + linux-built node_modules with the
 # bwrap/Landlock sandbox chain).

@@ -7,11 +7,11 @@
  */
 export function promptFor(taskId: string): string {
   return [
-    "You are an agent completing a retail order workflow task inside the workspace /workspace/benchmarks/tau-style-workflow.",
+    "You are an agent completing a retail order workflow task inside the staged workspace /workspace.",
     "",
     "Steps:",
-    `1. Read the agent-visible task at /workspace/benchmarks/tau-style-workflow/.dal/benchmark/e2e/agent-task-${taskId}.json.`,
-    "2. Read the written policy at /workspace/benchmarks/tau-style-workflow/tasks/policy.md and the workflow skill at /workspace/benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md. Follow them exactly.",
+    `1. Read the agent-visible task at /workspace/.dal/benchmark/e2e/agent-task-${taskId}.json.`,
+    "2. Read the written policy at /workspace/tasks/policy.md and the workflow skill at /workspace/.agents/skills/refund-workflow/SKILL.md. Follow them exactly.",
     "3. Operate the mock order/booking service ONLY through the typed tools (get_order, get_booking, issue_refund, create_return_label, change_booking, refuse_request, get_effect_status). Never write result files yourself.",
     "4. When the workflow is complete, respond with exactly one word: DONE",
   ].join("\n");
@@ -100,28 +100,16 @@ export function buildPiAiRow(provider: string): string {
  * The tools row mounting the mock-service workflow tools in the container.
  */
 export function buildToolsRow(
-  stateRoot: string,
-  faults: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">> = {},
-  resolutions: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure">> = {},
+  serviceUrl: string,
 ): string {
-  const faultLines = Object.entries(faults)
-    .map(([kind, outcome]) => `      ${kind}: ${outcome}`)
-    .join("\n");
-  const faultBlock = faultLines === "" ? "" : `\n    faults:\n${faultLines}`;
-  const resolutionLines = Object.entries(resolutions)
-    .map(([kind, outcome]) => `      ${kind}: ${outcome}`)
-    .join("\n");
-  const resolutionBlock = resolutionLines === "" ? "" : `\n    resolutions:\n${resolutionLines}`;
-  return `- id: dal-workflow-tools\n  name: 'dal-workflow-tools'\n  config:\n    stateRoot: ${stateRoot}${faultBlock}${resolutionBlock}\n`;
+  return `- id: dal-workflow-tools\n  name: 'dal-workflow-tools'\n  config:\n    serviceUrl: ${serviceUrl}\n`;
 }
 
 /** The full composition patch: model route, provider adapter route, tools. */
 export function buildCompositionPatch(
   provider: string,
   model: string,
-  stateRoot: string,
-  faults: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">> = {},
-  resolutions: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure">> = {},
+  serviceUrl: string,
 ): string {
-  return `${buildModelPatch(provider, model)}${buildPiAiRow(provider)}${buildToolsRow(stateRoot, faults, resolutions)}`;
+  return `${buildModelPatch(provider, model)}${buildPiAiRow(provider)}${buildToolsRow(serviceUrl)}`;
 }

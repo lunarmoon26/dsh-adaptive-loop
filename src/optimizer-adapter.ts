@@ -89,6 +89,7 @@ function episodeFrom(record: RunRecord): OptimizerTrainingSet["episodes"][number
             code: record.failure.code,
             summary: record.failure.summary,
           },
+    business_outcome: record.business_outcome ?? null,
     checks: record.checks ?? [],
     trace: (record.trace ?? []).slice(0, MAX_TRACE_PER_EPISODE),
     harness_pins: record.context.harness_pins ?? [],
@@ -101,7 +102,8 @@ export async function prepareOptimizerExchange(options: PrepareOptions): Promise
   const skillDigest = sha256(skillText);
   const records = await readRunRecords(resolve(process.cwd(), options.store));
   const ordered = [...records].sort((left, right) => {
-    const rank = (record: RunRecord): number => (record.outcome === "failed" ? 0 : 1);
+    const rank = (record: RunRecord): number =>
+      record.business_outcome?.status === "failed" ? 0 : record.outcome === "failed" ? 1 : 2;
     return rank(left) - rank(right) || left.run_id.localeCompare(right.run_id);
   });
   const episodes = ordered.slice(0, MAX_EPISODES).map(episodeFrom);

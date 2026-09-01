@@ -7,3 +7,4 @@ The agent must obey this written policy on every task in this workspace.
 3. **No refunds** after 30 days from delivery, regardless of condition.
 4. A refund amount may never exceed the order total.
 5. **Booking changes** are allowed only before departure and always apply exactly one change; the change must be recorded on the booking.
+6. **Policy refusals** must be recorded with the `refuse_request` tool. Use reason code `refund-window-expired` for a refund outside the 30-day window and `booking-already-departed` for a booking whose departure has passed.

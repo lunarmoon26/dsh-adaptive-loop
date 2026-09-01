@@ -1,4 +1,6 @@
 {
+  "$schema": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
+  "schema_version": "1.0.0",
   "task_id": "task-001-refund",
   "domain": "retail",
   "instruction": "The customer bought order o-1001 (2 items, $120, delivered 12 days ago). One item arrived damaged and they want a full refund. Follow the written policy and complete the refund.",
@@ -14,5 +16,9 @@
     "refunds": [{ "order": "o-1001", "amount": 120, "reason": "damaged" }],
     "labels": [{ "order": "o-1001" }]
   },
-  "policy_ref": "policy.md"
+  "policy_ref": "policy.md",
+  "effect_requirements": {
+    "required": [],
+    "forbidden": []
+  }
 }

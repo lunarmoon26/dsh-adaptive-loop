@@ -1,6 +1,6 @@
 # 0002: Deterministic guardrails precede evaluation and human authority remains separate
 
-Status: Accepted
+Status: Superseded by [`0003-purpose-specific-approved-executors.md`](0003-purpose-specific-approved-executors.md)
 Date: 2026-08-27
 Related: [`../evaluation-and-guardrails.md`](../evaluation-and-guardrails.md), [`../governance.md`](../governance.md), [`0001-local-staged-improvement.md`](0001-local-staged-improvement.md)
 

@@ -1,9 +1,9 @@
-import { readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { bindReceiptToState, readExecutionReceipt, receiptDigest } from "./execution-receipt.js";
-import { gradeTask, stableJson, type WorkflowTask } from "./workflow-grader.js";
+import { gradeTask, parseWorkflowEffectLog, stableJson, type WorkflowTask } from "./workflow-grader.js";
 import { DalError } from "./errors.js";
 import { prettyJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertSchema, loadPolicy, SCHEMA_IDS } from "./schema.js";
@@ -28,6 +28,8 @@ export interface BranchEvaluation {
   task_id: string;
   candidate_ref: string;
   candidate_sha256: string;
+  effect_log_ref?: string | null;
+  effect_log_sha256?: string | null;
   passed: boolean;
   score: number;
   checks: Array<{ id: string; pass: boolean }>;
@@ -116,6 +118,7 @@ export async function evaluateBranch(options: {
   branchId: string;
   taskPath: string;
   candidateStatePath: string;
+  effectLogPath?: string;
   store?: string;
   receiptPath?: string;
 }): Promise<{ status: "recorded" | "idempotent"; path: string; evaluation: BranchEvaluation }> {
@@ -126,7 +129,10 @@ export async function evaluateBranch(options: {
   const taskDocument = await readJsonFile<WorkflowTask>(options.taskPath);
   const stateDocument = await readJsonFile<unknown>(options.candidateStatePath);
   const stateDigest = sha256(stateDocument.raw.toString("utf8"));
-  const verdict = gradeTask(taskDocument.value, stateDocument.value);
+  const effectLogRaw = options.effectLogPath === undefined ? undefined : await readFile(options.effectLogPath, "utf8");
+  const effectLogDigest = effectLogRaw === undefined ? null : sha256(effectLogRaw);
+  const effects = effectLogRaw === undefined ? undefined : parseWorkflowEffectLog(effectLogRaw);
+  const verdict = gradeTask(taskDocument.value, stateDocument.value, effects);
   const checks: Array<{ id: string; pass: boolean }> = verdict.checks.map((check) => ({ id: check.id, pass: check.pass }));
 
   // Execution-receipt binding (audit P0-2): a provenance-valid evaluation
@@ -143,6 +149,22 @@ export async function evaluateBranch(options: {
         "BRANCH_RECEIPT_MISMATCH",
         "The execution receipt does not bind this task: its task_handle must equal the graded task id",
         [`receipt: ${receipt.task_handle}`, `task: ${taskDocument.value.task_id}`],
+      );
+    }
+    const hasEffectRules =
+      taskDocument.value.effect_requirements.required.length > 0 ||
+      taskDocument.value.effect_requirements.forbidden.length > 0;
+    if (hasEffectRules && effectLogRaw === undefined) {
+      throw new DalError(
+        "BRANCH_RECEIPT_MISMATCH",
+        "The task has effect requirements, so a receipt-bound evaluation must supply --effects",
+      );
+    }
+    if (effectLogRaw !== undefined && receipt.business_effect_log_head_sha256 !== effectLogDigest) {
+      throw new DalError(
+        "BRANCH_RECEIPT_MISMATCH",
+        "The execution receipt does not bind this effect log",
+        [`receipt: ${receipt.business_effect_log_head_sha256 ?? "null"}`, `effects: ${effectLogDigest}`],
       );
     }
     const graderReceipt = sha256(stableJson(verdict));
@@ -166,6 +188,8 @@ export async function evaluateBranch(options: {
     task_id: verdict.task_id,
     candidate_ref: "file://" + resolve(process.cwd(), options.candidateStatePath),
     candidate_sha256: stateDigest,
+    effect_log_ref: options.effectLogPath === undefined ? null : "file://" + resolve(process.cwd(), options.effectLogPath),
+    effect_log_sha256: effectLogDigest,
     passed: verdict.pass,
     score: verdict.pass ? 1 : 0,
     checks,

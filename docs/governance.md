@@ -36,7 +36,9 @@ An approval decision contains:
 
 The verifier accepts only `approved` decisions whose action and scope match exactly and whose expiry is in the future. Rejected decisions remain durable evidence. Changing scope or candidate requires a new decision.
 
-The tau-style e2e driver (`pnpm benchmark:e2e`) applies this binding to whole run batches: its transmission-manifest digest covers the provider, model, runner, fault/resolution profile, container image digest (which pins the baked workflow-tools bytes actually executed), agent-visible task contents, policy, skill, and the exact prompts. A skill, harness-plugin, image, or provider change therefore invalidates prior batch decisions — the paired G0 and G1 legs each carry their own skill digest and require their own decision.
+The tau-style e2e driver (`pnpm benchmark:e2e`) applies this binding to whole run batches: its transmission-manifest digest covers the provider, model, generation, rollout count, runner, fault/resolution profile, container image digest, baked workflow-tools bytes, agent-visible and evaluator-task digests, driver-source digests, policy, skill, exact rendered composition-patch text, and exact prompts. The patch uses a stable service alias, so approval binds executed text without attempt-specific paths. A skill, task, harness plugin, image, patch, provider, or rollout-count change therefore invalidates prior batch decisions. After verification, the exact manifest is published as immutable evidence; every attempt rehashes its staged inputs before the model call, receipts bind the manifest and real run ID, summaries bind the persisted run-record path/digest, and every container launches by the approved image digest rather than its mutable tag. The compare gate rejects reused receipt/run evidence and verifies business outcomes before recomputing summary metrics. The driver accepts only `g0`/`g1`; source-only G2 cannot be claimed as an executed generation. Docker candidate/service/grader isolation does not weaken the separate `send_data_externally` approval required before the model call.
+
+The G2 unknown-effect guard is repository source with a disabled bundle row, not an authorized installation or applied optimization. Mounting its package into any profile requires an exact `install_or_mount_plugin` decision. Promoting the same bytes as an optimization candidate separately requires an exact `apply_optimization_candidate` decision bound to the candidate digest. Either action must identify the target profile/generation and rollback generation; one approval cannot imply the other.
 
 ### Proposed DSH permission-escalation adapter
 
@@ -53,7 +55,7 @@ Headless/CI composition defaults to deterministic rejection when no approved ans
 - The operation that changes a target independently verifies the sensitive-action approval at its execution boundary.
 - Post-application measurement does not retroactively authorize the application.
 
-v0 provides verification and transition recording only. It deliberately provides no shared-config writer, plugin installer, external sender, optimizer runner, or candidate applier.
+v0 provides verification and transition recording plus three narrowly scoped executors: user-global install writes only the fixed governed assets, while proposer and benchmark e2e send only their exact digest-bound projections. It deliberately provides no generic shared-config writer or external sender, plugin installer or mounter, optimizer runner, or candidate applier.
 
 ## Data collection rules
 

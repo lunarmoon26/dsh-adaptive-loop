@@ -1,135 +1,78 @@
-# Handoff notes (2026-08-31, session end)
+# Handoff notes (2026-09-01)
 
-Written by the coding agent at session end. The next agent should start
-here. The repository history was rebaselined on request into a single
-`Initial commit` and force-pushed to `main` on
-`github.com/lunarmoon26/dsh-adaptive-loop`; all prior commit hashes
-(including `058c0c0`, which used to hold the G0 baseline skill) are gone.
-The G0 baseline skill content is preserved as
-`benchmarks/tau-style-workflow/dal/fixtures/skill-g0-v1.md`.
+## Current state
 
-## 0. Immediate state checks (do these first)
+- Repository: `/Users/haochuanzhang/Workspace/dsh-adaptive-loop`, branch `main`.
+- Change: `chg-benchmark-integrity-g2-20260831`.
+- The worktree is intentionally dirty with the complete modified/untracked feature set; no commit was requested.
+- Source implementation, focused tests, canonical docs, capsules, and the repository gate are complete.
+- Final benchmark-image rebuild is blocked because the Dockerfile installs a local dsh plugin and no independent `install_or_mount_plugin` decision file exists.
+- Required blocked feedback was validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json` with digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`.
+- Do not fabricate a human approval or treat chat delegation, policy output, tests, or this handoff as authority.
 
-```sh
-git -C /Users/haochuanzhang/Workspace/recursive-dev-loop status --short
-# Should be clean. The pass@k demo job was stopped for the rebaseline;
-# no leg is running and the G1 skill is at HEAD.
+## Implemented
+
+- Harness and business outcomes are separate across run validation, clustering, optimizer episodes, proposer summaries, fixtures, and e2e records.
+- `workflow-task.v1` owns evaluator-only goals and required/forbidden effect rules; grader `2.0.0` requires effect evidence for refusal success.
+- The workflow service uses a checksummed append-only journal, serialized effects, fail-closed replay, atomic initialization, and file/parent-directory fsync.
+- The e2e path uses candidate/service/grader containers with separate mounts/networks and authenticated grader snapshots.
+- Approval manifests bind provider/model/generation, rollout count, fault profile, image/tools, projected/full task digests, policy, skill, prompts, rendered patch, and driver sources.
+- Every attempt stages inputs, revalidates the approved manifest before the model boundary, runs containers by immutable image digest, and rejects staged-input drift.
+- Receipts and summaries bind real run IDs, persisted run-record paths/digests, candidate/model/generation/image/manifest identities, state/journal/verdict digests, and isolation facts.
+- Summary comparison rejects missing or reused evidence, derives metrics from receipt-bound outcomes, and rejects benchmark/context or model/candidate confounding.
+- `--generation` accepts only `g0` and `g1`; G2 remains a disabled source-only guard with separate mount/application approvals.
+- ADR 0003 permits only named purpose-specific executors and supersedes ADRs 0001/0002.
+
+## Verification observed
+
+- `CI=true pnpm run check`: pass.
+- Unit suite: 31 files, 187 tests passed, 6 opt-in skips.
+- Capsules: all valid; `capsule-dal-v0-contract` and `capsule-dsh-adapter-boundary` are `1.2.0`.
+- Focused e2e/receipt/branch proof: 24 tests passed, one opt-in skip.
+- Static and live three-container topology: pass.
+- Existing-image deterministic grader: pass under `landlock-run`, full enforcement.
+- Existing-image out-of-workspace write: denied as expected.
+- Final scoped and full worktree reviews: no findings after including untracked additions.
+- No model call, provider request, G2 mount/application, or optimization-candidate application occurred.
+
+## Image blocker
+
+Current documented image:
+
+```text
+dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2
+sha256:df7173dfcf8edbd1c68623286a2451900b3f7e50f31f4ac33d2c737f28bf0ef3
 ```
 
-## 1. What is in the rebaselined HEAD (single commit)
+It passed the live topology and Linux sandbox probes, but it predates the latest schema/types/e2e evidence changes and is not final provenance for this source tree.
 
-- Cluster identity = failure fingerprint + run batch (additive `batch_id`,
-  `dal cluster run --batch`); e2e driver `--attempts N` pass@k with
-  per-batch summaries (per-task mean, pass@1, checkpoint-union, overall
-  mean/variance) and `--compare` paired gate (task set match, mean and
-  per-task non-regression, every receipt digest-valid and bound to its
-  recorded state digest).
-- Multi-provider wiring via the in-box `dsh-llm-pi-ai` adapter:
-  `PROVIDERS` registry (deepseek-official → deepseek-v4-flash, openai →
-  gpt-5.6-luna, anthropic → claude-sonnet-5, zai → glm-5.2, moonshotai →
-  kimi-k3), `llm-pi-ai` composition row, fail-closed credential check.
-- Receipts bind the real dsh headless session (`dsh_session_id`, session
-  `event_log_head_sha256`, `business_effect_log_head_sha256`,
-  `container_image_sha256`, `effective_composition_sha256` = patch + skill +
-  tools bytes + image); `evaluateBranch` rejects task/verdict mismatches
-  (`BRANCH_RECEIPT_MISMATCH`); `branchStats` counts only receipt-bound
-  evaluations; the approval manifest binds provider/model/runner/faults/
-  resolutions/image/policy/skill/tools-bytes/prompts.
-- Driver resilience (docker health check, lingering-container cleanup, one
-  reseeded retry); per-batch service state root (parallel provider batches
-  safe).
-- Clean unknown-outcome experiment surface: tool descriptions
-  strategy-neutral; skill v3 (G1) teaches query-then-retry; `--resolutions`
-  support; the manifest binds the tools bytes *inside* the executed image.
-- Docs synced: `docs/governance.md`, `docs/spec.md`,
-  `docs/operator-guide.md`, `docs/evaluation-and-guardrails.md`,
-  `docs/architecture.md`, `deploy/docker/README.md`, `README.md`,
-  `ROADMAP.md`, `benchmarks/tau-style-workflow/PROVIDERS.md`,
-  `.env.example` (lists all five provider keys).
-- Feedback records for every change task are ingested (`.dal/outbox/fb-*`
-  plus store copies under `.dal/store/`).
+The blocked Docker build would execute `npm install -g /opt/dal/plugins/dal-workflow-tools`. A later independent human decision must approve this exact scope:
 
-## 2. Live pass@k demo (to run)
-
-Approved, verified decisions in `.dal/outbox/` (all `send_data_externally`,
-expiry 2026-09-03T00:00Z, all bound with `--faults issue_refund=unknown`):
-
-| decision | batch | scope.value |
-|---|---|---|
-| `dec-g0-passk-20260831` | G0, deepseek-v4-flash, v1 skill | `1f934e8141704d35a8b5b400b305125d5e28eeffd83cbe60fe8e59aaabb2a73d` |
-| `dec-g1-passk-20260831` | G1, deepseek-v4-flash, v3 skill | `ca0fd1920f2590b08021d4c11b9ccee4321f1366efb01a4beb0f2c9f5f82b919` |
-| `dec-openai-passk-20260831` | openai / gpt-5.6-luna | `506b9e7a358338f1a4fa4602931c021e00348795570aa1586d4634a2a37a952c` |
-| `dec-anthropic-passk-20260831` | anthropic / claude-sonnet-5 | `1ced79a28623b06cae38d0bbc334c0e8edce3dbd07709651754f42b396275ba0` |
-| `dec-zai-passk-20260831` | zai / glm-5.2 | `95a60190fe83c5c523e80124f3e5cde2e66f17a61bdb6bc8e080551cecd882cd` |
-| `dec-moonshotai-passk-20260831` | moonshotai / kimi-k3 | `0f097341df6d5a8a0c1b1523d9590fab88d9de4f90ebe08f4c1ab3ef0aff7e98` |
-
-Commands (repo root; `CI=true` required):
-
-```sh
-# G0: swap in the v1 baseline skill from the fixture
-cp benchmarks/tau-style-workflow/dal/fixtures/skill-g0-v1.md \
-  benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md
-CI=true pnpm benchmark:e2e --approval .dal/outbox/dec-g0-passk-20260831.json \
-  --batch g0-passk-20260831b --attempts 5 --faults issue_refund=unknown --generation g0
-git checkout -- benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md
-
-# G1
-CI=true pnpm benchmark:e2e --approval .dal/outbox/dec-g1-passk-20260831.json \
-  --batch g1-passk-20260831b --attempts 5 --faults issue_refund=unknown --generation g1 \
-  --compare .dal/check/e2e-summary-g0-passk-20260831b.json
-
-# providers (run in parallel once G1's summary exists; keys are in .env)
-CI=true pnpm benchmark:e2e --approval .dal/outbox/dec-openai-passk-20260831.json \
-  --provider openai --model gpt-5.6-luna --batch openai-passk-20260831 --generation g1 \
-  --attempts 5 --faults issue_refund=unknown \
-  --compare .dal/check/e2e-summary-g1-passk-20260831b.json
-# ...same shape for anthropic/claude-sonnet-5, zai/glm-5.2, moonshotai/kimi-k3
+```text
+install dal-workflow-tools@0.1.0 source-sha256=a026f79e4dc063c0e2e583a2238fc5f10bcf6c854ded05f8e6c9ecc8934ae7e7 into isolated Docker image dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 via deploy/docker/Dockerfile; no shared host profile
 ```
 
-Notes:
-- The driver prints `manifest digest: ...` before verifying the decision;
-  it must match the table above, or something (skill/image/faults/model)
-  drifted.
-- Exit code 1 is expected for legs with any failed attempt; the verdict is
-  the `compare pass|fail` line (G1) and the summary files.
-- Observed rate: ~4–10 min/attempt; a 5-task×5-attempt leg is 2–5 h.
-- If docker stalls: the driver relaunches Docker Desktop, kills lingering
-  containers, reseeds the per-batch service state, and retries once per
-  attempt. The pinned demo image is
-  `dsh-adaptive-loop/dsh:0.1.1-rc.2-demo` id
-  `sha256:2fca609a5f11bbc732167c419a378c9fa92be43fb755d1ca4a13606df28fa933`
-  (sandbox probe passed after rebuild). Changing the image, skill, tasks,
-  policy, tools plugin, faults, or model invalidates every digest above —
-  recompute with `pnpm benchmark:e2e manifest-digest ...` and re-issue
-  decisions.
-- Run records land in `.dal/runs` (commit them after the batch), receipts in
-  `.dal/check/e2e-receipts/`, summaries in `.dal/check/`.
+Scope SHA-256: `85af710aa467e4a339020be249b522f509e5f95ada5ec201db08939209087d55`.
 
-## 3. Remaining work (deferred review items — see ROADMAP.md "Benchmark measurement integrity")
+After receiving the decision file:
 
-All post-demo (they change grader/tool semantics and would confound the
-running comparison; each requires a `GRADER_VERSION` bump):
+1. Verify it at the operation with `pnpm dal approval verify <decision-file> --action install_or_mount_plugin --scope '<exact-scope>'`.
+2. Run `pnpm run build` and build both Docker tags from `deploy/docker/Dockerfile`.
+3. Inspect and record the new immutable image ID in `deploy/docker/README.md`.
+4. Rerun the live topology, deterministic grader, and denial probes.
+5. Rerun `CI=true pnpm run check` if any source or canonical documentation changes.
+6. Emit a new completed feedback record for the artifact-refresh follow-up; do not alter the blocked record for this session.
 
-1. Split harness outcome from business outcome in run records.
-2. Required/forbidden effects for refusal tasks (grader must require a
-   `refuse_request` effect; task metadata evaluator-only).
-3. Physical oracle isolation (staged read-only workspace + service as a
-   separate principal; three-container topology).
-4. Crash-safe service state (append-only effect journal as source of truth,
-   or SQLite).
-5. Bind the rendered composition-patch text in the approval manifest.
-6. G2 harness-code adaptation (unknown-effect-guard Cordis plugin).
+## Capsule pins
 
-## 4. Gate caveat
+- `docs/spec.md`: `5b4bf8fba2d5e08ef088f17a8864df60a382f5fa31ee9ebe9335a6dd0582542d`
+- `docs/governance.md`: `e07c31019a8f229364732a7ce19a4d49c756eb85406039852304a3388024e12a`
+- `docs/evaluation-and-guardrails.md`: `43ff7a7e7e7ee53918aaa1a046e75219c6d8812090ec91f385a55d839c663c2f`
+- `docs/architecture.md`: `f25a602c61b541fbb18fd78e81679f5903e75046e884410cecac8996db2495d7`
+- `ROADMAP.md`: `89b26ea36756e19560c3e34d408b6e430f9dd96648500c0b9466f15f64d1aee1`
 
-Do NOT run `pnpm run check` while a demo leg has the v1 skill swapped into
-the workspace — `tests/workflow-tools.test.ts` reads the workspace skill and
-will fail. Restore the skill (section 0) first, then `CI=true pnpm run check`.
+## Residual limits
 
-## 5. Session hygiene
-
-- `.env` (gitignored) now holds all five keys: `DEEPSEEK_API_KEY`,
-  `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `ZAI_API_KEY`, `MOONSHOT_API_KEY`.
-- Feedback records for every change task this session are ingested
-  (`.dal/outbox/fb-*.json` + store copies under `.dal/store/`).
-- History is a single `Initial commit` on `main`, force-pushed.
+- Candidate provider egress is not destination-allowlisted. Use a dedicated short-lived key; oracle isolation is not credential confinement.
+- The Dockerfile parent remains the mutable `node:24-slim` tag; the previously resolved parent manifest was `sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
+- No full model batch was run, so there is no model-behavior or latest-batch quality claim.

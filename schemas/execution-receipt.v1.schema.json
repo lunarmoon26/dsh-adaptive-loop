@@ -33,6 +33,11 @@
       "pattern": "^rcp-[a-z0-9][a-z0-9._-]+$",
       "maxLength": 100
     },
+    "run_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
     "created_at": { "type": "string", "format": "date-time" },
     "candidate_sha256": {
       "oneOf": [
@@ -88,6 +93,9 @@
         { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
       ]
     },
+    "transmission_manifest_sha256": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+    },
     "external_state_before_sha256": {
       "oneOf": [
         { "type": "null" },
@@ -105,6 +113,28 @@
     },
     "source": {
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "topology",
+        "candidate_workspace_sha256",
+        "candidate_workspace_read_only",
+        "candidate_repository_mounted",
+        "service_state_access",
+        "oracle_access"
+      ],
+      "properties": {
+        "topology": { "const": "candidate-service-grader-v1" },
+        "candidate_workspace_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "candidate_workspace_read_only": { "const": true },
+        "candidate_repository_mounted": { "const": false },
+        "service_state_access": { "const": "typed-endpoint-only" },
+        "oracle_access": { "const": "grader-only" }
+      }
     },
     "business_outcome": {
       "type": ["object", "null"],

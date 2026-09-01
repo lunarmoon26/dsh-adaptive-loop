@@ -29,6 +29,13 @@ describe("e2e provenance and business outcome (audit P0-4/P0-5)", () => {
         earned: 1,
         total: 2,
       },
+      checks: [{
+        id: "effect:refusal",
+        pass: false,
+        detail: "required refusal effect was missing",
+        goal_sha256: "d".repeat(64),
+        actual_sha256: "e".repeat(64),
+      }],
       context: {
         task_set: "tau-style-workflow-e2e",
         environment_snapshot: "test",

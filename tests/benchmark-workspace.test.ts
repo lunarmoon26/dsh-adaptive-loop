@@ -7,6 +7,8 @@ import { describe, expect, it } from "vitest";
 import { deepEqual, gradeTask, GRADER_VERSION, stableJson, type WorkflowTask } from "../benchmarks/tau-style-workflow/grader/grade.js";
 import { clusterRunRecords } from "../src/clustering.js";
 import { runEvaluationSuite } from "../src/evaluation.js";
+import { SCHEMA_IDS, assertSchema } from "../src/schema.js";
+import type { WorkflowEffectObservation } from "../src/workflow-grader.js";
 
 const workspace = resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow");
 const fixture = (...parts: string[]): string => resolve(workspace, ...parts);
@@ -33,10 +35,23 @@ describe("tau-style workflow benchmark workspace", () => {
     expect(verdict.checks.find((check) => check.id === "policy:full-refund-requires-label")?.pass).toBe(false);
   });
 
-  it("accepts a correct policy refusal that leaves state unchanged", async () => {
+  it("requires a matching refusal effect in addition to unchanged state", async () => {
     const task = await readJson<WorkflowTask>("tasks", "task-003-policy-refusal.json");
     const state = await readJson<unknown>("dal", "fixtures", "result-refusal.json");
-    expect(gradeTask(task, state).pass).toBe(true);
+    expect(gradeTask(task, state).pass).toBe(false);
+    const effects = (await readFile(fixture("dal", "fixtures", "effects-refusal.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as WorkflowEffectObservation);
+    expect(gradeTask(task, state, effects).pass).toBe(true);
+  });
+
+  it("validates every task against the evaluator-owned workflow task schema", async () => {
+    for (const name of (await readdir(fixture("tasks"))).filter((entry) => entry.endsWith(".json"))) {
+      await expect(
+        assertSchema(SCHEMA_IDS.workflowTask, await readJson<unknown>("tasks", name), "Workflow task"),
+      ).resolves.toBeUndefined();
+    }
   });
 
   it("grades deterministically with a stable state digest", async () => {
@@ -68,7 +83,9 @@ describe("tau-style workflow benchmark workspace", () => {
     const result = await clusterRunRecords({ store, output });
     expect(result.cluster_count).toBe(1);
     expect(result.skipped_successful_runs).toBe(1);
-    expect(result.clusters[0]?.cluster_id.startsWith("clu-test_failure-grader-mismatch-")).toBe(true);
+    expect(result.clustered_business_failures).toBe(1);
+    expect(result.clustered_harness_failures).toBe(0);
+    expect(result.clusters[0]?.cluster_id.startsWith("clu-business_failure-grader-mismatch-")).toBe(true);
   });
 
   it("ships a workflow skill with valid frontmatter", async () => {

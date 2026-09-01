@@ -38,9 +38,10 @@ describe("e2e multi-provider composition wiring", () => {
     expect(Object.keys(PROVIDERS).sort()).toEqual(["anthropic", "deepseek-official", "moonshotai", "openai", "zai"].sort());
   });
 
-  it("emits faults and unknown-outcome resolutions in the tools row", () => {
-    const row = buildToolsRow("/state", { issue_refund: "unknown" }, { issue_refund: "success" });
-    expect(row).toContain("faults:\n      issue_refund: unknown");
-    expect(row).toContain("resolutions:\n      issue_refund: success");
+  it("binds workflow tools to the typed service endpoint without embedding service state", () => {
+    const row = buildToolsRow("http://dal-workflow-service:8787");
+    expect(row).toContain("serviceUrl: http://dal-workflow-service:8787");
+    expect(row).not.toContain("stateRoot");
+    expect(row).not.toContain("faults");
   });
 });

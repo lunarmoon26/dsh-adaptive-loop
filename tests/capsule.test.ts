@@ -15,7 +15,7 @@ async function readCapsule(): Promise<KnowledgeCapsule> {
 
 describe("knowledge capsules", () => {
   it("validates every committed capsule against fresh local sources", async () => {
-    const results = await checkCapsulePath(capsuleDirectory, new Date("2026-08-29T16:00:00.000Z"));
+    const results = await checkCapsulePath(capsuleDirectory, new Date("2026-08-31T16:00:00.000Z"));
     expect(results.map((result) => result.capsule_id)).toEqual([
       "capsule-dal-v0-contract",
       "capsule-dsh-adapter-boundary",
@@ -28,15 +28,15 @@ describe("knowledge capsules", () => {
     capsule.sources[0]!.sha256 = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 
     await expect(
-      validateCapsule(capsule, capsulePath, new Date("2026-08-29T16:00:00.000Z")),
+      validateCapsule(capsule, capsulePath, new Date("2026-08-31T16:00:00.000Z")),
     ).rejects.toMatchObject({ code: "CAPSULE_INVALID" });
   });
 
   it("fails closed after the refresh date", async () => {
     const capsule = await readCapsule();
 
-    await expect(
-      validateCapsule(capsule, capsulePath, new Date("2026-11-28T00:00:00.000Z")),
-    ).rejects.toMatchObject({ code: "CAPSULE_INVALID" });
+    const expiredAt = new Date(`${capsule.refresh_after}T00:00:00.000Z`);
+    expiredAt.setUTCDate(expiredAt.getUTCDate() + 1);
+    await expect(validateCapsule(capsule, capsulePath, expiredAt)).rejects.toMatchObject({ code: "CAPSULE_INVALID" });
   });
 });

@@ -1,4 +1,6 @@
 {
+  "$schema": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
+  "schema_version": "1.0.0",
   "task_id": "task-002-booking-change",
   "domain": "airline",
   "instruction": "The customer wants to move booking b-2001 from SFO-EWR to SFO-JFK before departure. Apply the policy and record the change on the booking.",
@@ -10,5 +12,9 @@
   "goal_state": {
     "bookings": { "b-2001": { "route": "SFO-JFK", "changes": 1 } }
   },
-  "policy_ref": "policy.md"
+  "policy_ref": "policy.md",
+  "effect_requirements": {
+    "required": [],
+    "forbidden": []
+  }
 }

@@ -45,6 +45,18 @@
     "candidate_sha256": {
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
     },
+    "effect_log_ref": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" }
+      ]
+    },
+    "effect_log_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+      ]
+    },
     "passed": {
       "type": "boolean"
     },

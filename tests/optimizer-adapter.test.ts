@@ -40,13 +40,14 @@ async function failedRunStore(store: string): Promise<void> {
     change_id: "chg-adapter-test",
     started_at: "2026-08-29T23:00:00.000Z",
     finished_at: "2026-08-29T23:05:00.000Z",
-    outcome: "failed",
-    failure: {
-      category: "test_failure",
-      code: "check-goal-bookings",
-      fingerprint_extra: ["goal:bookings"],
-      summary: "state does not match the annotated goal",
-      evidence: ["repo://benchmarks/tau-style-workflow/grader/grade.ts"],
+    outcome: "succeeded",
+    failure: null,
+    business_outcome: {
+      status: "failed",
+      source: "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+      score: 0,
+      earned: 0,
+      total: 1,
     },
     context: {
       task_set: "tau-style-workflow-e2e",
@@ -55,7 +56,7 @@ async function failedRunStore(store: string): Promise<void> {
       model: { id: "deepseek-v4-flash", version: "deepseek-official" },
       prompt_sha256: sha256("prompt"),
       harness_sha256: null,
-      grader_version: "1.0.0",
+      grader_version: "2.0.0",
       seeds: [],
       context_policy_sha256: sha256("policy"),
       inference_parameters: [],
@@ -73,9 +74,11 @@ async function failedRunStore(store: string): Promise<void> {
         detail: "state does not match the annotated goal",
         goal_sha256: sha256("goal"),
         actual_sha256: sha256("actual"),
+        weight: 2,
+        gated: { reason: "upstream goal failed", upstream: "goal:bookings" },
       },
     ],
-    trace: [{ seq: 4, turn: 1, step: 1, tool: "bash", outcome: "timeout", code: "TIMEOUT_EXCEEDED" }],
+    trace: [{ seq: 4, turn: 1, step: 1, tool: "change_booking", outcome: "ok", code: null }],
     evidence: ["dsh-session://adapter-test"],
     privacy: { classification: "internal", contains_personal_data: false, redactions: [] },
   };
@@ -124,8 +127,13 @@ describe("optimizer adapter (prepare/evaluate-only)", () => {
       assertSchema(SCHEMA_IDS.optimizerTrainingSet, prepared.trainingSet, "Training set"),
     ).resolves.toBeUndefined();
     expect(prepared.trainingSet.episodes).toHaveLength(1);
-    expect(prepared.trainingSet.episodes[0]!.failure).toMatchObject({ code: "check-goal-bookings" });
+    expect(prepared.trainingSet.episodes[0]!.failure).toBeNull();
+    expect(prepared.trainingSet.episodes[0]!.business_outcome).toMatchObject({ status: "failed", score: 0 });
     expect(prepared.trainingSet.episodes[0]!.checks[0]!.pass).toBe(false);
+    expect(prepared.trainingSet.episodes[0]!.checks[0]).toMatchObject({
+      weight: 2,
+      gated: { upstream: "goal:bookings" },
+    });
     expect(prepared.trainingSet.episodes[0]!.trace).toHaveLength(1);
     expect(prepared.trainingSet.target.base_sha256).toBe(sha256(await readFile(skillPath, "utf8")));
   });

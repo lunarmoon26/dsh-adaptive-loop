@@ -71,6 +71,71 @@ describe("deterministic self-improvement loop", () => {
       evidence: ["repo://tests/fixtures/feedback/completed.json"],
     };
     await expect(validateRunRecord(succeededWithFailure)).rejects.toMatchObject({ code: "RUN_RECORD_INVALID" });
+
+    const blockedWithFailure = await readFixture<RunRecord>("runs", "run-fixture-test-failure-1.json");
+    blockedWithFailure.outcome = "blocked";
+    await expect(validateRunRecord(blockedWithFailure)).rejects.toMatchObject({ code: "RUN_RECORD_INVALID" });
+
+    const failedWithBusinessVerdict = await readFixture<RunRecord>("runs", "run-fixture-test-failure-1.json");
+    failedWithBusinessVerdict.business_outcome = {
+      status: "failed",
+      source: "repo://tests/fixtures/runs/run-fixture-test-failure-1.json",
+    };
+    failedWithBusinessVerdict.checks = [{
+      id: "goal:state",
+      pass: false,
+      detail: "business verdict must not accompany a failed harness",
+      goal_sha256: "5".repeat(64),
+      actual_sha256: "6".repeat(64),
+    }];
+    await expect(validateRunRecord(failedWithBusinessVerdict)).rejects.toMatchObject({ code: "RUN_RECORD_INVALID" });
+
+    const businessFailureWithoutFailedCheck = await readFixture<RunRecord>("runs", "run-fixture-succeeded.json");
+    businessFailureWithoutFailedCheck.business_outcome = {
+      status: "failed",
+      source: "repo://tests/fixtures/runs/run-fixture-succeeded.json",
+    };
+    businessFailureWithoutFailedCheck.checks = [];
+    await expect(validateRunRecord(businessFailureWithoutFailedCheck)).rejects.toMatchObject({ code: "SCHEMA_VALIDATION_FAILED" });
+  });
+
+  it("clusters a completed business failure separately from a harness failure", async () => {
+    const store = await tempStore("dal-runs-");
+    const output = await tempStore("dal-clusters-");
+    await ingestRunRecord(fixture("runs", "run-fixture-test-failure-1.json"), store);
+    const business = await readFixture<RunRecord>("runs", "run-fixture-succeeded.json");
+    business.run_id = "run-fixture-business-failure";
+    business.business_outcome = {
+      status: "failed",
+      source: "repo://tests/fixtures/runs/run-fixture-succeeded.json",
+      score: 0,
+      earned: 0,
+      total: 1,
+    };
+    business.checks = [
+      {
+        id: "goal:refunds",
+        pass: false,
+        detail: "state does not match the annotated goal",
+        goal_sha256: "5".repeat(64),
+        actual_sha256: "6".repeat(64),
+      },
+    ];
+    const path = join(store, "..", "business.json");
+    await writeFile(path, `${JSON.stringify(business, null, 2)}\n`, "utf8");
+    await ingestRunRecord(path, store);
+
+    const result = await clusterRunRecords({ store, output });
+    expect(result.cluster_count).toBe(2);
+    expect(result.clustered_harness_failures).toBe(1);
+    expect(result.clustered_business_failures).toBe(1);
+    expect(result.skipped_successful_runs).toBe(0);
+    const categories = await Promise.all(
+      result.clusters.map(async (cluster) =>
+        (JSON.parse(await readFile(cluster.path, "utf8")) as ClusterRecord).fingerprint.category,
+      ),
+    );
+    expect(categories.sort()).toEqual(["business_failure", "test_failure"]);
   });
 
   it("computes deterministic fingerprints that split on extra fields", () => {
@@ -95,6 +160,8 @@ describe("deterministic self-improvement loop", () => {
     expect(result.cluster_count).toBe(2);
     expect(result.clustered_runs).toBe(3);
     expect(result.skipped_successful_runs).toBe(1);
+    expect(result.clustered_harness_failures).toBe(3);
+    expect(result.clustered_business_failures).toBe(0);
 
     const testCluster = result.clusters.find((cluster) => cluster.cluster_id.startsWith("clu-test_failure-"));
     expect(testCluster?.member_count).toBe(2);

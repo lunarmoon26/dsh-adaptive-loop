@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.1.0",
-  "title": "dsh and future optimizer adapter boundary",
+  "capsule_version": "1.2.0",
+  "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-08-29",
-  "refresh_after": "2026-11-27",
+  "checked_at": "2026-08-31",
+  "refresh_after": "2026-11-29",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-v0-2026-08-29",
-      "sha256": "0b0ad60871740a234ab4556487c166247897f9b903d20ddf80e4652234faebae",
+      "revision": "dal-v0-2026-08-31",
+      "sha256": "f25a602c61b541fbb18fd78e81679f5903e75046e884410cecac8996db2495d7",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-v0-2026-08-29",
-      "sha256": "55f76f4375507cc3d3de23f7cd12ae2b47eb75cf096d799fe60fce1f199e5d5f",
+      "revision": "dal-v0-2026-08-31",
+      "sha256": "89b26ea36756e19560c3e34d408b6e430f9dd96648500c0b9466f15f64d1aee1",
       "local_path": "../ROADMAP.md",
       "required": true
     }
@@ -39,15 +39,15 @@
   "claims": [
     {
       "id": "claim-project-integration",
-      "text": "Current dsh integration uses repository instructions and project-local skill discovery; it does not require a shared profile edit or mounted Cordis plugin.",
+      "text": "Default dsh integration uses repository instructions and project-local skill discovery; optional plugin source and user-global deployment do not alter a shared profile or home configuration without their separate exact approvals.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research"
       ]
     },
     {
-      "id": "claim-future-cordis",
-      "text": "A future Cordis integration must be opt-in, lifecycle-owned, disposal-safe, flush-aware, and separately approved for installation or mounting.",
+      "id": "claim-optional-cordis",
+      "text": "Cordis mode and G2 packages ship as workspace source only; profile installation or mounting remains opt-in, lifecycle-owned, disposal-safe, flush-aware, and separately approved.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-roadmap"
@@ -55,7 +55,7 @@
     },
     {
       "id": "claim-provider-neutral",
-      "text": "GEPA and SkillOpt remain future providers behind a provider-neutral exchange; neither optimizer nor candidate application runs in v0.",
+      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA or SkillOpt optimizer runtimes and candidate application do not run in v0.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research",
@@ -115,7 +115,7 @@
     },
     {
       "id": "ptr-future-only",
-      "when": "Proposing a plugin, sandbox, optimizer, provider, or supply-chain integration",
+      "when": "Proposing plugin deployment, optimizer execution, candidate application, provider expansion, or supply-chain integration",
       "uri": "repo://ROADMAP.md",
       "source_ids": [
         "src-dal-roadmap"
@@ -134,6 +134,6 @@
   "limits": [
     "Pinned upstream interfaces are pre-stable and require fresh source inspection before integration.",
     "The unavailable expected local SkillOpt checkout remains an evidence gap.",
-    "No plugin, optimizer, model, external evaluator, or dsh runtime integration is proved by this capsule."
+    "No mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
   ]
 }

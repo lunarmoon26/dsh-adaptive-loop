@@ -612,6 +612,13 @@ export const RUN_FAILURE_CATEGORIES = [
 
 export type RunFailureCategory = (typeof RUN_FAILURE_CATEGORIES)[number];
 export type RunOutcome = "succeeded" | "failed" | "blocked" | "aborted";
+export type BusinessOutcome = {
+  status: "passed" | "failed" | "unknown";
+  source: string;
+  score?: number;
+  earned?: number;
+  total?: number;
+};
 
 export interface RunRecord {
   $schema: string;
@@ -654,15 +661,17 @@ export interface RunRecord {
     outcome: "ok" | "failed" | "timeout" | "denied" | "unknown";
     code: string | null;
   }>;
-  checks?: Array<{ id: string; pass: boolean; detail: string | null; goal_sha256: string; actual_sha256: string }>;
+  checks?: Array<{
+    id: string;
+    pass: boolean;
+    detail: string | null;
+    goal_sha256: string;
+    actual_sha256: string;
+    weight?: number;
+    gated?: { reason: string; upstream: string };
+  }>;
   batch_id?: string | null;
-  business_outcome?: {
-    status: "passed" | "failed" | "unknown";
-    source: string;
-    score?: number;
-    earned?: number;
-    total?: number;
-  } | null;
+  business_outcome?: BusinessOutcome | null;
   privacy: {
     classification: "public" | "internal" | "restricted";
     contains_personal_data: boolean;
@@ -679,7 +688,7 @@ export interface ClusterRecord {
   evaluator: "rdl-deterministic-clustering-v1";
   tier: "fingerprint";
   fingerprint: {
-    category: RunFailureCategory;
+    category: RunFailureCategory | "business_failure";
     code: string;
     signature: string;
   };
@@ -701,7 +710,16 @@ export interface OptimizerTrainingSet {
     batch_id: string | null;
     outcome: RunOutcome;
     failure: { category: string; code: string; summary: string } | null;
-    checks: Array<{ id: string; pass: boolean; detail: string | null; goal_sha256: string; actual_sha256: string }>;
+    business_outcome: BusinessOutcome | null;
+    checks: Array<{
+      id: string;
+      pass: boolean;
+      detail: string | null;
+      goal_sha256: string;
+      actual_sha256: string;
+      weight?: number;
+      gated?: { reason: string; upstream: string };
+    }>;
     trace: Array<{ seq: number; turn: number; step: number; tool: string; outcome: "ok" | "failed" | "timeout" | "denied" | "unknown"; code: string | null }>;
     harness_pins: Array<{ surface: string; uri: string; sha256: string }>;
     metrics: { duration_ms: number; tool_calls: number };
@@ -741,6 +759,7 @@ export interface ExecutionReceipt {
   $schema: string;
   schema_version: "1.0.0";
   receipt_id: string;
+  run_id?: string;
   created_at: string;
   candidate_sha256: string | null;
   base_generation_id: string | null;
@@ -753,10 +772,19 @@ export interface ExecutionReceipt {
   event_log_head_sha256: string | null;
   business_effect_log_head_sha256?: string | null;
   container_image_sha256?: string | null;
+  transmission_manifest_sha256?: string;
   external_state_before_sha256: string | null;
   external_state_after_sha256: string;
   grader_receipt_sha256: string | null;
   source: string;
+  isolation?: {
+    topology: "candidate-service-grader-v1";
+    candidate_workspace_sha256: string;
+    candidate_workspace_read_only: true;
+    candidate_repository_mounted: false;
+    service_state_access: "typed-endpoint-only";
+    oracle_access: "grader-only";
+  };
   business_outcome?: {
     status: "passed" | "failed" | "unknown";
     source: string;

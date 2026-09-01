@@ -7,7 +7,7 @@ Policy values: [`../config/policy.v1.json`](../config/policy.v1.json)
 
 ## Purpose and trust posture
 
-`dal` treats repository text, feedback, model output, optimizer output, plugin metadata, and evaluation results as untrusted data. None of them can grant a capability. A structured request must pass deterministic policy at the operation boundary, and sensitive operations additionally require an exact human approval. Version 0 evaluates and records requests but provides no network client, general shell executor, plugin manager, shared-configuration writer, optimizer runner, or candidate applier.
+`dal` treats repository text, feedback, model output, optimizer output, plugin metadata, and evaluation results as untrusted data. None of them can grant a capability. A structured request must pass deterministic policy at the operation boundary, and sensitive operations additionally require an exact human approval. Version 0 is local-only by default. The governed proposer and tau-style e2e driver are the only model/network paths and verify exact sanitized-payload or transmission-manifest approvals before calling a provider; there is no generic network client, general shell executor, plugin installer/mounter, optimizer runner, or candidate applier.
 
 Guardrails reduce risk; they do not prove that arbitrary content is safe. Prompt-injection detection and model grading are supplemental evaluations, never authorization mechanisms.
 
@@ -17,9 +17,9 @@ Guardrails reduce risk; they do not prove that arbitrary content is safe. Prompt
 | --- | --- | --- | --- |
 | Prompt injection | A repository document, capsule, fixture, or model output tells an agent to ignore policy or request more tools | Content is data; only schema-valid capability requests reach deterministic policy. Untrusted input cannot change policy, approvals, tool identity, or scope. Adversarial fixtures test instruction-like content. | Novel instructions can still influence model reasoning before the boundary. The harness owner must keep enforcement outside prompts. |
 | Malicious or untrusted repository content | Checked-in scripts, instructions, symlinks, or fixtures induce execution, path escape, or data access | Requests declare `input_trust`; local reads and writes are constrained to policy-owned URI roots; v0 never executes text from a request. Capsule digests fail closed. | This CLI is not an OS sandbox. A future executor must provide filesystem isolation and symlink-safe path resolution. |
-| Secret or PII leakage | Credentials or identifying data enter feedback, capsules, audit records, scorecards, logs, or external requests | Schema validation plus deterministic secret and PII scanning runs before persistence. Unsafe values are rejected, not logged. Explicit typed redaction markers and metadata are required. External transfer is unavailable. | Pattern detection has false positives and false negatives. Producers and human reviewers remain responsible for minimization. |
-| Unsafe shell, file, or network action | Destructive commands, writes outside the workspace, or unapproved network calls execute | Policy evaluates semantic operation IDs rather than raw shell strings. Destructive shell, outside-workspace writes, and all network capability are denied in v0. Allowed verifier requests require network-denied sandbox declarations and bounded writable roots. | `dal policy check` records intent; it does not sandbox another process. The future executor must independently enforce the same decision. |
-| Plugin supply-chain compromise | A malicious, substituted, or vulnerable plugin gains dsh/Cordis lifecycle access | Plugin installation and mounting are unavailable and approval-gated. Proposed artifacts require exact package/version/digest provenance, offline evidence, and no active quarantine before a future integration may proceed. | v0 does not verify signatures, SBOMs, or vulnerabilities. A future installer must add pinned, separately evaluated supply-chain verification. |
+| Secret or PII leakage | Credentials or identifying data enter feedback, capsules, audit records, scorecards, logs, or external requests | Schema validation plus deterministic secret and PII scanning runs before persistence. Unsafe values are rejected, not logged. Explicit typed redaction markers and metadata are required. The only external model paths minimize and digest-bind their exact approved projection. | Pattern detection has false positives and false negatives. Producers and human reviewers remain responsible for minimization. |
+| Unsafe shell, file, or network action | Destructive commands, writes outside the workspace, or unapproved network calls execute | Policy evaluates semantic operation IDs rather than raw shell strings. Destructive shell, outside-workspace writes, and generic network capability are denied. Allowed verifier requests require network-denied sandbox declarations and bounded writable roots; provider calls exist only in purpose-specific executors after exact approval verification. | `dal policy check` records intent; it does not sandbox another process. Each executor must independently enforce its own decision and confinement boundary. |
+| Plugin supply-chain compromise | A malicious, substituted, or vulnerable plugin gains dsh/Cordis lifecycle access | Plugin installation and mounting are unavailable and approval-gated. Plugin packages, including the disabled G2 candidate, remain workspace source with digest provenance and no enabled profile row. | v0 does not verify signatures, SBOMs, or vulnerabilities. A future installer must add pinned, separately evaluated supply-chain verification. |
 | Capability escalation | A read-only actor or tool converts one approval into broader access | Capabilities, action, scope, target digest, sandbox, and budget are explicit. Decisions match exactly; approvals do not imply another action or scope. Untrusted content cannot author policy. | Local actor IDs are assertions, not cryptographic identities. Organizational authentication remains external. |
 | Self-improvement reward hacking | A proposal optimizes the measured score while degrading safety or hidden behavior | Objectives, held-out fixtures, guardrail metrics, regression cases, and application authority are separate. An optimizer cannot edit its evaluator, policy, approval, or scorecard. Candidate application is unavailable. | Finite suites can be gamed. Maintainers own hidden-case rotation, qualitative review, and later production monitoring. |
 | Evaluation contamination | Candidate authors see or train on held-out cases, or test data leaks into reflection input | Suites label fixture class, pin fixture digests, declare contamination review, and keep regression/golden cases distinct from optimization datasets. Unknown or detected contamination is a hard stop. | v0 cannot prove a model never saw public or local data. Human review records the known boundary. |
@@ -52,11 +52,11 @@ Requests use stable operation IDs, not shell command strings or arguments. Polic
 - deterministic local schema, privacy, policy, capsule, test, typecheck, and build verification with network denied;
 - read-only query and summary operations.
 
-Policy denies destructive shell intent, writes outside policy-owned roots, network access, privilege escalation, shared configuration changes, plugin management, and candidate application. Sensitive denied capabilities map to the separate approval action defined in [`governance.md`](governance.md), but v0 still returns `denied` after a valid approval because no executor ships.
+Policy denies destructive shell intent, writes outside policy-owned roots, network access, privilege escalation, shared configuration changes, plugin management, and candidate application. `dal policy check` remains non-executing and returns `denied` even when a separate approval exists. Purpose-specific executors such as user-global install, proposer, and benchmark e2e do not consume that decision as authority; they independently verify the exact sensitive-action decision at their operation.
 
 ## Optional dsh enforcement adapter design
 
-Status: Proposed and unimplemented. The current CLI and scorecard schemas remain local, deterministic, and independent of dsh.
+Status: Mostly proposed. The current CLI and scorecard schemas remain local, deterministic, and independent of dsh. One bounded exception ships as disabled source only: the G2 unknown-effect guard uses `tools/pre-execute` for the next-call lock and `tools/result` only to observe terminal outcomes; it has not been mounted into a dsh profile.
 
 The inspected DSH version exposes three tool waterfalls, followed by an immutable result notification. A future DAL integration uses each phase only for the concern it can enforce:
 
@@ -141,7 +141,7 @@ The existing DSH session-telemetry plugin exports OTLP logs, not this trajectory
 
 ### Statistical evaluation of stochastic behavior
 
-Status: Proposed and unimplemented. Version 0 runs deterministic local validators only and records no model output. Any future model-based or trajectory evaluation whose results are stochastic must satisfy these rules before its numbers may enter a scorecard.
+Status: Proposed and unimplemented for scorecards. The offline scorecard runner invokes deterministic local validators only and records no model output. Approval-bound proposer/e2e model calls produce separate draft/run evidence; any future model-based or trajectory scorecard whose results are stochastic must satisfy these rules before its numbers may enter a promotion claim.
 
 - **Multiple seeds and rollouts per case.** Every stochastic case runs at least a declared minimum of independent rollouts across distinct, pinned seeds. A metric is never derived from a single run. The seed list is recorded in the scorecard and must match the executed rollouts.
 - **Paired comparison, not pooled means.** A candidate is compared to its baseline on matched `(case, seed, fixture, prompt, harness)` pairs, so each rollout has a direct baseline counterpart. Two independent overall averages are never compared as if paired; any unpaired comparison is labeled as such and reported separately.
@@ -150,11 +150,13 @@ Status: Proposed and unimplemented. Version 0 runs deterministic local validator
 - **Full versioning of every dimension.** Model ID (weights/quantization), prompt/template digest, tool and provider versions, harness and sandbox config digest, and evaluation suite digest are recorded per run and bound to the scorecard. Any unversioned dimension invalidates a comparison.
 - **No cherry-picking the best run.** Every run is retained and reported. A scorecard must include the full rollout distribution and the fixed seed list; re-running until a passing sample appears, or reporting only the best run, is prohibited. Declared-rollout count and seed-set completeness are verified, and a detected best-of-N selection is a hard stop.
 
+The tau-style e2e summary implements a narrower pre-scorecard guard: it binds the full task/evaluator inputs, rollout count, faults, image/tools, policy, prompts, and driver source into one frozen benchmark-context digest. A harness-generation comparison rejects a simultaneous model change; a same-generation provider comparison rejects a candidate change. This makes those batches comparable, but it does not provide paired seeds, confidence intervals, or a promotion scorecard.
+
 Statistical decisions use confidence intervals rather than raw point deltas: a difference within the noise floor is "no change," not "better" or "worse." Hidden-case overfitting is reduced by holding out both cases and seeds and by extending the contamination review to include seed reuse.
 
 ### Model-versus-harness attribution
 
-Status: Proposed and unimplemented. Version 0 runs no model, so attribution applies to future model-based evaluation. A self-improvement claim may not be promoted without it.
+Status: Proposed and unimplemented. Version 0 has approval-bound model calls but no model-based promotion scorecard, so attribution applies to future improvement claims. A self-improvement claim may not be promoted without it.
 
 - **Factorial matrix.** Every improvement claim is evaluated on the full Model × Harness matrix: each cell is evaluated on the same suite, so a model gain (row difference with the harness fixed), a harness gain (column difference with the model fixed), and interaction effects are separately visible. Comparing a new model+harness pair against an old model+harness pair is confounded and is not an attribution.
 
@@ -170,7 +172,7 @@ Status: Proposed and unimplemented. Version 0 runs no model, so attribution appl
 
 ### Self-improvement loop
 
-Status: Partially implemented. Version 0 implements run-record ingestion, deterministic failure clustering, and the surface/prediction proposal boundary below; model-based tiers, sandbox evaluation of proposals, and the run/improvement plugin modes remain future work.
+Status: Partially implemented. Version 0 implements run-record ingestion, separate harness/business failure clustering, the surface/prediction proposal boundary, and disabled run/improvement plugin modes; model-based clustering tiers, optimizer execution, and sandbox evaluation/application of proposals remain future work.
 
 1. **Run tasks** — the agent operates normally; every workspace modification, tool call, and outcome is recorded.
 2. **Collect traces and outcomes** — flushed, pinned trajectory snapshots plus independent side-effect receipts, as the trajectory section defines.
@@ -187,8 +189,8 @@ The governing rule: **the agent may propose changes, but it should not control t
 
 The improvement-mode clustering pipeline keeps an LLM out of raw traces. Tier 0 and Tier 1 below are implemented in v0 (`dal cluster run`); Tiers 2 and 3 remain future work:
 
-- **Tier 0 — canonical fingerprints at ingestion.** Every run record carries structured failure facts (category, code, and optional fingerprint extras) plus the pinned context. The clustering command computes a canonical failure signature at record time; raw trace text never enters any classifier context. *(Implemented.)*
-- **Tier 1 — deterministic grouping.** Exact-signature clustering groups same-signature failures into immutable cluster records and skips successful runs, with zero tokens and no model. Cluster identity binds the signature to the run batch (`batch_id`), so repeated passes over a growing store re-cluster cleanly; `--batch` filters to one batch. *(Implemented.)*
+- **Tier 0 — canonical fingerprints at ingestion.** Harness failures carry structured failure facts (category, code, and optional fingerprint extras); completed business failures derive a separate fingerprint from failed deterministic check IDs. Both retain pinned context, and raw trace text never enters classifier context. *(Implemented.)*
+- **Tier 1 — deterministic grouping.** Exact-signature clustering groups harness and business failures into separate immutable categories and skips completed passing/unknown runs, with zero tokens and no model. Cluster identity binds the signature to the run batch (`batch_id`), so repeated passes over a growing store re-cluster cleanly; `--batch` filters to one batch. *(Implemented.)*
 - **Tier 2 — local semantic tier.** The reserved local small model embeds compact per-step summaries; local centroid/online clustering groups near-duplicate failures with no external calls and no LLM context.
 - **Tier 3 — budgeted LLM classifier.** An LLM sees only cluster representatives (fingerprint summaries, never full traces) to name clusters, merge near-duplicates, and propose root-cause hypotheses. Strict per-cluster and per-run token budgets are tracked and capped; classifier output is advisory labeling with recorded provenance, never authorization.
 

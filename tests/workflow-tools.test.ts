@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,7 +8,9 @@ import {
   changeBooking,
   createReturnLabel,
   getEffectStatus,
+  initializeService,
   issueRefund,
+  loadEffectEntries,
   loadState,
   projectServiceState,
   refuseRequest,
@@ -21,14 +23,17 @@ async function environment(faults: ServiceEnvironment["faults"] = {}): Promise<S
 
 async function seeded(faults: ServiceEnvironment["faults"] = {}): Promise<ServiceEnvironment> {
   const env = await environment(faults);
-  const state = await loadState(env);
-  state.orders["o-1001"] = { status: "delivered", total: 120, days_since_delivery: 12, items: ["sku-a", "sku-b"] };
-  state.bookings["b-5001"] = { route: "SFO-EWR", date: "2026-08-01", status: "departed", seats: 1, changes: 0 };
-  const { writeFile, mkdir } = await import("node:fs/promises");
-  const { dirname, resolve } = await import("node:path");
-  const target = resolve(env.stateRoot, "state.json");
-  await mkdir(dirname(target), { recursive: true });
-  await writeFile(target, `${JSON.stringify(state, null, 2)}\n`);
+  const state = {
+    orders: {
+      "o-1001": { status: "delivered", total: 120, days_since_delivery: 12, items: ["sku-a", "sku-b"] },
+    },
+    refunds: [],
+    labels: [],
+    bookings: {
+      "b-5001": { route: "SFO-EWR", date: "2026-08-01", status: "departed", seats: 1, changes: 0 },
+    },
+  };
+  await initializeService(env, state);
   return env;
 }
 
@@ -54,6 +59,9 @@ describe("mock order/booking service", () => {
     const over = await issueRefund(env, { order_id: "o-1001", amount: 500, reason: "damaged", idempotency_key: "r-2" });
     expect(over.outcome).toBe("definite_failure");
     expect((await loadState(env)).refunds).toHaveLength(0);
+    expect(await loadEffectEntries(env)).toEqual([
+      expect.objectContaining({ kind: "issue_refund", outcome: "definite_failure" }),
+    ]);
 
     const departed = await changeBooking(env, { booking_id: "b-5001", new_route: "SFO-JFK", idempotency_key: "b-1" });
     expect(departed.outcome).toBe("definite_failure");
@@ -80,7 +88,7 @@ describe("mock order/booking service", () => {
     expect(label.outcome).toBe("success");
     const changed = await changeBooking(env, { booking_id: "b-5001", new_route: "SFO-EWR", idempotency_key: "b-2" });
     expect(changed.outcome).toBe("definite_failure");
-    const refusal = await refuseRequest(env, { kind: "booking_change", target: "b-5001", reason: "departed", idempotency_key: "f-1" });
+    const refusal = await refuseRequest(env, { kind: "booking_change", target: "b-5001", reason: "booking-already-departed", idempotency_key: "f-1" });
     expect(refusal.outcome).toBe("success");
     const state = await loadState(env);
     expect(state.labels).toHaveLength(1);
@@ -119,6 +127,25 @@ describe("mock order/booking service", () => {
     const projected = projectServiceState(await loadState(env));
     expect(projected.orders["o-1001"]).toEqual({ status: "refunded" });
     expect(projected.bookings["b-5001"]).toEqual({ route: "SFO-EWR", changes: 0 });
+  });
+
+  it("fails closed on a missing or truncated journal instead of loading empty state", async () => {
+    const env = await environment();
+    await expect(loadState(env)).rejects.toMatchObject({ code: "SERVICE_JOURNAL_MISSING" });
+    await initializeService(env, { orders: {}, refunds: [], labels: [], bookings: {} });
+    const path = join(env.stateRoot, "effects.jsonl");
+    const journal = await readFile(path, "utf8");
+    await writeFile(path, journal.slice(0, -2), "utf8");
+    await expect(loadState(env)).rejects.toMatchObject({ code: "SERVICE_JOURNAL_CORRUPT" });
+  });
+
+  it("serializes concurrent same-key attempts into one journaled effect", async () => {
+    const env = await seeded();
+    const input = { order_id: "o-1001", amount: 30, reason: "faulty-item", idempotency_key: "r-concurrent" };
+    const [first, second] = await Promise.all([issueRefund(env, input), issueRefund(env, input)]);
+    expect([first.idempotent, second.idempotent].sort()).toEqual([false, true]);
+    expect((await loadState(env)).refunds).toHaveLength(1);
+    expect(await loadEffectEntries(env)).toHaveLength(1);
   });
 });
 
