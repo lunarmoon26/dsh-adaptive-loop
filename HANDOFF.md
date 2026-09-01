@@ -8,6 +8,7 @@
 - Source implementation, focused tests, canonical docs, capsules, and the repository gate are complete.
 - Final benchmark-image rebuild is blocked because the Dockerfile installs a local dsh plugin and no independent `install_or_mount_plugin` decision file exists.
 - Required blocked feedback was validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json` with digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`.
+- A follow-up record for the hermetic hosted-CI fix supersedes it at `.dal/store/fb-benchmark-integrity-g2-ci-20260901.json` with digest `9e667c5e61f68110e20774bca792fe21dcd4c139b1a3743ee2aee54fd66b1e5c`.
 - Do not fabricate a human approval or treat chat delegation, policy output, tests, or this handoff as authority.
 
 ## Implemented

@@ -1,0 +1,162 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-benchmark-integrity-g2-ci-20260901",
+  "change_id": "chg-benchmark-integrity-g2-20260831",
+  "created_at": "2026-09-01T09:07:59Z",
+  "supersedes": "fb-benchmark-integrity-g2-20260901",
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "agent-local" },
+    "harness": { "name": "dsh", "version": "0.1.1-rc.2", "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "3737106",
+      "branch": "feat/benchmark-integrity-g2",
+      "dirty": true
+    },
+    "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/pull/2"
+  },
+  "goal": "Make the benchmark-integrity manifest test hermetic in clean CI while retaining the prior task's approval blocker.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-hermetic-manifest-test",
+      "statement": "Static manifest and drift tests run without a preinstalled local benchmark image.",
+      "result": "passed",
+      "evidence": ["ev-focused-ci-fix", "ev-full-gate"]
+    },
+    {
+      "id": "ac-no-production-bypass",
+      "statement": "Production manifest construction remains fail-closed when the executed image or workflow-tools bytes cannot be inspected.",
+      "result": "passed",
+      "evidence": ["ev-test-file", "ev-full-gate"]
+    },
+    {
+      "id": "ac-final-image",
+      "statement": "The latest source is rebuilt into an immutable benchmark image under an exact plugin-installation decision.",
+      "result": "not_run",
+      "evidence": ["ev-image-blocker"]
+    }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "The clean-CI failure was fixed by replacing the test's undeclared local-image dependency with a process-local Docker inspector fixture. Focused and full local gates pass; the independent image-build approval remains unavailable.",
+    "exception": {
+      "kind": "blocked",
+      "reason": "The final image build still performs a governed plugin installation without an approved, unexpired install_or_mount_plugin decision file.",
+      "owner": "project-maintainer",
+      "next_action": "Issue the exact independent decision, rebuild and re-probe the image, then record completed artifact-refresh feedback."
+    }
+  },
+  "what_worked": [
+    "The test now exercises the production manifest path with deterministic image and in-image tool identities without requiring Docker state.",
+    "Focused topology tests, typecheck, and the complete repository gate pass after the fix."
+  ],
+  "what_failed": [
+    "The first GitHub Actions run exposed that the static topology test depended on a developer-local image."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "GitHub Actions check",
+      "purpose": "Run the repository gate in a clean hosted environment.",
+      "outcome": "failed",
+      "duration_ms": null,
+      "evidence": ["ev-ci-failure"]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Verify the hermetic topology and manifest fixture.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-focused-ci-fix"]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "pnpm run check",
+      "purpose": "Rerun the complete local repository gate after the CI fix.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-full-gate"]
+    }
+  ],
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-local-image-test-dependency",
+      "category": "verification",
+      "summary": "A static unit test accidentally required a local Docker image that hosted CI does not provide.",
+      "impact": "medium",
+      "recoverable": true,
+      "suggested_action": "Keep static manifest tests on deterministic process-local command fixtures and reserve real images for opt-in live probes.",
+      "evidence": ["ev-ci-failure", "ev-test-file"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-ci-failure",
+      "kind": "url",
+      "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/actions/runs/33490230598",
+      "summary": "The initial hosted check failed only when the static manifest test attempted to inspect an unavailable local image.",
+      "sha256": null,
+      "observed_at": "2026-09-01T09:07:59Z"
+    },
+    {
+      "id": "ev-focused-ci-fix",
+      "kind": "test",
+      "uri": "command://vitest-e2e-topology-hermetic",
+      "summary": "The topology test passed with the live image probe remaining opt-in.",
+      "sha256": null,
+      "observed_at": "2026-09-01T09:07:59Z"
+    },
+    {
+      "id": "ev-full-gate",
+      "kind": "command",
+      "uri": "command://pnpm-run-check-after-ci-fix",
+      "summary": "The complete local gate passed 31 test files and 187 tests after the hermetic-test fix.",
+      "sha256": null,
+      "observed_at": "2026-09-01T09:07:59Z"
+    },
+    {
+      "id": "ev-test-file",
+      "kind": "file",
+      "uri": "repo://tests/e2e-topology.test.ts",
+      "summary": "The static test supplies deterministic Docker inspection output only inside its process and restores the environment afterward.",
+      "sha256": null,
+      "observed_at": "2026-09-01T09:07:59Z"
+    },
+    {
+      "id": "ev-image-blocker",
+      "kind": "file",
+      "uri": "repo://docs/requirement-evidence.md",
+      "summary": "The final image refresh remains explicitly blocked on independent human authority.",
+      "sha256": null,
+      "observed_at": "2026-09-01T09:07:59Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-hosted-rerun",
+      "statement": "The updated hosted check has not completed yet.",
+      "level": "medium",
+      "resolution": "Push the follow-up commit and wait for PR checks to finish.",
+      "evidence": ["ev-ci-failure", "ev-focused-ci-fix"]
+    }
+  ],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": ["The sensitive plugin-installation decision remains separate from code review."],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets", "ci-portability", "blocked-artifact-refresh"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

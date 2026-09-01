@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -75,23 +75,42 @@ describe("tau-style three-container topology", () => {
       ["model", "deepseek-v4-flash"],
       ["batch", "another-root"],
     ]))).toBe(patch);
-    const manifestArgs = new Map([["tasks", "task-001-refund.json"]]);
-    const manifest = await transmissionManifest(manifestArgs);
-    expect(manifest.rendered_composition_patch).toBe(renderedCompositionPatch(new Map()));
-    expect(manifest.evaluator_tasks).toEqual([{ task_id: "task-001-refund.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/) }]);
-    expect(manifest.attempts_per_task).toBe(1);
-    expect(manifest.benchmark_context_sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(manifest.container_image_sha256).toMatch(/^[0-9a-f]{64}$/);
-    const driftedArgs = new Map(manifestArgs);
-    driftedArgs.set("attempts", "2");
-    await expect(assertTransmissionManifestCurrent(
-      driftedArgs,
-      manifest.container_image_sha256!,
-      sha256(canonicalJson(manifest)),
-    )).rejects.toThrow("Transmission manifest drifted after approval");
-    await expect(transmissionManifest(new Map([["generation", "g2"]]))).rejects.toThrow("source-only");
-    await expect(transmissionManifest(new Map([["generation", "other"]]))).rejects.toThrow("must be g0 or g1");
-    await expect(transmissionManifest(new Map([["tasks", "missing-task.json"]]))).rejects.toThrow("unknown: missing-task.json");
+    const fakeBin = join(root, "bin");
+    const fakeDocker = join(fakeBin, "docker");
+    await mkdir(fakeBin, { recursive: true });
+    await writeFile(fakeDocker, `#!/bin/sh
+if [ "$1" = "image" ]; then
+  printf '%s\\n' 'sha256:${"a".repeat(64)}'
+else
+  printf '%s\\n' '${"b".repeat(64)}  -'
+fi
+`, "utf8");
+    await chmod(fakeDocker, 0o755);
+    const originalPath = process.env.PATH;
+    process.env.PATH = `${fakeBin}:${originalPath ?? ""}`;
+    try {
+      const manifestArgs = new Map([["tasks", "task-001-refund.json"]]);
+      const manifest = await transmissionManifest(manifestArgs);
+      expect(manifest.rendered_composition_patch).toBe(renderedCompositionPatch(new Map()));
+      expect(manifest.evaluator_tasks).toEqual([{ task_id: "task-001-refund.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/) }]);
+      expect(manifest.attempts_per_task).toBe(1);
+      expect(manifest.benchmark_context_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(manifest.container_image_sha256).toMatch(/^[0-9a-f]{64}$/);
+      const driftedArgs = new Map(manifestArgs);
+      driftedArgs.set("attempts", "2");
+      await expect(assertTransmissionManifestCurrent(
+        driftedArgs,
+        manifest.container_image_sha256!,
+        sha256(canonicalJson(manifest)),
+      )).rejects.toThrow("Transmission manifest drifted after approval");
+      await expect(transmissionManifest(new Map([["generation", "g2"]]))).rejects.toThrow("source-only");
+      await expect(transmissionManifest(new Map([["generation", "other"]]))).rejects.toThrow("must be g0 or g1");
+      await expect(transmissionManifest(new Map([["tasks", "missing-task.json"]]))).rejects.toThrow("unknown: missing-task.json");
+    } finally {
+      if (originalPath === undefined) delete process.env.PATH;
+      else process.env.PATH = originalPath;
+      await rm(root, { recursive: true, force: true });
+    }
   });
 
   it("keeps candidate, service state, and grader oracle on separate mounts and networks", () => {
