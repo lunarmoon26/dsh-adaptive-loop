@@ -21,3 +21,9 @@
     - id: dal-improve-tools
       name: '@lunarmoon26/dal-improve-tools'
       disabled: true
+
+    # G2 optimization candidate. Source-only and disabled: mounting this row
+    # and applying the candidate require their own exact approvals.
+    - id: dal-unknown-effect-guard
+      name: '@lunarmoon26/dal-unknown-effect-guard'
+      disabled: true

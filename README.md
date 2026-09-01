@@ -53,7 +53,7 @@ Expected results: the feedback, local-read policy decision, capsules, and evalua
 | `dal saga begin/complete/status/list` | Exactly-once effect intents and receipts for crash-resume |
 | `dal admit issue/complete/status` | Nonce-bound admission: a candidate cannot forge its own boot receipt |
 | `dal propose prepare/run` | Governed proposer: sanitized payload, verified send_data_externally approval, model draft on an editable surface |
-| `dal branch record/evaluate/stats/select` | Bounded search archive: parent-linked branches, deterministic grader as value function, UCB1 selection |
+| `dal branch record/evaluate/stats/select` | Bounded search archive: parent-linked branches, state/effect grader as value function, receipt-bound evidence, UCB1 selection |
 | `dal verify run` | Confined verifier executor: Seatbelt-enforced local verification, fail-closed when the sandbox is unavailable |
 | `dal verify run / propose run --runner docker` | Container-hosted harness execution: pinned image, workspace mount, network disabled (DAL-020) |
 | `dal reset status\|execute` | Rebaseline: remove `.dal` evidence and start from the current snapshot; validated receipts under `.dal/resets/` |
@@ -68,8 +68,9 @@ The `plugins/` tree ships one dsh bundle (`@lunarmoon26/dal-modes`) with two sep
 
 - **Run mode** (`@lunarmoon26/dal-run-record`) — on by default: projects session events into privacy-safe run records under `.dal/runs` (counts, digests, outcome and failure codes; never prompt text, message content, tool arguments, or results).
 - **Improvement mode** (`@lunarmoon26/dal-improve-tools`) — off by default: workbench tools over the deterministic dal CLI (cluster, prepare payload, summarize, branch evaluate, reset status). Nothing approval-gated — `propose run` and `reset execute` stay CLI-only.
+- **G2 candidate** (`@lunarmoon26/dal-unknown-effect-guard`) — off by default: per-agent pre-execution lock for unknown workflow-effect retries. It is source/test evidence only, not an installed or applied generation.
 
-Mounting the bundle into a profile (`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools`, then enable the tools row in the profile's `cordis.patch.yml`) is an approval-gated `install_or_mount_plugin` operation; see [`docs/spec.md`](docs/spec.md) DAL-019.
+Mounting the bundle into a profile (`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools`, then enable the tools row in the profile's `cordis.patch.yml`) is an approval-gated `install_or_mount_plugin` operation; see [`docs/spec.md`](docs/spec.md) DAL-019. The G2 package is deliberately excluded from that command: mounting it needs a new exact plugin decision, and applying it as a candidate needs a separate exact `apply_optimization_candidate` decision.
 
 ## Deliberate rejection examples
 
@@ -107,7 +108,7 @@ dal init                             # inside any workspace: stores, skill, inst
 
 ## Self-improvement boundary
 
-Improvement proposals may change only the editable surfaces (`prompt`, `tool_descriptions`, `skills`, `memory_policy`, `routing`, `stop_retry_logic`, `harness_code`) and must carry a falsifiable prediction from the `proposed` stage. The immutable anchors (`evaluator`, `sealed_holdout`, `permissions`, `maximum_budget`, `promotion_policy`, `audit_log`, `rollback_mechanism`) are never proposal targets. Run records and deterministic failure clustering feed the loop; model-based clustering, proposer integration, and run/improvement plugin modes remain future work.
+Improvement proposals may change only the editable surfaces (`prompt`, `tool_descriptions`, `skills`, `memory_policy`, `routing`, `stop_retry_logic`, `harness_code`) and must carry a falsifiable prediction from the `proposed` stage. The immutable anchors (`evaluator`, `sealed_holdout`, `permissions`, `maximum_budget`, `promotion_policy`, `audit_log`, `rollback_mechanism`) are never proposal targets. Run records, deterministic failure clustering, and disabled source candidates feed the loop; model-based clustering and autonomous candidate application remain future work.
 
 ## How it is meant to be used
 
@@ -115,4 +116,4 @@ Agents work normally during the day; each task ends with a structured feedback r
 
 ## Benchmark workspace
 
-[`benchmarks/tau-style-workflow/`](benchmarks/tau-style-workflow/) is a target test workspace modeling the τ-bench pattern (closed-loop repetitive workflows, deterministic end-state grader, written policy): tasks, a policy, a deterministic `grade.ts` verifier, a workspace skill the loop will improve, a source-only workspace plugin package, and an dal evaluation suite that pins and exercises the whole workspace. `pnpm run benchmark:check` runs it and is part of `pnpm run check`.
+[`benchmarks/tau-style-workflow/`](benchmarks/tau-style-workflow/) is a target test workspace modeling the τ-bench pattern: closed-loop repetitive workflows, deterministic state/effect grading, written policy, and separate harness/business outcomes. Its approval-bound e2e path stages a minimal read-only candidate and separates candidate, journal-owning service, and grader containers so evaluator artifacts are not candidate-visible. `pnpm run benchmark:check` runs the offline suite and is part of `pnpm run check`; model batches still require exact external-transfer approval.

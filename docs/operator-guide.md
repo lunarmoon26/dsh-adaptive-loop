@@ -4,7 +4,7 @@ Status: Current for v0
 
 ## Safety boundary
 
-`dal` reads JSON and local files, writes validated evidence under an explicit local store, and runs deterministic validators. It has no requested-action executor, network client, model SDK, optimizer runtime, plugin installer, shared-config writer, or candidate applier. A policy `allowed` result is evidence only.
+`dal` reads JSON and local files, writes validated evidence under explicit local stores, and runs deterministic validators by default. A policy `allowed` result is evidence only. Purpose-specific executors exist for confined verification, fixed user-global installation, the governed proposer, and the isolated benchmark e2e path; each independently rechecks its confinement or exact approval at the operation. There is no generic shell/network/shared-config executor, model SDK, optimizer runtime, plugin installer or mounter, or candidate applier.
 
 ## Install and verify
 
@@ -62,7 +62,7 @@ pnpm run dal approval verify <decision.json> \
   --candidate-sha256 <digest>
 ```
 
-v0 still denies candidate application after a valid decision because no executor exists. Shared dsh configuration, plugin management, external transfer, and candidate application remain unavailable.
+v0 still denies candidate application after a valid decision because no candidate applier exists. Plugin installation/mounting and candidate application remain unavailable. Shared configuration and external transfer occur only through the fixed user-global installer or purpose-specific proposer/e2e paths after their exact approvals verify.
 
 ## Offline evaluation and scorecards
 
@@ -107,7 +107,7 @@ pnpm run dal run ingest tests/fixtures/runs/run-fixture-test-failure-1.json --st
 pnpm run dal cluster run --store .dal/runs --output .dal/clusters --format json
 ```
 
-Run records carry the outcome, structured failure facts (`category`, `code`, `fingerprint_extra`), the pinned evaluation context (task set, environment snapshot, tool versions, model, prompt/harness digests, grader version, seeds, context policy digest, inference parameters), artifact digests, usage metrics, evidence references, and privacy metadata. `dal cluster run` groups failed runs by canonical fingerprint into immutable cluster records and skips successful runs; it runs no model or classifier. Cluster identity binds the fingerprint to the run batch (`batch_id`), so re-clustering after a new batch does not collide; `--batch <id>` clusters a single batch:
+Run records carry separate harness and business outcomes, structured harness-failure facts (`category`, `code`, `fingerprint_extra`), deterministic business checks, the pinned evaluation context (task set, environment snapshot, tool versions, model, prompt/harness digests, grader version, seeds, context policy digest, inference parameters), artifact digests, usage metrics, evidence references, and privacy metadata. `dal cluster run` groups harness failures by canonical failure fingerprint and completed business failures by failed check IDs into separate immutable categories; completed passing or unknown business outcomes are skipped. It runs no model or classifier. Cluster identity binds the fingerprint to the run batch (`batch_id`), so re-clustering after a new batch does not collide; `--batch <id>` clusters a single batch:
 
 ```sh
 pnpm run dal cluster run --store .dal/runs --output .dal/clusters --batch e2e-20260831 --format json

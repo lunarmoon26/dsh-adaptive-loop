@@ -1,6 +1,6 @@
 # 0001: Keep v0 local and stage every improvement before application
 
-Status: Accepted
+Status: Superseded by [`0003-purpose-specific-approved-executors.md`](0003-purpose-specific-approved-executors.md)
 Date: 2026-08-27
 Related: [`../spec.md`](../spec.md), [`../architecture.md`](../architecture.md), [`../governance.md`](../governance.md)
 

@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.1.0",
+  "capsule_version": "1.2.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, or approval behavior",
-  "checked_at": "2026-08-29",
-  "refresh_after": "2026-11-27",
+  "checked_at": "2026-08-31",
+  "refresh_after": "2026-11-29",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-v0-2026-08-29",
-      "sha256": "173463eebfbb4cd184563556c11694c7fdf47920dd3452b3c677ec5d9e98bc38",
+      "revision": "dal-v0-2026-08-31",
+      "sha256": "5b4bf8fba2d5e08ef088f17a8864df60a382f5fa31ee9ebe9335a6dd0582542d",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -21,8 +21,8 @@
       "id": "src-dal-governance",
       "kind": "local_file",
       "uri": "repo://docs/governance.md",
-      "revision": "dal-v0-2026-08-27",
-      "sha256": "da501aebe253dfb2c8f6be6d57f94e87d761c9c17c016c27c38d1b3c02b87be0",
+      "revision": "dal-v0-2026-08-31",
+      "sha256": "e07c31019a8f229364732a7ce19a4d49c756eb85406039852304a3388024e12a",
       "local_path": "../docs/governance.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-evaluation",
       "kind": "local_file",
       "uri": "repo://docs/evaluation-and-guardrails.md",
-      "revision": "dal-v0-2026-08-29",
-      "sha256": "b4262e30a68d14c3150fe105054271413908b318c202b1d78f0ed20c15aaf502",
+      "revision": "dal-v0-2026-08-31",
+      "sha256": "43ff7a7e7e7ee53918aaa1a046e75219c6d8812090ec91f385a55d839c663c2f",
       "local_path": "../docs/evaluation-and-guardrails.md",
       "required": true
     }
@@ -39,7 +39,7 @@
   "claims": [
     {
       "id": "claim-local-only",
-      "text": "Version 0 validates and records local evidence but has no network, plugin, shared-configuration, optimizer, or candidate-application executor.",
+      "text": "Version 0 is local-only by default. Its fixed user-global installer and purpose-specific proposer/e2e paths independently verify exact approvals; no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, or candidate applier ships.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",
@@ -67,6 +67,15 @@
       "text": "A passing offline scorecard is prerequisite evidence only; a hard stop quarantines or requests manual rollback and blocks proposal progression.",
       "source_ids": [
         "src-dal-spec",
+        "src-dal-evaluation"
+      ]
+    },
+    {
+      "id": "claim-benchmark-integrity",
+      "text": "The tau-style benchmark separates harness and business outcomes, requires evaluator-owned effect evidence where declared, and permits full model batches only through the approval-bound Docker candidate/service/grader topology.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-governance",
         "src-dal-evaluation"
       ]
     }

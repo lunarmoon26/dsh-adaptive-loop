@@ -6,24 +6,18 @@
   "change_id": "chg-benchmark-scaffold",
   "started_at": "2026-08-29T16:05:00.000Z",
   "finished_at": "2026-08-29T16:05:31.000Z",
-  "outcome": "failed",
-  "failure": {
-    "category": "test_failure",
-    "code": "grader-mismatch",
-    "fingerprint_extra": [],
-    "summary": "The refund workflow omitted the required return label, so the deterministic grader failed the full-refund policy invariant.",
-    "evidence": ["repo://benchmarks/tau-style-workflow/tasks/task-001-refund.json"]
-  },
+  "outcome": "succeeded",
+  "failure": null,
   "context": {
     "task_set": "tau-style-retail",
     "environment_snapshot": "local-node24-macos",
     "tool_versions": [
-      { "name": "grader", "version": "tau-style-workflow-grader-v1" }
+      { "name": "grader", "version": "2.0.0" }
     ],
     "model": { "id": "synthetic-agent", "version": "2026-08" },
     "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "harness_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "grader_version": "1.0.0",
+    "grader_version": "2.0.0",
     "seeds": [2],
     "context_policy_sha256": null,
     "inference_parameters": []
@@ -35,6 +29,22 @@
       "description": "Refund workflow skill v1 used by the run"
     }
   ],
+  "checks": [
+    {
+      "id": "grader-mismatch",
+      "pass": false,
+      "detail": "Full refund omitted the required return label.",
+      "goal_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "actual_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
+  ],
+  "business_outcome": {
+    "status": "failed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 0.75,
+    "earned": 3,
+    "total": 4
+  },
   "metrics": { "duration_ms": 31000, "tool_calls": 5 },
   "evidence": ["repo://benchmarks/tau-style-workflow/tasks/task-001-refund.json"],
   "privacy": {

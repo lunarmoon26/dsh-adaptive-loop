@@ -1,5 +1,5 @@
 import { defineTool } from "@deepseek-ai/dsh-tools";
-import { changeBooking, createReturnLabel, getBooking, getEffectStatus, getOrder, issueRefund, refuseRequest, } from "./service.js";
+import { localWorkflowService, remoteWorkflowService } from "./client.js";
 /**
  * Typed domain tools for the tau-style benchmark workspace: the agent
  * operates the mock order/booking service ONLY through these tools, and the
@@ -11,11 +11,16 @@ import { changeBooking, createReturnLabel, getBooking, getEffectStatus, getOrder
 export const name = "dal-workflow-tools";
 export const inject = ["tools"];
 export function apply(ctx, config) {
-    const env = {
-        stateRoot: config.stateRoot,
-        faults: config.faults ?? {},
-        ...(config.resolutions === undefined ? {} : { resolutions: config.resolutions }),
-    };
+    if ((config.stateRoot === undefined) === (config.serviceUrl === undefined)) {
+        throw new Error("dal-workflow-tools requires exactly one of stateRoot or serviceUrl");
+    }
+    const service = config.serviceUrl !== undefined
+        ? remoteWorkflowService(config.serviceUrl)
+        : localWorkflowService({
+            stateRoot: config.stateRoot,
+            faults: config.faults ?? {},
+            ...(config.resolutions === undefined ? {} : { resolutions: config.resolutions }),
+        });
     ctx.tools.register(defineTool({
         name: "get_order",
         description: "Read one order from the mock order service by id.",
@@ -35,7 +40,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const { order_id } = args;
-            const order = await getOrder(env, order_id);
+            const order = await service.getOrder(order_id);
             const data = order === null ? null : JSON.parse(JSON.stringify(order));
             return { found: order !== null, data };
         },
@@ -59,7 +64,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const { booking_id } = args;
-            const booking = await getBooking(env, booking_id);
+            const booking = await service.getBooking(booking_id);
             const data = booking === null ? null : JSON.parse(JSON.stringify(booking));
             return { found: booking !== null, data };
         },
@@ -88,7 +93,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const input = args;
-            const result = await issueRefund(env, input);
+            const result = await service.issueRefund(input);
             return { ...result, idempotency_key: input.idempotency_key };
         },
     }));
@@ -114,7 +119,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const input = args;
-            return createReturnLabel(env, input);
+            return service.createReturnLabel(input);
         },
     }));
     ctx.tools.register(defineTool({
@@ -140,7 +145,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const input = args;
-            return changeBooking(env, input);
+            return service.changeBooking(input);
         },
     }));
     ctx.tools.register(defineTool({
@@ -167,7 +172,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const input = args;
-            return refuseRequest(env, input);
+            return service.refuseRequest(input);
         },
     }));
     ctx.tools.register(defineTool({
@@ -191,7 +196,7 @@ export function apply(ctx, config) {
         },
         async execute(args) {
             const { idempotency_key } = args;
-            return getEffectStatus(env, idempotency_key);
+            return service.getEffectStatus(idempotency_key);
         },
     }));
 }

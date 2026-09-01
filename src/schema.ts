@@ -43,6 +43,7 @@ export const SCHEMA_IDS = {
   sealCommitment: "https://recursive-dev-loop.dev/schemas/seal-commitment.v1.schema.json",
   sealReveal: "https://recursive-dev-loop.dev/schemas/seal-reveal.v1.schema.json",
   storedFeedback: "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  workflowTask: "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
 } as const;
 
 const schemaDirectory = fileURLToPath(new URL("../schemas/", import.meta.url));

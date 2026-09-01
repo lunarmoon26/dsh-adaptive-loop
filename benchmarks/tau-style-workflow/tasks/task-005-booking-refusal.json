@@ -1,4 +1,6 @@
 {
+  "$schema": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
+  "schema_version": "1.0.0",
   "task_id": "task-005-booking-refusal",
   "domain": "airline",
   "instruction": "The customer wants to change booking b-5001, but the departure date has already passed. The policy allows changes only before departure; refuse and leave the booking unchanged.",
@@ -10,5 +12,24 @@
   "goal_state": {
     "bookings": { "b-5001": { "route": "SFO-EWR", "changes": 0 } }
   },
-  "policy_ref": "policy.md"
+  "policy_ref": "policy.md",
+  "effect_requirements": {
+    "required": [
+      {
+        "kind": "refuse_request",
+        "outcome": "success",
+        "params": {
+          "kind": "booking_change",
+          "target": "b-5001",
+          "reason": "booking-already-departed"
+        }
+      }
+    ],
+    "forbidden": [
+      {
+        "kind": "change_booking",
+        "params": { "booking_id": "b-5001" }
+      }
+    ]
+  }
 }

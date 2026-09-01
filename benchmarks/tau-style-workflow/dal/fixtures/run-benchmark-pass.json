@@ -12,12 +12,12 @@
     "task_set": "tau-style-retail",
     "environment_snapshot": "local-node24-macos",
     "tool_versions": [
-      { "name": "grader", "version": "tau-style-workflow-grader-v1" }
+      { "name": "grader", "version": "2.0.0" }
     ],
     "model": { "id": "synthetic-agent", "version": "2026-08" },
     "prompt_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "harness_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "grader_version": "1.0.0",
+    "grader_version": "2.0.0",
     "seeds": [1],
     "context_policy_sha256": null,
     "inference_parameters": []
@@ -29,6 +29,13 @@
       "description": "Refund workflow skill v1 used by the run"
     }
   ],
+  "business_outcome": {
+    "status": "passed",
+    "source": "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    "score": 1,
+    "earned": 4,
+    "total": 4
+  },
   "metrics": { "duration_ms": 12000, "tool_calls": 4 },
   "evidence": ["repo://benchmarks/tau-style-workflow/tasks/task-001-refund.json"],
   "privacy": {

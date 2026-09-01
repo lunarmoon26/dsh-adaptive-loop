@@ -79,8 +79,9 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
       try {
         const document = await readJsonFile<unknown>(resolve(runsDir, name));
         const run = document.value as RunRecord;
-        if (run.failure?.summary !== undefined) {
-          runSummaries.set(run.run_id, run.failure.summary.slice(0, SUMMARY_CAP));
+        const summary = representativeFailure(run);
+        if (summary !== null) {
+          runSummaries.set(run.run_id, summary);
         }
       } catch {
         // skip unreadable run records; clusters remain the authority
@@ -119,6 +120,20 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
   assertNoSecrets(scanSecrets(payload, json));
   assertNoPii(scanPii(payload, json));
   return { payload, digest: sha256(json), json };
+}
+
+function representativeFailure(run: RunRecord): string | null {
+  if (run.failure?.summary !== undefined) {
+    return run.failure.summary.slice(0, SUMMARY_CAP);
+  }
+  if (run.outcome !== "succeeded" || run.business_outcome?.status !== "failed") {
+    return null;
+  }
+  const details = (run.checks ?? [])
+    .filter((check) => !check.pass)
+    .map((check) => check.detail?.trim() ?? "")
+    .filter((detail) => detail !== "");
+  return (details.length === 0 ? "Business outcome failed deterministic checks." : details.join("; ")).slice(0, SUMMARY_CAP);
 }
 
 function extractJsonObject(text: string): unknown {

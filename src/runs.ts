@@ -22,10 +22,24 @@ export async function validateRunRecord(value: unknown, rawText?: string): Promi
     issues.push("/finished_at must not precede /started_at");
   }
   if (run.outcome === "failed" && run.failure === null) {
-    issues.push("/failure is required when the outcome is failed");
+    issues.push("/failure is required when the harness outcome is failed");
   }
-  if (run.outcome === "succeeded" && run.failure !== null) {
-    issues.push("/failure must be null when the outcome is succeeded");
+  if (run.outcome !== "failed" && run.failure !== null) {
+    issues.push("/failure must be null unless the harness outcome is failed");
+  }
+  if (
+    run.outcome !== "succeeded" &&
+    run.business_outcome !== undefined &&
+    run.business_outcome !== null &&
+    run.business_outcome.status !== "unknown"
+  ) {
+    issues.push("/business_outcome.status may be passed or failed only when the harness outcome is succeeded");
+  }
+  if (
+    run.business_outcome?.status === "failed" &&
+    !(run.checks ?? []).some((check) => !check.pass)
+  ) {
+    issues.push("/checks must contain at least one failed deterministic check when /business_outcome.status is failed");
   }
   if (issues.length > 0) {
     throw new DalError("RUN_RECORD_INVALID", "Run record violates semantic rules", issues);

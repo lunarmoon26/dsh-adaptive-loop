@@ -5,7 +5,7 @@ import { DalError } from "./errors.js";
 import { canonicalJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertSchema, loadPolicy, SCHEMA_IDS } from "./schema.js";
 import { validateRunRecord } from "./runs.js";
-import type { ClusterRecord, Policy, RunRecord } from "./types.js";
+import type { ClusterRecord, Policy, RunFailureCategory, RunRecord } from "./types.js";
 
 export interface ClusterPublishResult {
   cluster_id: string;
@@ -19,7 +19,23 @@ export interface ClusterRunResult {
   clustered_runs: number;
   skipped_successful_runs: number;
   skipped_unfailed_runs: number;
+  clustered_harness_failures: number;
+  clustered_business_failures: number;
   clusters: ClusterPublishResult[];
+}
+
+interface ClusterFacts {
+  category: RunFailureCategory | "business_failure";
+  code: string;
+  extra: string[];
+  summary: string;
+}
+
+interface ClusterEntry {
+  run: RunRecord;
+  uri: string;
+  digest: string;
+  facts: ClusterFacts;
 }
 
 /**
@@ -42,32 +58,41 @@ export async function clusterRunRecords(
     throw new DalError("CLUSTER_STORE_MISSING", `Run store is not readable: ${store}`);
   }
 
-  const bySignature = new Map<string, { run: RunRecord; uri: string; digest: string }[]>();
+  const bySignature = new Map<string, ClusterEntry[]>();
   const requestedBatch = options.batch ?? null;
   let skippedSuccessful = 0;
   let skippedUnfailed = 0;
+  let clusteredHarnessFailures = 0;
+  let clusteredBusinessFailures = 0;
 
   for (const name of names) {
     const document = await readJsonFile<unknown>(resolve(store, name));
     const run = await validateRunRecord(document.value);
-    if (run.outcome === "succeeded") {
-      skippedSuccessful += 1;
-      continue;
-    }
-    if (run.failure === null) {
-      skippedUnfailed += 1;
-      continue;
-    }
     if (requestedBatch !== null && (run.batch_id ?? null) !== requestedBatch) {
       continue;
     }
+    const facts = clusterFacts(run);
+    if (facts === null) {
+      if (run.outcome === "succeeded") {
+        skippedSuccessful += 1;
+      } else {
+        skippedUnfailed += 1;
+      }
+      continue;
+    }
+    if (facts.category === "business_failure") {
+      clusteredBusinessFailures += 1;
+    } else {
+      clusteredHarnessFailures += 1;
+    }
     const batch = run.batch_id ?? "unbatched";
-    const signature = `${failureSignature(run)}|batch=${batch}`;
+    const signature = `${sha256(canonicalJson({ category: facts.category, code: facts.code, extra: facts.extra }))}|batch=${batch}`;
     const members = bySignature.get(signature) ?? [];
     members.push({
       run,
       uri: `repo://.dal/runs/${name}`,
       digest: sha256(document.raw.toString("utf8")),
+      facts,
     });
     bySignature.set(signature, members);
   }
@@ -77,7 +102,7 @@ export async function clusterRunRecords(
     left.localeCompare(right),
   )) {
     const sorted = [...entries].sort((left, right) => left.run.run_id.localeCompare(right.run.run_id));
-    const { category, code } = sorted[0]!.run.failure!;
+    const { category, code } = sorted[0]!.facts;
     const members = sorted.map(({ run, uri, digest }) => ({
       run_id: run.run_id,
       record_uri: uri,
@@ -119,8 +144,44 @@ export async function clusterRunRecords(
     clustered_runs: clusters.reduce((total, cluster) => total + cluster.member_count, 0),
     skipped_successful_runs: skippedSuccessful,
     skipped_unfailed_runs: skippedUnfailed,
+    clustered_harness_failures: clusteredHarnessFailures,
+    clustered_business_failures: clusteredBusinessFailures,
     clusters,
   };
+}
+
+function clusterFacts(run: RunRecord): ClusterFacts | null {
+  if (run.outcome === "failed" && run.failure !== null) {
+    return {
+      category: run.failure.category,
+      code: run.failure.code,
+      extra: run.failure.fingerprint_extra,
+      summary: run.failure.summary,
+    };
+  }
+  if (run.outcome !== "succeeded" || run.business_outcome?.status !== "failed") {
+    return null;
+  }
+  const failedChecks = (run.checks ?? [])
+    .filter((check) => !check.pass)
+    .map((check) => check.id)
+    .sort();
+  const first = failedChecks[0] ?? "business-outcome";
+  return {
+    category: "business_failure",
+    code: identifier(first),
+    extra: failedChecks,
+    summary: `Business grader failed ${failedChecks.length} checks`,
+  };
+}
+
+function identifier(value: string): string {
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^[^a-z]+/, "")
+    .slice(0, 128);
+  return normalized === "" ? "business-outcome-failed" : normalized;
 }
 
 export function failureSignature(run: RunRecord): string {

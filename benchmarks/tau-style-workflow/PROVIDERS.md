@@ -5,7 +5,9 @@ route the harness can serve. DeepSeek runs through the in-box
 `dsh-llm-deepseek` adapter; every other provider runs through the in-box
 `dsh-llm-pi-ai` multi-provider adapter, which ships catalog routes for
 `openai`, `anthropic`, `zai` (Z.ai / GLM), and `moonshotai` (Kimi) at the
-same harness version (verified in the pinned `dsh:0.1.1-rc.2-demo` image).
+same harness version. Benchmark-integrity runs target the local
+`dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2` image; rebuilding it changes
+the approval scope and requires fresh evidence.
 
 ## How the wiring works
 
@@ -52,9 +54,10 @@ Model ids are the pi-ai catalog entries shipped with dsh `0.1.1-rc.2`
    ```
 
 2. Approve the batch: the approval decision binds the full transmission
-   manifest — provider, model, runner, fault/resolution profile, container
-   image digest (which pins the baked workflow-tools bytes), agent-visible
-   task contents, policy, skill, and the exact prompts — so every
+   manifest — provider, model, generation, rollout count, runner,
+   fault/resolution profile, immutable container image and baked workflow-tools
+   digests, agent-visible and evaluator-task digests, driver-source digests,
+   policy, skill, exact rendered composition-patch text, and prompts — so every
    provider/model pair, and every skill or image change, needs its own
    approved, unexpired `send_data_externally` decision. Compute the scope
    digest first:
@@ -72,11 +75,18 @@ Model ids are the pi-ai catalog entries shipped with dsh `0.1.1-rc.2`
      --batch openai-passk-YYYYMMDD --generation g1 \
      --attempts 5 --faults issue_refund=unknown \
      --resolutions issue_refund=success \
-     --compare .dal/check/e2e-summary-g0-passk-YYYYMMDD.json
+      --compare .dal/check/e2e-summary-g1-passk-YYYYMMDD.json
    ```
 
-   The `--compare` gate then judges the provider batch against the reference
-   summary with the same receipt-binding checks.
+   The exact approved manifest is stored under `.dal/check/e2e-manifests/`,
+   revalidated before each attempt, and bound into every receipt. The
+   `--compare` gate then judges the provider batch against the reference
+   summary with the same manifest/receipt checks. It requires the same frozen
+   benchmark-context and candidate digests for a same-generation provider
+   comparison; a harness-generation comparison instead requires the model to
+   remain fixed. Every attempt uses the
+   candidate/service/grader isolation topology; `--runner local` is refused
+   because it cannot keep the oracle outside the candidate process.
 
 ## Credential failure mode
 
@@ -84,3 +94,9 @@ A missing key fails the run before any model call: the driver throws
 `Provider "<provider>" needs <KEY>; set it in the environment or <repo>/.env
 before running`. Credential values never appear in run records, receipts,
 summaries, or logs.
+
+The candidate container needs outbound access to the selected provider and
+receives that provider's key. Its network is not destination-allowlisted, so
+the topology proof protects evaluator artifacts but is not credential-egress
+confinement. Use a dedicated short-lived benchmark credential and rotate it
+after any suspected candidate-process compromise.

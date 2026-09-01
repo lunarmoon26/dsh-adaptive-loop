@@ -254,7 +254,7 @@ export function apply(ctx: Context, config: Config): void {
     defineTool({
       name: "dal_branch_evaluate",
       description:
-        "Evaluate a candidate branch state against a deterministic workflow task grader and record the verdict (score 1 pass / 0 fail). Local, no model, no network.",
+        "Evaluate candidate state and optional evaluator-owned effect evidence against a deterministic workflow task grader and record the verdict (score 1 pass / 0 fail). Local, no model, no network.",
       parameters: {
         branch: {
           type: "string",
@@ -270,6 +270,14 @@ export function apply(ctx: Context, config: Config): void {
           type: "string",
           required: true,
           description: "Repo-relative path to the candidate final-state file.",
+        },
+        effects: {
+          type: "string",
+          description: "Optional repo-relative evaluator effect-log JSONL path; required for effect-aware refusal tasks.",
+        },
+        receipt: {
+          type: "string",
+          description: "Optional execution receipt that binds the state, task, effects, and verdict.",
         },
         store: {
           type: "string",
@@ -291,7 +299,14 @@ export function apply(ctx: Context, config: Config): void {
         ],
       },
       async execute(args) {
-        const { branch, task, state, store } = args as { branch: string; task: string; state: string; store?: string };
+        const { branch, task, state, effects, receipt, store } = args as {
+          branch: string;
+          task: string;
+          state: string;
+          effects?: string;
+          receipt?: string;
+          store?: string;
+        };
         const result = await runCli(cliCommand, timeoutMs, undefined, [
           "branch",
           "evaluate",
@@ -301,6 +316,8 @@ export function apply(ctx: Context, config: Config): void {
           task,
           "--state",
           state,
+          ...(effects === undefined ? [] : ["--effects", effects]),
+          ...(receipt === undefined ? [] : ["--receipt", receipt]),
           ...(store === undefined ? [] : ["--store", store]),
         ]);
         if (result.code !== 0) throw new Error(toolError(result.code, result.stderr));

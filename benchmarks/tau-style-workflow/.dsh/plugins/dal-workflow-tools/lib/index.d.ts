@@ -10,8 +10,10 @@ import type { Context } from "@deepseek-ai/cordis";
 export declare const name = "dal-workflow-tools";
 export declare const inject: string[];
 export interface Config {
-    /** Absolute directory for the mock service state and effect log. */
-    stateRoot: string;
+    /** Local-only development mode: absolute directory for the service journal. */
+    stateRoot?: string;
+    /** Isolated mode: typed endpoint owned by the separate service container. */
+    serviceUrl?: string;
     /** Simulated outcomes per effect kind; default all success. */
     faults?: Partial<Record<"issue_refund" | "create_return_label" | "change_booking" | "refuse_request", "success" | "definite_failure" | "unknown">>;
     /** Resolution of unknown outcomes on status query, per effect kind. */

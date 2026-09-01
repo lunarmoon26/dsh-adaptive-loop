@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -8,12 +8,15 @@ import { describe, expect, it } from "vitest";
 import { recordBranch, evaluateBranch } from "../src/branch.js";
 import { validateExecutionReceipt } from "../src/execution-receipt.js";
 import { sha256 } from "../src/json.js";
-import { gradeTask, stableJson, type WorkflowTask } from "../src/workflow-grader.js";
+import { gradeTask, parseWorkflowEffectLog, stableJson, type WorkflowTask } from "../src/workflow-grader.js";
 
 const repoRoot = resolve(import.meta.dirname, "..");
 const workspace = resolve(repoRoot, "benchmarks", "tau-style-workflow");
 const taskPath = resolve(workspace, "tasks", "task-001-refund.json");
 const statePath = resolve(workspace, "dal", "fixtures", "result-pass.json");
+const refusalTaskPath = resolve(workspace, "tasks", "task-003-policy-refusal.json");
+const refusalStatePath = resolve(workspace, "dal", "fixtures", "result-refusal.json");
+const refusalEffectsPath = resolve(workspace, "dal", "fixtures", "effects-refusal.jsonl");
 
 async function setupBranch(store: string): Promise<string> {
   const draftPath = join(store, "draft.json");
@@ -64,6 +67,14 @@ async function receiptFor(store: string, afterSha: string, overrides: Partial<Re
     external_state_after_sha256: afterSha,
     grader_receipt_sha256: sha256(stableJson(verdict)),
     source: "repo://benchmarks/tau-style-workflow/grader/grade.ts",
+    isolation: {
+      topology: "candidate-service-grader-v1",
+      candidate_workspace_sha256: "5".repeat(64),
+      candidate_workspace_read_only: true,
+      candidate_repository_mounted: false,
+      service_state_access: "typed-endpoint-only",
+      oracle_access: "grader-only",
+    },
     business_outcome: { status: "passed", source: "repo://benchmarks/tau-style-workflow/grader/grade.ts", score: 1, earned: 3, total: 3 },
     ...overrides,
   };
@@ -80,6 +91,11 @@ describe("execution receipts (audit P0-2)", () => {
     await expect(validateExecutionReceipt(receipt)).resolves.toBeDefined();
     const broken = { ...(receipt as Record<string, unknown>), external_state_after_sha256: "zz" };
     await expect(validateExecutionReceipt(broken)).rejects.toMatchObject({ code: "SCHEMA_VALIDATION_FAILED" });
+    const invalidIsolation = {
+      ...(receipt as Record<string, unknown>),
+      isolation: { ...((receipt as Record<string, unknown>).isolation as object), candidate_repository_mounted: true },
+    };
+    await expect(validateExecutionReceipt(invalidIsolation)).rejects.toMatchObject({ code: "SCHEMA_VALIDATION_FAILED" });
   });
 
   it("binds branch evaluations to the receipt's external state", async () => {
@@ -121,5 +137,36 @@ describe("execution receipts (audit P0-2)", () => {
     const result = await evaluateBranch({ branchId, taskPath, candidateStatePath: statePath, store });
     expect(result.evaluation.provenance_valid).toBe(false);
     expect(result.evaluation.receipt_id).toBeNull();
+  });
+
+  it("requires and receipt-binds effect evidence for refusal-task branch evaluations", async () => {
+    const store = await mkdtemp(join(tmpdir(), "dal-receipt-"));
+    const branchId = await setupBranch(store);
+    const task = JSON.parse(await readFile(refusalTaskPath, "utf8")) as WorkflowTask;
+    const stateRaw = await readFile(refusalStatePath, "utf8");
+    const state = JSON.parse(stateRaw) as unknown;
+    const effectsRaw = await readFile(refusalEffectsPath, "utf8");
+    const verdict = gradeTask(task, state, parseWorkflowEffectLog(effectsRaw));
+    expect(verdict.pass).toBe(true);
+    const receiptPath = await receiptFor(store, sha256(stateRaw), {
+      task_handle: task.task_id,
+      business_effect_log_head_sha256: sha256(effectsRaw),
+      grader_receipt_sha256: sha256(stableJson(verdict)),
+    });
+
+    const bound = await evaluateBranch({
+      branchId,
+      taskPath: refusalTaskPath,
+      candidateStatePath: refusalStatePath,
+      effectLogPath: refusalEffectsPath,
+      store,
+      receiptPath,
+    });
+    expect(bound.evaluation).toMatchObject({ passed: true, provenance_valid: true });
+    expect(bound.evaluation.effect_log_sha256).toBe(sha256(effectsRaw));
+
+    await expect(
+      evaluateBranch({ branchId, taskPath: refusalTaskPath, candidateStatePath: refusalStatePath, store, receiptPath }),
+    ).rejects.toMatchObject({ code: "BRANCH_RECEIPT_MISMATCH" });
   });
 });

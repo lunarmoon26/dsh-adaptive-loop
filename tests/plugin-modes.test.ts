@@ -265,6 +265,9 @@ describe("mode bundle manifest", () => {
     expect(patch).toContain("id: dal-run-record");
     expect(patch).toContain("name: '@lunarmoon26/dal-run-record'");
     expect(patch).toContain("id: dal-improve-tools");
+    expect(patch).toContain("id: dal-unknown-effect-guard");
+    expect(patch).toContain("name: '@lunarmoon26/dal-unknown-effect-guard'");
+    expect(patch.match(/disabled: true/g)).toHaveLength(2);
     expect(patch).toContain("disabled: true");
   });
 

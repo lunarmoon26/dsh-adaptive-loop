@@ -10,7 +10,9 @@ container so the host's dsh installation, profiles, `~/.dsh/AGENTS.md`, and
 
 ```sh
 pnpm run build   # dist/ must exist before the image build
-docker build -f deploy/docker/Dockerfile -t dsh-adaptive-loop/dsh:0.1.1-rc.2 .
+docker build -f deploy/docker/Dockerfile \
+  -t dsh-adaptive-loop/dsh:0.1.1-rc.2 \
+  -t dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 .
 ```
 
 The image pins `@deepseek-ai/dsh@0.1.1-rc.2` and `pnpm@11.7.0` on
@@ -19,17 +21,25 @@ The image pins `@deepseek-ai/dsh@0.1.1-rc.2` and `pnpm@11.7.0` on
 node_modules. Supply-chain rule: before sharing the image, pin the base image
 digest and record the image's own digest in the deployment evidence.
 
-Demo image (2026-08-31, bakes the benchmark workflow-tools plugin with the
-strategy-neutral tool descriptions and `resolutions` config):
-`dsh-adaptive-loop/dsh:0.1.1-rc.2-demo`, image id
-`sha256:2fca609a5f11bbc732167c419a378c9fa92be43fb755d1ca4a13606df28fa933`
-(sandbox probe re-run after the rebuild: `landlock-run`, enforcement full).
-The e2e driver's approval manifest and receipts digest the workflow-tools
-bytes *inside* this image, so rebuilding the image invalidates every prior
-batch decision.
+The benchmark-v2 tag bakes the typed workflow client/service and the remote
+grader entry point. The e2e approval manifest and receipts digest the image
+and workflow-tools bytes *inside* it, so rebuilding the image invalidates
+every prior batch decision. Record the new digest and rerun the sandbox and
+topology probes after each rebuild. Current local build (2026-09-01):
+`dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2`, image id
+`sha256:1adcf95dedf922eaf182fefee0d4ddcaf90fed00eaa2eb947bfe99f7f97f64d9`.
+The service/grader topology probe and Linux sandbox probes passed for this
+image; the verifier reported `landlock-run` with full enforcement, and the
+out-of-workspace write probe was denied by the backend. The in-image
+workflow-tools tree digest is
+`7e6ea2a4a1ce8f9a688472e8209da11fd1e347b10e62e3357c00fbc46b212905`.
+The local plugin installation in this build was authorized by
+`dec-dal-workflow-tools-image-20260901` for the exact source digest and
+isolated-image scope; it did not install or mount a host profile.
 
-Probe-verified base image (2026-08-29, this workspace):
-`sha256:9e3cb523c1f90a44e49dcb49e60f84764cf4b5c113c210e0e97534dfa63b35ea`.
+Resolved `node:24-slim` parent manifest for this local build:
+`sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e`.
+The Dockerfile tag remains mutable; pin that digest before sharing the image.
 
 ## Sandbox probe (run after every image rebuild)
 
@@ -52,11 +62,11 @@ Denial probe:
 
 ```sh
 pnpm dal verify run --runner docker \
-  --action benchmarks/tau-style-workflow/dal/fixtures/verifier-write.json \
-  --command "sh -c 'echo x > /tmp/outside.txt'"
+  --action benchmarks/tau-style-workflow/dal/fixtures/verifier-grader.json \
+  --command "sh -c 'echo x > /root/dal-exec-denied.txt'"
 ```
 
-Expected: rejected in the backend's own denial dialect (exit non-zero).
+Expected: exit non-zero with the backend's own permission-denied dialect.
 
 Note: in-container commands must reference the image's own node_modules —
 `/opt/dal/node_modules/.bin/tsx` — because `/workspace/node_modules` is the
@@ -78,19 +88,51 @@ never in VCS or the image. The host environment wins over `.env`.
 
 ## E2E batch driver (tau-style workflow)
 
-`pnpm benchmark:e2e` runs approval-bound pass@k batches against the demo
-image directly (not through the dal policy runner), so it manages its own
-container contract:
+`pnpm benchmark:e2e` runs approval-bound pass@k batches against the
+benchmark-v2 image directly (not through the dal policy runner), so it
+manages its own container contract:
 
 - it passes exactly the selected provider's credential env (`.env.example`
   lists all five) and fails closed before any call when the key is missing;
-- each attempt gets a batch-local `DSH_HOME` bind mount, and the receipt
-  records the real `dsh_session_id` + session event-log head digest plus the
-  business effect-log digest (`business_effect_log_head_sha256`);
+- the candidate network allows provider egress and is not destination-
+  allowlisted; use a dedicated short-lived key and do not treat oracle
+  isolation as credential-egress confinement;
+- each attempt stages only the agent-visible task, policy, candidate skill,
+  and exact composition patch into a read-only candidate workspace; the
+  repository, goal state, grader source, journal, and receipts are not mounted;
+- a separate service container owns the writable checksummed effect journal
+  and exposes only typed workflow endpoints to the candidate; a grader-only
+  internal network exposes an authenticated evaluator snapshot to a third
+  container that mounts only the full task;
+- each attempt gets its own writable `DSH_HOME`; the receipt records the real
+  dsh session/event-log head, journal digest, staged-workspace digest, image
+  digest, and explicit `candidate-service-grader-v1` isolation facts;
 - `--attempts N`, `--compare <summary>`, `--generation`, `--faults`, and
   `--resolutions` shape the run; see
   [`benchmarks/tau-style-workflow/PROVIDERS.md`](../../benchmarks/tau-style-workflow/PROVIDERS.md)
   for the multi-provider matrix and the transmission-manifest decision flow;
-- on a docker transport failure it kills lingering containers, reseeds the
-  per-batch service state, relaunches Docker Desktop when the daemon is
-  down, and retries the attempt once.
+- on a docker transport failure it removes the attempt's named containers,
+  atomically reseeds the journal, relaunches Docker Desktop when the daemon is
+  down, and retries the candidate once; final cleanup removes both networks;
+- `--runner local` is rejected because it cannot prove oracle isolation.
+
+The approval manifest binds rollout count, projected and full task digests,
+driver source, and the immutable image identity. After verification it is
+stored under `.dal/check/e2e-manifests/`, rehashed before each model call, and
+bound into every receipt; service, candidate, and grader containers launch by
+its image digest, not by the mutable tag. Summaries carry candidate, generation,
+manifest, persisted run-record, and frozen benchmark-context digests so the
+compare gate can reject reused evidence, inconsistent counters, benchmark
+drift, hand-authored attribution, and model+harness confounding.
+Only `g0` and `g1` labels are accepted while G2 remains unmounted source.
+
+Run the no-model topology probe after rebuilding:
+
+```sh
+CI=true DAL_E2E_TOPOLOGY_PROBE=1 pnpm exec vitest run tests/e2e-topology.test.ts
+```
+
+It starts the service on two isolated networks, performs typed effects from a
+candidate-network container, and grades the authenticated snapshot from a
+grader-network container. It does not invoke a model or exercise the full dsh
+candidate loop.

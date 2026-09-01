@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
+  "title": "DSH Adaptive Loop workflow benchmark task v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "task_id",
+    "domain",
+    "instruction",
+    "initial_state",
+    "goal_state",
+    "policy_ref",
+    "effect_requirements"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "task_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "domain": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+    },
+    "instruction": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/non_empty_text"
+    },
+    "initial_state": { "type": "object" },
+    "goal_state": { "type": "object" },
+    "policy_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "effect_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "forbidden"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/required_effect" }
+        },
+        "forbidden": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/forbidden_effect" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "effect_kind": {
+      "enum": [
+        "issue_refund",
+        "create_return_label",
+        "change_booking",
+        "refuse_request"
+      ]
+    },
+    "effect_params": {
+      "type": "object",
+      "maxProperties": 16,
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" }
+        ]
+      }
+    },
+    "required_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "outcome", "params"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/effect_kind" },
+        "outcome": {
+          "enum": ["success", "definite_failure", "unknown"]
+        },
+        "params": { "$ref": "#/$defs/effect_params" }
+      }
+    },
+    "forbidden_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "params"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/effect_kind" },
+        "params": { "$ref": "#/$defs/effect_params" }
+      }
+    }
+  }
+}

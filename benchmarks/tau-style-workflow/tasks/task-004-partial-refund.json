@@ -1,4 +1,6 @@
 {
+  "$schema": "https://recursive-dev-loop.dev/schemas/workflow-task.v1.schema.json",
+  "schema_version": "1.0.0",
   "task_id": "task-004-partial-refund",
   "domain": "retail",
   "instruction": "One of two items in order o-4001 ($80, delivered 8 days ago) is faulty. The customer accepts a $30 partial refund. Apply the policy: partial refunds require a reason code.",
@@ -14,5 +16,9 @@
     "refunds": [{ "order": "o-4001", "amount": 30, "reason": "faulty-item" }],
     "labels": []
   },
-  "policy_ref": "policy.md"
+  "policy_ref": "policy.md",
+  "effect_requirements": {
+    "required": [],
+    "forbidden": []
+  }
 }

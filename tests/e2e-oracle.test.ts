@@ -9,7 +9,7 @@ import { agentVisibleTask, type WorkflowTask } from "../src/workflow-grader.js";
 const workspace = resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow");
 
 describe("oracle isolation (audit P0-1)", () => {
-  it("keeps goal_state and policy_ref out of the agent-visible projection", async () => {
+  it("keeps goal_state, policy_ref, and effect requirements out of the agent-visible projection", async () => {
     const task = JSON.parse(
       await readFile(resolve(workspace, "tasks", "task-001-refund.json"), "utf8"),
     ) as WorkflowTask;
@@ -22,6 +22,7 @@ describe("oracle isolation (audit P0-1)", () => {
     });
     expect(JSON.stringify(visible)).not.toContain("goal_state");
     expect(JSON.stringify(visible)).not.toContain("policy_ref");
+    expect(JSON.stringify(visible)).not.toContain("effect_requirements");
   });
 
   it("keeps the e2e prompt free of evaluator-only references", () => {

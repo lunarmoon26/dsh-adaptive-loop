@@ -3,7 +3,12 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { aggregate, gradeTask, type WorkflowTask } from "../src/workflow-grader.js";
+import {
+  aggregate,
+  gradeTask,
+  type WorkflowEffectObservation,
+  type WorkflowTask,
+} from "../src/workflow-grader.js";
 
 const workspace = resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow");
 const readTask = async (name: string): Promise<WorkflowTask> =>
@@ -56,5 +61,58 @@ describe("weighted and gated grader contract", () => {
       { id: "d", pass: true, detail: "" },
     ]);
     expect(result).toEqual({ score: 5 / 8, earned: 5, total: 8 });
+  });
+});
+
+describe("evaluator-only effect contract", () => {
+  const refusal = (
+    overrides: Partial<WorkflowEffectObservation> = {},
+  ): WorkflowEffectObservation => ({
+    kind: "refuse_request",
+    outcome: "success",
+    params: {
+      kind: "refund",
+      target: "o-3001",
+      reason: "refund-window-expired",
+    },
+    ...overrides,
+  });
+
+  it("fails an unchanged refusal state when the required refusal is missing or has the wrong reason", async () => {
+    const task = await readTask("task-003-policy-refusal.json");
+    const state = await readState("result-refusal.json");
+    expect(gradeTask(task, state).pass).toBe(false);
+    expect(
+      gradeTask(task, state, [
+        refusal({
+          params: { kind: "refund", target: "o-3001", reason: "customer-requested" },
+        }),
+      ]).pass,
+    ).toBe(false);
+  });
+
+  it("passes only the matching refusal trajectory", async () => {
+    const task = await readTask("task-003-policy-refusal.json");
+    const state = await readState("result-refusal.json");
+    const verdict = gradeTask(task, state, [refusal()]);
+    expect(verdict.pass).toBe(true);
+    expect(verdict.checks.find((check) => check.id.includes("effect:required"))?.pass).toBe(true);
+    expect(verdict.effect_digest).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("rejects a forbidden effect attempt even when a matching refusal follows", async () => {
+    const task = await readTask("task-003-policy-refusal.json");
+    const state = await readState("result-refusal.json");
+    const effects: WorkflowEffectObservation[] = [
+      {
+        kind: "issue_refund",
+        outcome: "definite_failure",
+        params: { order_id: "o-3001", amount: 90, reason: "damaged" },
+      },
+      refusal(),
+    ];
+    const verdict = gradeTask(task, state, effects);
+    expect(verdict.pass).toBe(false);
+    expect(verdict.checks.find((check) => check.id.includes("effect:forbidden"))?.pass).toBe(false);
   });
 });

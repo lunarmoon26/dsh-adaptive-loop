@@ -12,8 +12,8 @@
     "dal": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json && tsc -p plugins/dal-run-record/tsconfig.json --noEmit && tsc -p plugins/dal-improve-tools/tsconfig.json --noEmit && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p plugins/dal-run-record/tsconfig.json --noEmit && tsc -p plugins/dal-improve-tools/tsconfig.json --noEmit && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json --noEmit && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "dal": "tsx src/cli.ts",
