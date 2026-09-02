@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.2.0",
+  "capsule_version": "1.3.0",
   "title": "DAL v0 safety and evidence contract",
-  "audience": "Agents and maintainers changing feedback, policy, evaluation, or approval behavior",
-  "checked_at": "2026-08-31",
-  "refresh_after": "2026-11-29",
+  "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, or controller-observation behavior",
+  "checked_at": "2026-09-02",
+  "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-v0-2026-08-31",
-      "sha256": "5b4bf8fba2d5e08ef088f17a8864df60a382f5fa31ee9ebe9335a6dd0582542d",
+      "revision": "dal-v0-2026-09-02",
+      "sha256": "fad804e160e67e51d9e63df2f07c889ac7fedb1f5482fc9c6fa31ba15a4993f1",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -77,6 +77,14 @@
         "src-dal-spec",
         "src-dal-governance",
         "src-dal-evaluation"
+      ]
+    },
+    {
+      "id": "claim-controller-observation",
+      "text": "Controller estimation publishes deterministic observation-only state from one compatible task batch and pinned harness generation; insufficient evidence cannot invoke adaptation or grant authority.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-governance"
       ]
     }
   ],

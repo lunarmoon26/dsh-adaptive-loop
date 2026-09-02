@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/reset-receipt.v1.schema.json",
+  "schema_version": "1.0.0",
+  "reset_id": "reset-23690aca-134b-415f-8e4a-562ed65bdd6c",
+  "action": "reset",
+  "repository": {
+    "root": "repo://dsh-adaptive-loop",
+    "revision": "c250ef3b38bc1dbd91055aafb5dd7e06a1815f47",
+    "branch": "feat/control-supervisor-foundation",
+    "dirty": false
+  },
+  "stores_digest": "6b36b318e9015dade240cde58ec10423d70b0aa87740ce373b99de04d8eb6307",
+  "removed": {
+    "total_files": 979,
+    "outbox": 66,
+    "store": 33,
+    "runs": 38,
+    "clusters": 2,
+    "other": 840
+  },
+  "reason": "Rebaseline after controller supervisor foundation branch cut.",
+  "actor": "workspace-user",
+  "created_at": "2026-09-02T08:42:02.261Z"
+}

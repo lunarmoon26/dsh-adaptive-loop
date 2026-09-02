@@ -28,6 +28,7 @@ describe("CLI", () => {
     expect(await runCli(["help"], captured.io)).toBe(0);
     expect(captured.stdout.join("")).toContain("dal policy check");
     expect(captured.stdout.join("")).toContain("dal eval run");
+    expect(captured.stdout.join("")).toContain("dal control estimate");
     expect(captured.stdout.join("")).toContain("dal reset execute");
     expect(captured.stdout.join("")).toContain("executes a requested action");
   });

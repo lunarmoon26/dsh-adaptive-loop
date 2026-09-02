@@ -1,8 +1,8 @@
 # Requirement Evidence
 
-Status: Repository and latest-image gates passed; completed artifact-refresh feedback validated and ingested
-Change: `chg-benchmark-integrity-g2-20260831`
-Evidence date: 2026-09-01
+Status: Controller observation focused gate passed; complete repository gate and task feedback pending
+Change: `chg-control-supervisor-foundation-20260902`
+Evidence date: 2026-09-02
 
 This matrix maps canonical requirements to executable or inspectable evidence. ‚ÄúPass‚Äù means the named evidence was observed in the current workspace; it does not imply model-backed benchmark quality or candidate promotion.
 
@@ -25,6 +25,7 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | DAL-020 container-hosted harness execution | `src/docker.ts`, `deploy/docker/`, Docker policy seams | `tests/docker.test.ts`; approved image build; live Landlock and denial probes | Pass |
 | DAL-021 SkillOpt-shaped optimizer adapter | `src/optimizer-adapter.ts`, optimizer schemas | `tests/optimizer-adapter.test.ts` | Pass |
 | DAL-022 benchmark measurement integrity | Workflow task/receipt/run schemas; grader/service/e2e driver; disabled G2 source | Grader, service, topology, receipt, summary, branch, clustering, and G2 tests | Pass |
+| DAL-023 run-to-run controller observation | Controller policy/state schemas; `src/control/`; CLI and evidence-store integration | `tests/controller.test.ts`, init/reset/CLI tests | Focused pass; full gate pending |
 
 ## DAL-022 acceptance closure
 
@@ -44,10 +45,24 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | G2 unknown-effect guard remains source-only and retains same-key locks until terminal evidence | Disabled bundle row and G2 unit tests | Pass |
 | Current source is rebuilt into the benchmark image and re-probed | `dec-dal-workflow-tools-image-20260901`; image identity plus live topology/Landlock/denial probes | Pass |
 
+## DAL-023 acceptance closure
+
+| Criterion | Evidence | Result |
+| --- | --- | --- |
+| Controller state is separate from candidate proposal lifecycle | ADR 0004, focused contract, distinct schemas/store | Pass |
+| One estimate uses an exact task set, batch, context, and pinned generation | `src/control/estimator.ts`, mixed-context/generation tests | Pass |
+| Harness, business, and deterministic-check metrics have explicit denominators and exclusions | Controller policy/state schemas and fixture assertions | Pass |
+| Estimates include versioned two-sided 95% Wilson intervals | `dal-wilson-score-v1`, estimator and tamper tests | Pass |
+| Inadequate samples produce non-authorizing `insufficient_evidence` | Minimum-sample test | Pass |
+| Complete snapshot identity and estimate time are deterministic; identical publication is idempotent | State tamper and retry tests | Pass |
+| Existing persisted policy snapshots remain valid | Controller defaults stay outside `policy.v1`; guardrail CLI regression test | Pass |
+| Command performs no proposer, model, network, sandbox, budget, transition, application, promotion, or rollback action | Static boundary review and command implementation | Pass |
+
 ## Observed commands
 
 ```text
 CI=true pnpm run typecheck
+CI=true pnpm exec vitest run tests/controller.test.ts tests/init.test.ts tests/reset.test.ts tests/cli.test.ts
 CI=true pnpm exec vitest run tests/e2e-summary.test.ts tests/e2e-topology.test.ts tests/execution-receipt.test.ts tests/branch.test.ts
 pnpm dal capsule check capsules/dal-v0-contract.json
 pnpm dal capsule check capsules/dsh-adapter-boundary.json

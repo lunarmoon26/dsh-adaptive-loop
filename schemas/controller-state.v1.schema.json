@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/controller-state.v1.schema.json",
+  "title": "Recursive Development Loop controller state v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "state_id",
+    "estimated_at",
+    "task_class",
+    "policy",
+    "generation",
+    "measurement_context",
+    "observations",
+    "estimator",
+    "status",
+    "metrics"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/controller-state.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "state_id": {
+      "type": "string",
+      "pattern": "^ctlstate-[a-f0-9]{24}$"
+    },
+    "estimated_at": { "type": "string", "format": "date-time" },
+    "task_class": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_id", "sha256"],
+      "properties": {
+        "policy_id": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+        },
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "prompt_sha256", "harness_sha256", "model_patch_sha256", "harness_pins"],
+      "properties": {
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "prompt_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+          ]
+        },
+        "harness_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "model_patch_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+          ]
+        },
+        "harness_pins": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["surface", "uri", "sha256"],
+            "properties": {
+              "surface": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "uri": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+              },
+              "sha256": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    "measurement_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "task_set",
+        "environment_snapshot",
+        "tool_versions",
+        "model",
+        "grader_version",
+        "context_policy_sha256",
+        "inference_parameters"
+      ],
+      "properties": {
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "task_set": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+        },
+        "environment_snapshot": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "tool_versions": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "version"],
+            "properties": {
+              "name": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+              },
+              "version": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+              }
+            }
+          }
+        },
+        "model": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "version"],
+              "properties": {
+                "id": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+                },
+                "version": {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+                }
+              }
+            }
+          ]
+        },
+        "grader_version": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/semver" }
+          ]
+        },
+        "context_policy_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" }
+          ]
+        },
+        "inference_parameters": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "value"],
+            "properties": {
+              "name": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+              },
+              "value": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "input_set_sha256",
+        "run_count",
+        "first_started_at",
+        "last_finished_at",
+        "seeds",
+        "runs"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "input_set_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "run_count": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "first_started_at": { "type": "string", "format": "date-time" },
+        "last_finished_at": { "type": "string", "format": "date-time" },
+        "seeds": {
+          "type": "array",
+          "maxItems": 10000,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "runs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["run_id", "sha256"],
+            "properties": {
+              "run_id": {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 100,
+                "pattern": "^run-[a-z0-9][a-z0-9._-]+$"
+              },
+              "sha256": {
+                "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+              }
+            }
+          }
+        }
+      }
+    },
+    "estimator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "confidence_level"],
+      "properties": {
+        "id": { "const": "dal-wilson-score-v1" },
+        "confidence_level": { "const": 0.95 }
+      }
+    },
+    "status": { "enum": ["ready", "insufficient_evidence"] },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "metric_id",
+          "source",
+          "target",
+          "deadband",
+          "minimum_samples",
+          "successes",
+          "failures",
+          "excluded",
+          "sample_count",
+          "mean",
+          "ci_low",
+          "ci_high",
+          "sufficient_evidence"
+        ],
+        "properties": {
+          "metric_id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          },
+          "source": { "$ref": "#/$defs/metric_source" },
+          "target": { "type": "number", "minimum": 0, "maximum": 1 },
+          "deadband": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minimum_samples": { "type": "integer", "minimum": 1, "maximum": 10000 },
+          "successes": { "type": "integer", "minimum": 0 },
+          "failures": { "type": "integer", "minimum": 0 },
+          "excluded": { "type": "integer", "minimum": 0 },
+          "sample_count": { "type": "integer", "minimum": 0 },
+          "mean": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "ci_low": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "ci_high": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "sufficient_evidence": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metric_source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "harness_outcome" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "business_outcome" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "check_id"],
+          "properties": {
+            "kind": { "const": "check" },
+            "check_id": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

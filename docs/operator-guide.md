@@ -115,9 +115,25 @@ pnpm run dal cluster run --store .dal/runs --output .dal/clusters --batch e2e-20
 
 Cluster output feeds a later human-reviewed proposal; the clustering command itself changes nothing else.
 
+## Run-to-run controller observation
+
+After a complete batch is present in the run store, estimate its observation state with a reviewed controller policy:
+
+```sh
+pnpm run dal control estimate \
+  --policy tests/fixtures/controller/controller-policy.json \
+  --batch batch-control-001 \
+  --runs tests/fixtures/controller/runs \
+  --store .dal/demo-control
+```
+
+The policy fixes one logical task class, exact run `task_set`, estimator version, and explicit harness/business/check denominators. The command rejects mixed contexts, mixed generations, missing harness digests, duplicate identities, and ambiguous metric sources. It records successes, failures, excluded runs, sample count, mean, and a two-sided 95% Wilson interval. `insufficient_evidence` is a valid non-authorizing state; it is not permission to invoke a proposer or spend more budget.
+
+The estimate time derives from policy/run evidence and the state ID binds the complete canonical snapshot, so repeating the same command is idempotent. The command performs no model, network, branch-selection, sandbox, proposal-transition, candidate-application, promotion, or rollback operation. See [`control-governed-evolution.md`](control-governed-evolution.md) for the exact claim boundary.
+
 ## End-of-day reconcile
 
-Run phase needs nothing special: agents work and finish each task with a feedback record and, for failures, a run record. `.dal/outbox`, `.dal/store`, `.dal/runs`, and `.dal/clusters` are VCS-tracked, so pull first, then reconcile:
+Run phase needs nothing special: agents work and finish each task with a feedback record and, for failures, a run record. `.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, and `.dal/control-states` are VCS-tracked, so pull first, then reconcile:
 
 ```sh
 git pull

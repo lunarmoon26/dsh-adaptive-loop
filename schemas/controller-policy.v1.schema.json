@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/controller-policy.v1.schema.json",
+  "title": "Recursive Development Loop controller policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "policy_id",
+    "created_at",
+    "task_class",
+    "task_set",
+    "estimator",
+    "metrics"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/controller-policy.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "policy_id": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "task_class": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "task_set": {
+      "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "estimator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "confidence_level"],
+      "properties": {
+        "id": { "const": "dal-wilson-score-v1" },
+        "confidence_level": { "const": 0.95 }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["metric_id", "source", "target", "deadband", "minimum_samples"],
+        "properties": {
+          "metric_id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+          },
+          "source": { "$ref": "#/$defs/metric_source" },
+          "target": { "type": "number", "minimum": 0, "maximum": 1 },
+          "deadband": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minimum_samples": { "type": "integer", "minimum": 1, "maximum": 10000 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "metric_source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "harness_outcome" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "business_outcome" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "check_id"],
+          "properties": {
+            "kind": { "const": "check" },
+            "check_id": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
