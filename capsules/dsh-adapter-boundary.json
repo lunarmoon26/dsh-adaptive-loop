@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.2.0",
+  "capsule_version": "1.3.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-08-31",
-  "refresh_after": "2026-11-29",
+  "checked_at": "2026-09-02",
+  "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-v0-2026-08-31",
-      "sha256": "f25a602c61b541fbb18fd78e81679f5903e75046e884410cecac8996db2495d7",
+      "revision": "dal-v0-2026-09-02",
+      "sha256": "621c75657f6e5443283c64975682bbab673f5e3232e79663d2a809569bbb5560",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-v0-2026-08-31",
-      "sha256": "89b26ea36756e19560c3e34d408b6e430f9dd96648500c0b9466f15f64d1aee1",
+      "revision": "dal-v0-2026-09-02",
+      "sha256": "ea42b4d60cec6198031b9ff9874f10515132c5c9ce446c8753bc923599f1aa25",
       "local_path": "../ROADMAP.md",
       "required": true
     }
@@ -93,6 +93,14 @@
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research"
+      ]
+    },
+    {
+      "id": "claim-controller-boundary",
+      "text": "The run-to-run controller foundation is an offline observation subsystem separate from proposal lifecycle; PI governance, response learning, predictive selection, canary, and rollback control remain future work.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-roadmap"
       ]
     }
   ],

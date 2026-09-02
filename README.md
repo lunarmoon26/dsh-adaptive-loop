@@ -4,7 +4,7 @@
 
 `dal` is a local, human-governed evidence and improvement loop for **closed-loop, repetitive agent workflows** — task classes with bounded objectives, observable state transitions, and deterministic graders (customer-service-style workflows, ops routines, benchmarkable business processes). Open-ended creative coding is an open-loop problem and is explicitly out of scope for improvement claims: with no bounded objective to evaluate against, dal makes no recursive-self-improvement claim there.
 
-Version 0 validates structured task feedback, stores immutable local records, evaluates non-executing capability requests, runs pinned offline safety/regression suites, clusters failures deterministically, seals a holdout, produces governed model proposal drafts, searches candidate branches with UCB1, executes confined deterministic verifiers, and records human-controlled proposal state.
+Version 0 validates structured task feedback, stores immutable local records, evaluates non-executing capability requests, runs pinned offline safety/regression suites, clusters failures deterministically, estimates observation-only run-to-run controller state, seals a holdout, produces governed model proposal drafts, searches candidate branches with UCB1, executes confined deterministic verifiers, and records human-controlled proposal state.
 
 It does **not** invoke an LLM or optimizer outside the approval-bound proposer, execute a requested action unconfined, install a plugin, change dsh configuration without an approved decision, or apply a candidate.
 
@@ -28,11 +28,13 @@ pnpm run dal feedback ingest tests/fixtures/feedback/completed.json --store .dal
 pnpm run dal feedback summary --store .dal/demo-feedback --format json
 pnpm run dal policy check tests/fixtures/guardrail/allowed-read.json --store .dal/demo-guardrail
 pnpm run dal eval run tests/fixtures/evaluation/v0-suite.json --store .dal/demo-evaluations
+pnpm run dal control estimate --policy tests/fixtures/controller/controller-policy.json \
+  --batch batch-control-001 --runs tests/fixtures/controller/runs --store .dal/demo-control
 pnpm run dal capsule check capsules
 pnpm run check
 ```
 
-Expected results: the feedback, local-read policy decision, capsules, and evaluation suite pass; ingestion creates one immutable record; summary reports one completed record. Repeating identical feedback or policy ingestion is idempotent. All commands run locally.
+Expected results: the feedback, local-read policy decision, capsules, and evaluation suite pass; ingestion creates one immutable record; summary reports one completed record; controller estimation publishes one `ready` state. Repeating identical feedback, policy, or controller-state publication is idempotent. All commands run locally.
 
 ## Commands
 
@@ -48,6 +50,7 @@ Expected results: the feedback, local-read policy decision, capsules, and evalua
 | `dal eval run <suite-file> ...` | Run pinned local fixtures and publish a machine-readable scorecard |
 | `dal run ingest <file> [--store <dir>]` | Validate and immutably store one run record with failure facts and pinned context |
 | `dal cluster run [--store <dir>] [--output <dir>] [--batch <id>]` | Deterministically cluster failed runs by canonical failure fingerprint, bound to the run batch |
+| `dal control estimate --policy <file> --batch <id> ...` | Estimate an immutable observation-only state from one compatible run batch with explicit Wilson intervals and exclusions (DAL-023) |
 | `dal install user-global --approval <decision-file>` | Approval-verified automated install of the skill and global AGENTS.md |
 | `dal seal init/verify/reveal` | One-shot sealed-holdout commitment with Merkle drift detection |
 | `dal saga begin/complete/status/list` | Exactly-once effect intents and receipts for crash-resume |
@@ -93,6 +96,7 @@ pnpm run dal improvement transition tests/fixtures/proposals/proposed-hard-stop.
 - Approval and privacy policy: [`docs/governance.md`](docs/governance.md)
 - Operator procedures: [`docs/operator-guide.md`](docs/operator-guide.md)
 - Requirement proof: [`docs/requirement-evidence.md`](docs/requirement-evidence.md)
+- Controller contract and research boundary: [`docs/control-governed-evolution.md`](docs/control-governed-evolution.md)
 - Future-only work: [`ROADMAP.md`](ROADMAP.md)
 
 Local generated evidence lives under `.dal/` and is not source control. Hard-stop scorecards in the policy-configured evaluation store quarantine the matching digest; rollback and release remain manual human procedures.
@@ -108,11 +112,11 @@ dal init                             # inside any workspace: stores, skill, inst
 
 ## Self-improvement boundary
 
-Improvement proposals may change only the editable surfaces (`prompt`, `tool_descriptions`, `skills`, `memory_policy`, `routing`, `stop_retry_logic`, `harness_code`) and must carry a falsifiable prediction from the `proposed` stage. The immutable anchors (`evaluator`, `sealed_holdout`, `permissions`, `maximum_budget`, `promotion_policy`, `audit_log`, `rollback_mechanism`) are never proposal targets. Run records, deterministic failure clustering, and disabled source candidates feed the loop; model-based clustering and autonomous candidate application remain future work.
+Improvement proposals may change only the editable surfaces (`prompt`, `tool_descriptions`, `skills`, `memory_policy`, `routing`, `stop_retry_logic`, `harness_code`) and must carry a falsifiable prediction from the `proposed` stage. The immutable anchors (`evaluator`, `sealed_holdout`, `permissions`, `maximum_budget`, `promotion_policy`, `audit_log`, `rollback_mechanism`) are never proposal targets. Run records, deterministic failure clustering, observation-only controller states, and disabled source candidates feed the loop; PI governance, response learning, predictive selection, model-based clustering, and autonomous candidate application remain future work.
 
 ## How it is meant to be used
 
-Agents work normally during the day; each task ends with a structured feedback record and, on failure, a run record. Those records live in VCS-tracked stores (`.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`). At the end of the day one human reconciles: pull, summarize, cluster failures, review, drive proposals through the staged lifecycle, and apply changes by committing them — dal itself applies nothing. See the operator guide for the exact runbook.
+Agents work normally during the day; each task ends with a structured feedback record and, on failure, a run record. Those records and derived controller observations live in VCS-tracked stores (`.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, `.dal/control-states`). At the end of the day one human reconciles: pull, summarize, cluster failures, estimate state when a reviewed controller policy exists, review, drive proposals through the staged lifecycle, and apply changes by committing them — dal itself applies nothing. See the operator guide for the exact runbook.
 
 ## Benchmark workspace
 

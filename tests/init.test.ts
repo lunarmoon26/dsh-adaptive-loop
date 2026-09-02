@@ -25,7 +25,7 @@ describe("workspace initialization", () => {
     const root = await mkdtemp(join(tmpdir(), "dal-init-"));
     const result = await initWorkspace({ dir: root });
     expect(result.status).toBe("initialized");
-    for (const directory of [".dal/outbox", ".dal/store", ".dal/runs", ".dal/clusters"]) {
+    for (const directory of [".dal/outbox", ".dal/store", ".dal/runs", ".dal/clusters", ".dal/control-states"]) {
       await access(join(root, directory));
     }
     const skill = await readFile(join(root, ".agents", "skills", "end-task-feedback", "SKILL.md"), "utf8");
@@ -34,6 +34,7 @@ describe("workspace initialization", () => {
     expect(agents).toContain("dal agent instructions");
     const gitignore = await readFile(join(root, ".gitignore"), "utf8");
     expect(gitignore).toContain("!.dal/outbox/");
+    expect(gitignore).toContain("!.dal/control-states/");
   });
 
   it("never overwrites existing workspace files", async () => {

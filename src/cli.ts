@@ -10,6 +10,7 @@ import { admissionStatus, completeAdmission, issueAdmission } from "./admission.
 import { branchStats, evaluateBranch, recordBranch, selectBranchUcb } from "./branch.js";
 import { checkCapsulePath } from "./capsule.js";
 import { clusterRunRecords } from "./clustering.js";
+import { estimateControllerState } from "./control/index.js";
 import { DalError } from "./errors.js";
 import { runEvaluationSuite } from "./evaluation.js";
 import { runVerifier } from "./executor.js";
@@ -78,7 +79,12 @@ export async function runCli(argv: readonly string[], io: CliIo = defaultIo): Pr
 
 async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
   if (argv.length === 0 || argv[0] === "help" || argv[0] === "--help" || argv[0] === "-h") {
-    io.stdout(HELP);
+    io.stdout(
+      HELP.replace(
+        "  dal init [--dir <directory>] [--skill <name>]",
+        "  dal control estimate --policy <controller-policy> --batch <batch-id> [--runs <directory>] [--store <directory>]\n  dal init [--dir <directory>] [--skill <name>]",
+      ),
+    );
     return;
   }
 
@@ -121,6 +127,10 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
   }
   if (group === "cluster" && action === "run") {
     await clusterRun(rest, io);
+    return;
+  }
+  if (group === "control" && action === "estimate") {
+    await controlEstimate(rest, io);
     return;
   }
   if (group === "improvement" && action === "transition") {
@@ -427,6 +437,37 @@ async function clusterRun(argv: readonly string[], io: CliIo): Promise<void> {
   for (const cluster of clusters) {
     io.stdout(`cluster\t${cluster.cluster_id}\t${cluster.member_count}\t${cluster.status}\n`);
   }
+}
+
+async function controlEstimate(argv: readonly string[], io: CliIo): Promise<void> {
+  const parsed = parseArguments(argv);
+  assertOptions(parsed, ["policy", "batch", "runs", "store"]);
+  exactlyPositionals(
+    parsed,
+    0,
+    "control estimate --policy <controller-policy> --batch <batch-id> [--runs <directory>] [--store <directory>]",
+  );
+  const options: Parameters<typeof estimateControllerState>[0] = {
+    policyPath: requiredOption(parsed, "policy"),
+    batchId: requiredOption(parsed, "batch"),
+  };
+  const runs = oneOption(parsed, "runs");
+  const store = oneOption(parsed, "store");
+  if (runs !== undefined) options.runs = runs;
+  if (store !== undefined) options.store = store;
+  const result = await estimateControllerState(options);
+  printJson(io, {
+    status: result.status,
+    controller_status: result.state.status,
+    state_id: result.state.state_id,
+    task_class: result.state.task_class,
+    batch_id: result.state.observations.batch_id,
+    generation_sha256: result.state.generation.sha256,
+    measurement_context_sha256: result.state.measurement_context.sha256,
+    metrics: result.state.metrics,
+    state_sha256: result.state_sha256,
+    record_path: displayPath(result.path),
+  });
 }
 
 async function initCommand(argv: readonly string[], io: CliIo): Promise<void> {

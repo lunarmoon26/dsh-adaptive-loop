@@ -1,0 +1,64 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  "schema_version": "1.0.0",
+  "run_id": "run-control-business-fail-001",
+  "task_id": "refund-identity-fail",
+  "change_id": "chg-controller-fixture",
+  "started_at": "2026-09-02T00:02:00.000Z",
+  "finished_at": "2026-09-02T00:02:12.000Z",
+  "outcome": "succeeded",
+  "failure": null,
+  "context": {
+    "task_set": "tau-control",
+    "environment_snapshot": "local-node24-linux",
+    "tool_versions": [
+      { "name": "node", "version": "24.19.0" },
+      { "name": "dal", "version": "0.1.0" }
+    ],
+    "model": { "id": "deepseek-v4-pro", "version": "2026-08" },
+    "prompt_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "harness_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "grader_version": "2.0.0",
+    "seeds": [102],
+    "context_policy_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "inference_parameters": [{ "name": "temperature", "value": "0" }],
+    "harness_pins": [
+      {
+        "surface": "skills",
+        "uri": "repo://benchmarks/tau-style-workflow/candidate-skill.md",
+        "sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+      }
+    ],
+    "model_patch_sha256": null
+  },
+  "artifacts": [],
+  "metrics": { "duration_ms": 12000, "tool_calls": 4 },
+  "evidence": [],
+  "checks": [
+    {
+      "id": "identity-check",
+      "pass": false,
+      "detail": "Identity evidence did not satisfy the deterministic requirement.",
+      "goal_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "actual_sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+    },
+    {
+      "id": "policy-check",
+      "pass": true,
+      "detail": null,
+      "goal_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "actual_sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+    }
+  ],
+  "batch_id": "batch-control-001",
+  "business_outcome": {
+    "status": "failed",
+    "source": "repo://tests/fixtures/controller/verdicts/business-fail.json",
+    "score": 0.5
+  },
+  "privacy": {
+    "classification": "internal",
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

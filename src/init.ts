@@ -9,13 +9,20 @@ export interface InitResult {
   next_steps: string[];
 }
 
-export const EVIDENCE_DIRECTORIES = [".dal/outbox", ".dal/store", ".dal/runs", ".dal/clusters"] as const;
+export const EVIDENCE_DIRECTORIES = [
+  ".dal/outbox",
+  ".dal/store",
+  ".dal/runs",
+  ".dal/clusters",
+  ".dal/control-states",
+] as const;
 
 export const EVIDENCE_GITIGNORE = `.dal/*
 !.dal/outbox/
 !.dal/store/
 !.dal/runs/
 !.dal/clusters/
+!.dal/control-states/
 !.dal/resets/
 `;
 

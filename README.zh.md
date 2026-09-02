@@ -2,7 +2,7 @@
 
 `dal` 是一个本地、由人治理的证据与自我改进循环，面向**闭环、重复性的智能体工作流**——目标有界、状态迁移可观测、评分器确定性的任务类别（客服类工作流、运维例行流程、可基准化的业务流程）。开放式创作型编程属于开环问题，明确排除在改进声明之外：没有可评估的有界目标，dal 就不对其做任何递归自我改进声明。
 
-版本 0 会验证结构化任务反馈、存储不可变的本地记录、评估不执行的权限请求、运行钉住的离线安全/回归套件、确定性聚类失败、封存留出集（holdout）、产出受治理的模型提案草稿、用 UCB1 搜索候选分支、在受限环境执行确定性校验器，并记录由人控制的提案状态。
+版本 0 会验证结构化任务反馈、存储不可变的本地记录、评估不执行的权限请求、运行钉住的离线安全/回归套件、确定性聚类失败、估计仅观测的 Run-to-Run controller state、封存留出集（holdout）、产出受治理的模型提案草稿、用 UCB1 搜索候选分支、在受限环境执行确定性校验器，并记录由人控制的提案状态。
 
 它**不会**在受审批约束的提案器之外调用 LLM 或优化器，不会无约束地执行所请求的操作，不会安装插件，不会在未经批准的决策下修改 dsh 配置，也不会应用任何候选变更。
 
@@ -26,11 +26,13 @@ pnpm run dal feedback ingest tests/fixtures/feedback/completed.json --store .dal
 pnpm run dal feedback summary --store .dal/demo-feedback --format json
 pnpm run dal policy check tests/fixtures/guardrail/allowed-read.json --store .dal/demo-guardrail
 pnpm run dal eval run tests/fixtures/evaluation/v0-suite.json --store .dal/demo-evaluations
+pnpm run dal control estimate --policy tests/fixtures/controller/controller-policy.json \
+  --batch batch-control-001 --runs tests/fixtures/controller/runs --store .dal/demo-control
 pnpm run dal capsule check capsules
 pnpm run check
 ```
 
-预期结果：反馈、本地读取的策略决策、知识胶囊与评估套件全部通过；摄取会生成一条不可变记录；摘要报告一条已完成记录。重复提交相同的反馈或策略摄取是幂等的。所有命令都在本地运行。
+预期结果：反馈、本地读取的策略决策、知识胶囊与评估套件全部通过；摄取会生成一条不可变记录；摘要报告一条已完成记录；controller estimation 发布一条 `ready` 状态。重复发布相同的反馈、策略或 controller state 是幂等的。所有命令都在本地运行。
 
 ## 命令
 
@@ -45,7 +47,8 @@ pnpm run check
 | `dal policy check <action-file> ...` | 记录一次确定性策略决策；不执行任何操作 |
 | `dal eval run <suite-file> ...` | 运行钉住的本地夹具并发布机器可读的记分卡 |
 | `dal run ingest <file> [--store <dir>]` | 校验并不可变地存储一条带失败事实与钉住上下文的运行记录 |
-| `dal cluster run [--store <dir>] [--output <dir>]` | 按规范失败指纹确定性聚类失败的运行 |
+| `dal cluster run [--store <dir>] [--output <dir>] [--batch <id>]` | 按规范失败指纹确定性聚类失败的运行，并绑定到运行批次 |
+| `dal control estimate --policy <file> --batch <id> ...` | 从一个兼容运行批次估计带 Wilson 区间和显式排除项的不可变、仅观测状态（DAL-023） |
 | `dal install user-global --approval <decision-file>` | 经审批校验的自动化安装：技能与全局 AGENTS.md |
 | `dal seal init/verify/reveal` | 一次性封存留出集承诺，带 Merkle 漂移检测 |
 | `dal saga begin/complete/status/list` | 恰好一次的效果意图与回执，支持崩溃恢复 |
@@ -91,6 +94,7 @@ pnpm run dal improvement transition tests/fixtures/proposals/proposed-hard-stop.
 - 审批与隐私策略：[`docs/governance.md`](docs/governance.md)
 - 运维流程：[`docs/operator-guide.md`](docs/operator-guide.md)
 - 需求证明：[`docs/requirement-evidence.md`](docs/requirement-evidence.md)
+- Controller 契约与研究声明边界：[`docs/control-governed-evolution.md`](docs/control-governed-evolution.md)
 - 仅限未来的工作：[`ROADMAP.md`](ROADMAP.md)
 
 本地生成的证据位于 `.dal/` 下，不纳入源码控制。策略配置的评估存储中的硬停止记分卡会隔离匹配的摘要；回滚与发布仍是人工流程。
@@ -106,11 +110,11 @@ dal init                             # 在任意工作区内：存储、技能�
 
 ## 自我改进边界
 
-改进提案只能修改可编辑表面（`prompt`、`tool_descriptions`、`skills`、`memory_policy`、`routing`、`stop_retry_logic`、`harness_code`），且自 `proposed` 阶段起必须携带可证伪的预测。不可变锚点（`evaluator`、`sealed_holdout`、`permissions`、`maximum_budget`、`promotion_policy`、`audit_log`、`rollback_mechanism`）永远不是提案目标。运行记录、确定性失败聚类和默认关闭的源码候选项为循环供料；基于模型的聚类与自主应用候选项仍属未来工作。
+改进提案只能修改可编辑表面（`prompt`、`tool_descriptions`、`skills`、`memory_policy`、`routing`、`stop_retry_logic`、`harness_code`），且自 `proposed` 阶段起必须携带可证伪的预测。不可变锚点（`evaluator`、`sealed_holdout`、`permissions`、`maximum_budget`、`promotion_policy`、`audit_log`、`rollback_mechanism`）永远不是提案目标。运行记录、确定性失败聚类、仅观测 controller state 和默认关闭的源码候选项为循环供料；PI governor、response model、predictive selection、基于模型的聚类与自主应用候选项仍属未来工作。
 
 ## 预期的使用方式
 
-智能体白天正常工作；每个任务以一条结构化反馈记录收尾，失败时再加一条运行记录。这些记录存放在受 VCS 跟踪的存储中（`.dal/outbox`、`.dal/store`、`.dal/runs`、`.dal/clusters`）。收工时由一位人负责对账：拉取、汇总、聚类失败、评审、推动提案走完分阶段生命周期，并以提交的方式应用变更——dal 自身不应用任何东西。精确运行手册见运维指南。
+智能体白天正常工作；每个任务以一条结构化反馈记录收尾，失败时再加一条运行记录。这些记录及其派生 controller observation 存放在受 VCS 跟踪的存储中（`.dal/outbox`、`.dal/store`、`.dal/runs`、`.dal/clusters`、`.dal/control-states`）。收工时由一位人负责对账：拉取、汇总、聚类失败、在有已审查 controller policy 时估计状态、评审、推动提案走完分阶段生命周期，并以提交的方式应用变更——dal 自身不应用任何东西。精确运行手册见运维指南。
 
 ## 基准工作区
 

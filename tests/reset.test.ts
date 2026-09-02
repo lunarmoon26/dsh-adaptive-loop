@@ -78,7 +78,7 @@ describe("reset / rebaseline", () => {
     expect(result.removed.other).toBe(1);
     expect(result.revision).toBeNull();
     await expect(access(join(root, ".dal", "store", "fb-example.json"))).rejects.toMatchObject({ code: "ENOENT" });
-    for (const directory of ["outbox", "store", "runs", "clusters", "resets"]) {
+    for (const directory of ["outbox", "store", "runs", "clusters", "control-states", "resets"]) {
       await expect(access(join(root, ".dal", directory))).resolves.toBeUndefined();
     }
     const receipt = JSON.parse(

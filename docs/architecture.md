@@ -20,6 +20,7 @@ Last contract review: 2026-08-31; pinned upstream evidence remains in [`research
 | 6 | Untrusted content requests shell, file, network, plugin, or optimizer capability | The request reaches the deterministic boundary | Unsafe capability is denied and immutably audited without execution |
 | 7 | A candidate improves one score but fails privacy, policy, budget, or golden behavior | The evaluation suite finishes | The scorecard hard-stops and quarantines the candidate digest |
 | 8 | A benchmark candidate attempts to inspect goals, grader code, or effect logs | The e2e attempt starts | Candidate receives only a minimal read-only workspace and typed service access; oracle data stays on the grader network |
+| 9 | A controller estimate receives mixed generations, contexts, or inadequate denominators | The estimate is requested | Mixed evidence fails closed; inadequate evidence publishes a non-authorizing `insufficient_evidence` state |
 
 Hard constraints:
 
@@ -43,6 +44,7 @@ Hard constraints:
 | GEPA or SkillOpt runtime | Future adapter data | Future candidate | Not installed or executed; external transfer requires approval |
 | Guardrail evaluator | Structured, non-executing capability request | Immutable allow/deny/approval-required decision | Local deterministic policy; no requested tool execution |
 | Evaluation harness | Pinned local fixture suite and target digest | Immutable scorecard and hard-stop disposition | Deterministic v0 runner; no model/provider/network |
+| Controller estimator | Controller policy plus one run-record batch | Immutable state with context/generation identities and proportion intervals | Observation only; no proposal, budget, model, execution, or promotion authority |
 | Tau workflow service and grader | Seed state, effect requests, full evaluator task | Checksummed journal, authenticated snapshot, deterministic verdict | Separate containers/networks; candidate has typed service access but no journal, token, grader, or full task |
 | Optional dsh plugin set | Protected tool calls, live agent control, and durable session events | Privacy-safe run records, workbench tools, and a disabled G2 retry guard | Source and focused tests ship; no mount/application authority; DSH owns execution and session lifecycle |
 | Future evaluation/observability adapter | Flushed sanitized trajectory plus independent side-effect receipts | Promptfoo input or OpenTelemetry/OpenInference projection | Optional; no authority; external transfer requires exact approval |
@@ -54,13 +56,14 @@ Hard constraints:
 - Store immutable per-record envelopes rather than a mutable database. Query scans the bounded local directory; a database index can be added only when measured scale requires it.
 - Treat improvements as staged state transitions. Evaluation evidence and application authority are separate records.
 - Treat optimizer providers as adapters over versioned JSON, not as owners of policy or persistence.
+- Keep task-class controller state separate from the candidate-scoped proposal lifecycle; controller output is evidence or recommendation, never authorization.
 - Pin capsule claims to source identity, digest, and refresh time.
 - Put deterministic schema, privacy, capability, sandbox-declaration, budget, provenance, and approval checks ahead of score-based evaluation.
 - Treat hard-stop scorecards as quarantine evidence, never as mutation instructions.
 - Attach future DSH enforcement to the narrow owning waterfall or capability operation instead of inserting a control-flow gateway around the agent loop.
 - Evaluate agent behavior from ordered Turn/Step/tool/approval events plus independently observed side effects; text output alone is insufficient.
 
-Current significant decision: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md). It preserves the local staged core from decisions 0001/0002 while superseding their blanket executor exclusion.
+Current significant decisions: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md) preserves the local staged core while allowing only named operation-owned executors; [`decisions/0004-separate-run-to-run-supervisor.md`](decisions/0004-separate-run-to-run-supervisor.md) separates task-class controller observations from candidate proposal state.
 
 ## Level-one building blocks
 
@@ -76,6 +79,7 @@ Current significant decision: [`decisions/0003-purpose-specific-approved-executo
 | Optimizer boundary | Define provider-neutral request/candidate/result data | Exchange JSON only | disabled adapter protocol |
 | Guardrail policy | Evaluate explicit tool/capability intent without execution | Immutable decision files | policy API and `policy check` CLI |
 | Evaluation harness | Run offline/adversarial/golden/policy fixtures and calculate scorecards | Immutable scorecard files | evaluation API and `eval run` CLI |
+| Controller observation | Validate one controller policy, reject mixed evidence, estimate configured proportions and uncertainty | Immutable controller-state files | internal control API and `control estimate` CLI |
 
 ## Critical flows
 
@@ -120,6 +124,14 @@ Current significant decision: [`decisions/0003-purpose-specific-approved-executo
 3. The service starts by the approved immutable image digest on the candidate network as the sole journal writer, then joins a separate internal grader network. The evaluator token is present only in service/grader environments.
 4. The candidate runs with no repository or oracle mount and reaches state only through typed workflow tools. The grader mounts the full task only after the candidate exits and retrieves the authenticated state/effect snapshot.
 5. The driver immutably stores the approved manifest and records its digest in each receipt and summary alongside separate harness/business outcomes plus state, effect-journal, staged-workspace, image, session, composition, isolation, and verdict digests. Receipt verification binds task, candidate, model, generation, image, manifest, and real run ID back to the summary; the persisted run record is independently path/digest-bound, and duplicate evidence or counters inconsistent with receipt outcomes fail closed. Comparison rejects context drift and candidate/model confounding. It removes the attempt containers and both networks on every exit path.
+
+### Run-to-run controller observation
+
+1. A human-authored controller policy fixes the logical task class, exact run task set, estimator identity, metric sources, targets, deadbands, and sample minima.
+2. The estimator validates every run-store record, then selects the requested task set and batch.
+3. It normalizes and compares context and generation identities, excluding seeds from context while retaining them as observations; any mixed or unpinned evidence fails closed.
+4. It computes harness, business, or named-check proportions with explicit exclusions and 95% Wilson intervals.
+5. It derives estimate time from policy/run evidence, binds the state ID to the complete canonical snapshot, and publishes the snapshot exclusively. A ready or insufficient state changes no proposal, budget, harness, or runtime.
 
 ## Data and privacy
 
@@ -193,7 +205,7 @@ DSH already has an optional session-telemetry seam and an OTLP/HTTP log backend,
 
 ## Self-improvement loop
 
-Status: Partially implemented in v0: run-record ingestion, deterministic harness/business failure clustering, the surface/prediction proposal boundary, branch selection/evaluation, an approval-bound proposer branch, and unmounted run/improvement plugin source ship today. Model-based clustering, optimizer execution, sandbox candidate application, and deeper search remain design-only. The boundary is explicit: **the agent may propose changes, but it should not control the evaluator, the holdout set, or its own permission boundary.**
+Status: Partially implemented in v0: run-record ingestion, deterministic harness/business failure clustering, run-to-run observation state, the surface/prediction proposal boundary, branch selection/evaluation, an approval-bound proposer branch, and unmounted run/improvement plugin source ship today. PI governance, model-based clustering, response learning, predictive selection, optimizer execution, sandbox candidate application, canary, rollback control, and deeper search remain design-only. The boundary is explicit: **the agent may propose changes, but it should not control the evaluator, the holdout set, its maximum budget, promotion policy, or its own permission boundary.**
 
 ### Editable surface
 
@@ -252,6 +264,7 @@ Optimizing workspace skills and the profile plugin runtime over logged sessions 
 | Plugin provenance is digest-only in v0 | Signed or dependency compromise is missed | No plugin installation; quarantine and separate approval | First approved plugin installer design |
 | Event observers run after commit | A detector notices a loop after the current effect has occurred | Enforce at the next `agent/pre-step` or tool decision; use cancellation only as cooperative containment | First repeated-failure hard-stop plugin |
 | Trajectory or observability export contains sensitive session data | External disclosure | Default disabled; minimize and scan projections; require exact transfer approval | First Promptfoo, Langfuse, Phoenix, or remote collector adapter |
+| A point estimate is mistaken for adaptation authority | Noisy batches trigger unsupported changes | Controller state records intervals, exclusions, sample sufficiency, and an observation-only boundary | First PI governor or automatic mode-entry experiment |
 
 ## Glossary
 

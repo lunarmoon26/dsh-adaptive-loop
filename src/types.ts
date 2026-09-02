@@ -620,6 +620,89 @@ export type BusinessOutcome = {
   total?: number;
 };
 
+export type ControllerMetricSource =
+  | { kind: "harness_outcome" }
+  | { kind: "business_outcome" }
+  | { kind: "check"; check_id: string };
+
+export interface ControllerPolicy {
+  $schema: string;
+  schema_version: "1.0.0";
+  policy_id: string;
+  created_at: string;
+  task_class: string;
+  task_set: string;
+  estimator: {
+    id: "dal-wilson-score-v1";
+    confidence_level: 0.95;
+  };
+  metrics: Array<{
+    metric_id: string;
+    source: ControllerMetricSource;
+    target: number;
+    deadband: number;
+    minimum_samples: number;
+  }>;
+}
+
+export interface ControllerState {
+  $schema: string;
+  schema_version: "1.0.0";
+  state_id: string;
+  estimated_at: string;
+  task_class: string;
+  policy: {
+    policy_id: string;
+    sha256: string;
+  };
+  generation: {
+    sha256: string;
+    prompt_sha256: string | null;
+    harness_sha256: string;
+    model_patch_sha256: string | null;
+    harness_pins: Array<{ surface: string; uri: string; sha256: string }>;
+  };
+  measurement_context: {
+    sha256: string;
+    task_set: string;
+    environment_snapshot: string;
+    tool_versions: Array<{ name: string; version: string }>;
+    model: null | { id: string; version: string };
+    grader_version: string | null;
+    context_policy_sha256: string | null;
+    inference_parameters: Array<{ name: string; value: string }>;
+  };
+  observations: {
+    batch_id: string;
+    input_set_sha256: string;
+    run_count: number;
+    first_started_at: string;
+    last_finished_at: string;
+    seeds: number[];
+    runs: Array<{ run_id: string; sha256: string }>;
+  };
+  estimator: {
+    id: "dal-wilson-score-v1";
+    confidence_level: 0.95;
+  };
+  status: "ready" | "insufficient_evidence";
+  metrics: Array<{
+    metric_id: string;
+    source: ControllerMetricSource;
+    target: number;
+    deadband: number;
+    minimum_samples: number;
+    successes: number;
+    failures: number;
+    excluded: number;
+    sample_count: number;
+    mean: number | null;
+    ci_low: number | null;
+    ci_high: number | null;
+    sufficient_evidence: boolean;
+  }>;
+}
+
 export interface RunRecord {
   $schema: string;
   schema_version: "1.0.0";
