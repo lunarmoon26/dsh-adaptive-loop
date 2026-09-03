@@ -7,7 +7,11 @@ import { join, resolve } from "node:path";
 import { Context } from "@deepseek-ai/cordis";
 import { describe, expect, it } from "vitest";
 
-import { apply as applyRunRecord, RunSessionRecorder } from "../plugins/dal-run-record/src/index.js";
+import {
+  apply as applyRunRecord,
+  RunSessionRecorder,
+  type RuntimeGenerationSourceLike,
+} from "../plugins/dal-run-record/src/index.js";
 import { apply as applyImproveTools } from "../plugins/dal-improve-tools/src/index.js";
 import { SCHEMA_IDS, assertSchema } from "../src/schema.js";
 import { clusterRunRecords } from "../src/clustering.js";
@@ -38,6 +42,28 @@ async function recordsIn(root: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+function runtimeGenerationSource(): RuntimeGenerationSourceLike & { advance(): void } {
+  let transitionSequence = 7;
+  return {
+    bindSession: () => ({
+      manifest_sha256: "9da7af8cc4672fd3fcf19c1d958b3b205cb8a6175c064c7fc5b2bf77e86a8d2c",
+      digest_profile: "rfc8785-jcs-sha256-v1",
+      evidence_uri: "repo://tests/fixtures/runtime-generation/evidence-verified.json",
+      assurance: "verified",
+      transition_sequence: transitionSequence,
+      harness_sha256: "a".repeat(64),
+      model_patch_sha256: null,
+      harness_pins: [
+        { surface: "plugin", uri: "dsh://plugins/dal-run-record/0.1.3", sha256: "b".repeat(64) },
+      ],
+    }),
+    transitionSequence: () => transitionSequence,
+    advance: () => {
+      transitionSequence += 1;
+    },
+  };
 }
 
 describe("run-mode recorder", () => {
@@ -119,8 +145,14 @@ describe("run-mode recorder", () => {
   it("wires onto a Cordis context and records through emitted events", async () => {
     const root = await workspace();
     const ctx = new Context();
+    const source = runtimeGenerationSource();
+    ctx.provide("runtimeGeneration", source);
     applyRunRecord(ctx, { storeRoot: ".dal/runs" });
     const id = "session-5";
+    (ctx as unknown as { emit: (name: string, ...args: unknown[]) => void }).emit(
+      "session/created",
+      session(id, root),
+    );
     (ctx as unknown as { emit: (name: string, ...args: unknown[]) => void }).emit(
       "session/event",
       session(id, root),
@@ -131,9 +163,92 @@ describe("run-mode recorder", () => {
       session(id, root),
       event("turn/end", { turn: 1, reason: { kind: "completed" } }, 1),
     );
-    (ctx as unknown as { emit: (name: string, ...args: unknown[]) => void }).emit("session/disposed", session(id, root));
-    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+    await (ctx as unknown as { parallel: (name: string, ...args: unknown[]) => Promise<void> }).parallel(
+      "session/disposed",
+      session(id, root),
+    );
     expect(await recordsIn(root)).toEqual([`run-${id}-s1.final.json`]);
+    const record = JSON.parse(
+      await readFile(join(root, ".dal", "runs", `run-${id}-s1.final.json`), "utf8"),
+    ) as { runtime_generation: { stable_for_session: boolean } };
+    expect(record.runtime_generation.stable_for_session).toBe(true);
+  });
+
+  it("binds launcher evidence at session creation and qualifies only a stable final record", async () => {
+    const root = await workspace();
+    const source = runtimeGenerationSource();
+    const recorder = new RunSessionRecorder({ storeRoot: ".dal/runs", maxErrorFacts: 64 }, source);
+    const activeSession = session("session-generation-stable", root);
+    recorder.bindRuntimeGeneration(activeSession);
+    recorder.onEvent(activeSession, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(activeSession, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 1));
+    await recorder.flush(activeSession);
+    await recorder.dispose(activeSession);
+
+    const checkpoint = JSON.parse(
+      await readFile(join(root, ".dal", "runs", "run-session-generation-stable-s1.json"), "utf8"),
+    ) as Record<string, unknown>;
+    const final = JSON.parse(
+      await readFile(join(root, ".dal", "runs", "run-session-generation-stable-s1.final.json"), "utf8"),
+    ) as Record<string, unknown>;
+    expect(checkpoint.runtime_generation).toMatchObject({ stable_for_session: false });
+    expect(final.runtime_generation).toEqual({
+      session_id_sha256: sha("session-generation-stable"),
+      manifest_sha256: "9da7af8cc4672fd3fcf19c1d958b3b205cb8a6175c064c7fc5b2bf77e86a8d2c",
+      digest_profile: "rfc8785-jcs-sha256-v1",
+      evidence_uri: "repo://tests/fixtures/runtime-generation/evidence-verified.json",
+      assurance: "verified",
+      stable_for_session: true,
+    });
+    expect(final.context).toMatchObject({
+      harness_sha256: "a".repeat(64),
+      harness_pins: [
+        { surface: "plugin", uri: "dsh://plugins/dal-run-record/0.1.3", sha256: "b".repeat(64) },
+      ],
+    });
+    await expect(assertSchema(SCHEMA_IDS.runRecord, final, "Run record")).resolves.toBeUndefined();
+  });
+
+  it("keeps a session ineligible after an attempted runtime transition", async () => {
+    const root = await workspace();
+    const source = runtimeGenerationSource();
+    const recorder = new RunSessionRecorder({ storeRoot: ".dal/runs", maxErrorFacts: 64 }, source);
+    const activeSession = session("session-generation-transition", root);
+    recorder.bindRuntimeGeneration(activeSession);
+    recorder.onEvent(activeSession, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(activeSession, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 1));
+    source.advance();
+    await recorder.dispose(activeSession);
+
+    const record = JSON.parse(
+      await readFile(join(root, ".dal", "runs", "run-session-generation-transition-s1.final.json"), "utf8"),
+    ) as { runtime_generation: { stable_for_session: boolean } };
+    expect(record.runtime_generation.stable_for_session).toBe(false);
+  });
+
+  it("rejects binding pin extensions instead of persisting unknown fields", async () => {
+    const root = await workspace();
+    const source = runtimeGenerationSource();
+    const original = source.bindSession;
+    source.bindSession = (activeSession) => {
+      const binding = original(activeSession)!;
+      (binding.harness_pins[0] as Record<string, unknown>).credential = "must-not-persist";
+      return binding;
+    };
+    const recorder = new RunSessionRecorder({ storeRoot: ".dal/runs", maxErrorFacts: 64 }, source);
+    const activeSession = session("session-generation-malformed", root);
+    recorder.bindRuntimeGeneration(activeSession);
+    recorder.onEvent(activeSession, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(activeSession, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 1));
+    await recorder.dispose(activeSession);
+
+    const serialized = await readFile(
+      join(root, ".dal", "runs", "run-session-generation-malformed-s1.final.json"),
+      "utf8",
+    );
+    const record = JSON.parse(serialized) as Record<string, unknown>;
+    expect(record.runtime_generation).toBeUndefined();
+    expect(serialized).not.toContain("must-not-persist");
   });
 });
 

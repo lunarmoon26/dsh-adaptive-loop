@@ -4,7 +4,9 @@ import { resolve } from "node:path";
 import { DalError } from "../errors.js";
 import { canonicalJson, publishJsonExclusive, readJsonFile, sha256 } from "../json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "../privacy.js";
+import { readRepositoryJsonFile } from "../repository.js";
 import { validateRunRecord } from "../runs.js";
+import { validateRuntimeGenerationAttestation, validateRuntimeGenerationEvidence } from "../runtime-generation.js";
 import { assertSchema, loadPolicy, SCHEMA_IDS } from "../schema.js";
 import type { ControllerMetricSource, ControllerPolicy, ControllerState, Policy, RunRecord } from "../types.js";
 import { buildControllerState, controllerStateIdentity, wilsonScore95 } from "./estimator.js";
@@ -44,6 +46,7 @@ export async function estimateControllerState(
   const runStore = resolve(process.cwd(), options.runs ?? globalPolicy.default_run_store);
   const observations = await readBatch(runStore, controllerPolicy.task_set, batchId);
   const state = buildControllerState(controllerPolicy, controllerPolicySha256, batchId, observations);
+  await validateControllerRuntimeEvidence(observations);
   await validateControllerState(state);
   assertNoSecrets(scanSecrets(state));
   assertNoPii(scanPii(state));
@@ -94,6 +97,9 @@ export async function validateControllerState(value: unknown): Promise<Controlle
     harness_sha256: state.generation.harness_sha256,
     model_patch_sha256: state.generation.model_patch_sha256,
     harness_pins: state.generation.harness_pins,
+    ...(state.generation.runtime_generation === undefined
+      ? {}
+      : { runtime_generation: state.generation.runtime_generation }),
   };
   if (state.generation.sha256 !== sha256(canonicalJson(generation))) {
     issues.push("/generation/sha256 does not match generation fields");
@@ -192,9 +198,61 @@ async function readBatch(
     const document = await readJsonFile<unknown>(resolve(store, name));
     const run = await validateRunRecord(document.value, document.raw.toString("utf8"));
     if (run.context.task_set !== taskSet || (run.batch_id ?? null) !== batchId) continue;
+    if (run.record_stage === "checkpoint") continue;
     observations.push({ run, sha256: sha256(canonicalJson(run)) });
   }
   return observations;
+}
+
+async function validateControllerRuntimeEvidence(
+  observations: ReadonlyArray<{ run: RunRecord; sha256: string }>,
+): Promise<void> {
+  for (const { run } of observations) {
+    const binding = run.runtime_generation;
+    if (binding === undefined) continue;
+    try {
+      const evidenceDocument = await readRepositoryJsonFile<unknown>(
+        binding.evidence_uri,
+        `Runtime generation evidence for run ${run.run_id}`,
+      );
+      const evidence = await validateRuntimeGenerationEvidence(
+        evidenceDocument.value,
+        evidenceDocument.raw.toString("utf8"),
+      );
+      const manifestDocument = await readRepositoryJsonFile<unknown>(
+        evidence.manifest_uri,
+        `Runtime generation manifest for run ${run.run_id}`,
+      );
+      await validateRuntimeGenerationAttestation(
+        manifestDocument.value,
+        evidence,
+        {
+          manifest: manifestDocument.raw.toString("utf8"),
+          evidence: evidenceDocument.raw.toString("utf8"),
+        },
+      );
+      if (
+        binding.session_id_sha256 !== evidence.session_binding.session_id_sha256
+        || binding.manifest_sha256 !== evidence.manifest_sha256
+        || binding.digest_profile !== evidence.digest_profile
+        || binding.assurance !== evidence.assurance
+        || binding.stable_for_session !== evidence.stable_for_session
+      ) {
+        throw new DalError(
+          "CONTROL_RUNTIME_GENERATION_EVIDENCE_MISMATCH",
+          `Run ${run.run_id} does not match its runtime generation evidence`,
+        );
+      }
+    } catch (error) {
+      if (error instanceof DalError && error.code === "CONTROL_RUNTIME_GENERATION_EVIDENCE_MISMATCH") {
+        throw error;
+      }
+      throw new DalError(
+        "CONTROL_RUNTIME_GENERATION_EVIDENCE_INVALID",
+        `Run ${run.run_id} has unavailable or invalid runtime generation evidence`,
+      );
+    }
+  }
 }
 
 function validateMetricEstimate(

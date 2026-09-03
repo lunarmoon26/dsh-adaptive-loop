@@ -2,7 +2,7 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.3.0",
+  "capsule_version": "1.4.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
   "checked_at": "2026-09-02",
@@ -13,7 +13,7 @@
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
       "revision": "dal-v0-2026-09-02",
-      "sha256": "621c75657f6e5443283c64975682bbab673f5e3232e79663d2a809569bbb5560",
+      "sha256": "aadc9eb56334a404d9a6b67782f7b74a9b8d0066f49de27ca973a8a7311aa8a2",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -31,8 +31,17 @@
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
       "revision": "dal-v0-2026-09-02",
-      "sha256": "ea42b4d60cec6198031b9ff9874f10515132c5c9ce446c8753bc923599f1aa25",
+      "sha256": "cc256dbcdee1de1a5ca3b30afce33c81cc6a1eba79cc70f964379cfa5119c304",
       "local_path": "../ROADMAP.md",
+      "required": true
+    },
+    {
+      "id": "src-runtime-generation-contract",
+      "kind": "local_file",
+      "uri": "repo://docs/runtime-generation-attestation.md",
+      "revision": "runtime-generation-attestation-2026-09-02",
+      "sha256": "5b3f9137ba109c49c2eb6c163ae01aa8959dae82df717e93f2a46295127ea196",
+      "local_path": "../docs/runtime-generation-attestation.md",
       "required": true
     }
   ],
@@ -47,10 +56,11 @@
     },
     {
       "id": "claim-optional-cordis",
-      "text": "Cordis mode and G2 packages ship as workspace source only; profile installation or mounting remains opt-in, lifecycle-owned, disposal-safe, flush-aware, and separately approved.",
+      "text": "Cordis mode and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
       "source_ids": [
         "src-dal-architecture",
-        "src-dal-roadmap"
+        "src-dal-roadmap",
+        "src-runtime-generation-contract"
       ]
     },
     {
@@ -102,6 +112,15 @@
         "src-dal-architecture",
         "src-dal-roadmap"
       ]
+    },
+    {
+      "id": "claim-runtime-generation-producer-boundary",
+      "text": "DAL ships the runtime manifest/evidence contract, recorder consumer, and controller verifier; authoritative effective Loader configuration, resolver receipts, artifact closure, transition sequencing, and readiness remain owned by a future pinned DSH launcher service.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-roadmap",
+        "src-runtime-generation-contract"
+      ]
     }
   ],
   "retrieval_pointers": [
@@ -137,11 +156,19 @@
         "src-dal-architecture",
         "src-dal-research"
       ]
+    },
+    {
+      "id": "ptr-runtime-generation",
+      "when": "Implementing generation identity, Loader mutation binding, resolver evidence, or session stability",
+      "uri": "repo://docs/runtime-generation-attestation.md",
+      "source_ids": [
+        "src-runtime-generation-contract"
+      ]
     }
   ],
   "limits": [
     "Pinned upstream interfaces are pre-stable and require fresh source inspection before integration.",
     "The unavailable expected local SkillOpt checkout remains an evidence gap.",
-    "No mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
+    "No authoritative DSH runtime-generation producer, final-disposal durability, mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
   ]
 }

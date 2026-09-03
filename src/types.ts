@@ -620,6 +620,64 @@ export type BusinessOutcome = {
   total?: number;
 };
 
+export const RUNTIME_GENERATION_DIGEST_PROFILE = "rfc8785-jcs-sha256-v1" as const;
+export type RuntimeGenerationDigestProfile = typeof RUNTIME_GENERATION_DIGEST_PROFILE;
+export type RuntimeGenerationAssurance = "declared" | "observed" | "verified";
+
+export interface RuntimeGenerationManifest {
+  $schema: string;
+  schema_version: "1.0.0";
+  digest_profile: RuntimeGenerationDigestProfile;
+  launcher: { name: string; version: string; uri: string; sha256: string };
+  configuration: {
+    projection_profile: "effective-config-jcs-sha256-secret-values-omitted-v1";
+    sha256: string;
+  };
+  loader_tree: Array<{
+    ordinal: number;
+    path: string;
+    id: string;
+    specifier: string;
+    resolved_uri: string;
+    artifact_sha256: string;
+    config_sha256: string;
+    enabled: boolean;
+  }>;
+  resolver_receipts: Array<{
+    ordinal: number;
+    specifier: string;
+    parent_uri: string;
+    resolved_uri: string;
+    artifact_sha256: string;
+  }>;
+  artifacts: Array<{
+    kind: "launcher" | "plugin" | "module" | "patch" | "prompt" | "skill" | "policy" | "other";
+    uri: string;
+    sha256: string;
+  }>;
+}
+
+export interface RuntimeGenerationEvidence {
+  $schema: string;
+  schema_version: "1.0.0";
+  manifest_sha256: string;
+  manifest_uri: string;
+  digest_profile: RuntimeGenerationDigestProfile;
+  assurance: RuntimeGenerationAssurance;
+  producer: { name: string; version: string };
+  session_binding: {
+    session_id_sha256: string;
+    bound_transition_sequence: number;
+    final_transition_sequence: number;
+  };
+  stable_for_session: boolean;
+  claims: Array<{
+    id: "artifact-closure" | "effective-config" | "launcher-composition" | "resolver-closure" | "session-binding";
+    status: "passed" | "failed" | "unavailable";
+    evidence: string[];
+  }>;
+}
+
 export type ControllerMetricSource =
   | { kind: "harness_outcome" }
   | { kind: "business_outcome" }
@@ -627,11 +685,15 @@ export type ControllerMetricSource =
 
 export interface ControllerPolicy {
   $schema: string;
-  schema_version: "1.0.0";
+  schema_version: "1.0.0" | "1.1.0";
   policy_id: string;
   created_at: string;
   task_class: string;
   task_set: string;
+  runtime_generation?: {
+    digest_profile: RuntimeGenerationDigestProfile;
+    minimum_assurance: Exclude<RuntimeGenerationAssurance, "declared">;
+  };
   estimator: {
     id: "dal-wilson-score-v1";
     confidence_level: 0.95;
@@ -647,7 +709,7 @@ export interface ControllerPolicy {
 
 export interface ControllerState {
   $schema: string;
-  schema_version: "1.0.0";
+  schema_version: "1.0.0" | "1.1.0";
   state_id: string;
   estimated_at: string;
   task_class: string;
@@ -661,6 +723,10 @@ export interface ControllerState {
     harness_sha256: string;
     model_patch_sha256: string | null;
     harness_pins: Array<{ surface: string; uri: string; sha256: string }>;
+    runtime_generation?: {
+      manifest_sha256: string;
+      digest_profile: RuntimeGenerationDigestProfile;
+    };
   };
   measurement_context: {
     sha256: string;
@@ -712,6 +778,7 @@ export interface RunRecord {
   started_at: string;
   finished_at: string;
   outcome: RunOutcome;
+  record_stage?: "checkpoint" | "final";
   failure: null | {
     category: RunFailureCategory;
     code: string;
@@ -732,6 +799,14 @@ export interface RunRecord {
     inference_parameters: Array<{ name: string; value: string }>;
     harness_pins?: Array<{ surface: string; uri: string; sha256: string }>;
     model_patch_sha256?: string | null;
+  };
+  runtime_generation?: {
+    session_id_sha256: string;
+    manifest_sha256: string;
+    digest_profile: RuntimeGenerationDigestProfile;
+    evidence_uri: string;
+    assurance: RuntimeGenerationAssurance;
+    stable_for_session: boolean;
   };
   artifacts: Array<{ uri: string; sha256: string; description: string }>;
   metrics: { duration_ms: number; tool_calls: number };

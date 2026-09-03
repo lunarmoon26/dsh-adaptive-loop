@@ -22,7 +22,7 @@
     "$schema": {
       "const": "https://recursive-dev-loop.dev/schemas/controller-state.v1.schema.json"
     },
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "enum": ["1.0.0", "1.1.0"] },
     "state_id": {
       "type": "string",
       "pattern": "^ctlstate-[a-f0-9]{24}$"
@@ -47,7 +47,13 @@
     "generation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sha256", "prompt_sha256", "harness_sha256", "model_patch_sha256", "harness_pins"],
+      "required": [
+        "sha256",
+        "prompt_sha256",
+        "harness_sha256",
+        "model_patch_sha256",
+        "harness_pins"
+      ],
       "properties": {
         "sha256": {
           "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
@@ -87,6 +93,17 @@
                 "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
               }
             }
+          }
+        },
+        "runtime_generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["manifest_sha256", "digest_profile"],
+          "properties": {
+            "manifest_sha256": {
+              "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+            },
+            "digest_profile": { "const": "rfc8785-jcs-sha256-v1" }
           }
         }
       }
@@ -315,5 +332,34 @@
         }
       ]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.1.0" } }
+      },
+      "then": {
+        "properties": {
+          "generation": {
+            "type": "object",
+            "properties": { "runtime_generation": {} },
+            "required": ["runtime_generation"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.0.0" } }
+      },
+      "then": {
+        "properties": {
+          "generation": {
+            "type": "object",
+            "properties": { "runtime_generation": false }
+          }
+        }
+      }
+    }
+  ]
 }

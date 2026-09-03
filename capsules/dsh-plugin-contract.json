@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-plugin-contract",
-  "capsule_version": "1.0.0",
+  "capsule_version": "1.1.0",
   "title": "dsh plugin contract for the proposer",
   "audience": "Proposer models and maintainers changing skills or plugin sources",
-  "checked_at": "2026-08-29",
-  "refresh_after": "2027-02-27",
+  "checked_at": "2026-09-02",
+  "refresh_after": "2027-03-01",
   "sources": [
     {
       "id": "src-dsh-plugin-contract",
       "kind": "local_file",
       "uri": "repo://docs/dsh-plugin-contract.md",
-      "revision": "dsh-plugin-contract-v1-2026-08-30",
-      "sha256": "8a9aa334e12a3f2d7998b49fde536d5f8fb23e1da334db0e690d83162c14b9a3",
+      "revision": "dsh-plugin-contract-v1-2026-09-02",
+      "sha256": "e1749a4718a95e17a77d785bcb181b070e923d89111ea235e3e1b6255d608ee0",
       "local_path": "../docs/dsh-plugin-contract.md",
       "required": true
     }
@@ -35,7 +35,7 @@
     },
     {
       "id": "claim-events",
-      "text": "Session events form an append-only log; recorder plugins subscribe to session/event and drain on session/flush and session/disposed with contained failures; projections store digests and counts, never raw arguments or results.",
+      "text": "Session events form an append-only log; recorder plugins subscribe to session/event and drain durably on awaited session/flush. Observe-only session/disposed contains failures but does not await asynchronous final writes; projections store digests and counts, never raw arguments or results.",
       "source_ids": [
         "src-dsh-plugin-contract"
       ]

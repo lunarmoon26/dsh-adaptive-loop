@@ -55,6 +55,9 @@
         "aborted"
       ]
     },
+    "record_stage": {
+      "enum": ["checkpoint", "final"]
+    },
     "failure": {
       "oneOf": [
         {
@@ -282,6 +285,32 @@
           ],
           "maxLength": 64
         }
+      }
+    },
+    "runtime_generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id_sha256",
+        "manifest_sha256",
+        "digest_profile",
+        "evidence_uri",
+        "assurance",
+        "stable_for_session"
+      ],
+      "properties": {
+        "session_id_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "manifest_sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        },
+        "digest_profile": { "const": "rfc8785-jcs-sha256-v1" },
+        "evidence_uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "assurance": { "enum": ["declared", "observed", "verified"] },
+        "stable_for_session": { "type": "boolean" }
       }
     },
     "artifacts": {
