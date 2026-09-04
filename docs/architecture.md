@@ -27,6 +27,7 @@ Last contract review: 2026-09-04; pinned upstream evidence remains in [`research
 Hard constraints:
 
 - Local-only is the default. There is no generic network/shared-config executor, optimizer runtime, or plugin installer/mounter. The sole candidate applier is fixed to configured files in an isolated linked worktree and independently verifies exact approval at its operation.
+- HMR approval verification executes only a startup-digested DAL CLI launcher chain outside the candidate worktree; workspace package scripts and changed launcher files fail closed.
 - Exact data syntax lives in JSON Schema, not duplicated prose or TypeScript literals.
 - Every persistent mutation is local, explicit, and atomic at one-record granularity.
 - dsh integrations respect Cordis lifecycle ownership: registrations use plugin effects, HMR owns module replacement, and durable facts use session events.
@@ -118,7 +119,7 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 
 1. A separately approved workbench profile mounts the coordinator outside its configured editable entry directory in a linked worktree.
 2. The coordinator copies the clean live files to inactive staging; the agent edits only those copies.
-3. A human decision binds the staged digest. The coordinator re-verifies it, writes dependencies then the entry, and accepts only a matching successful DSH HMR event.
+3. A human decision binds the staged digest. The coordinator re-verifies it through startup-pinned external launcher files, writes dependencies then the entry, and accepts only a matching successful DSH HMR event; any other successful reload aborts admission and starts rollback.
 4. `dal-run-record` binds the active candidate generation at `session/created`; a later successful HMR event makes that run ineligible.
 5. Rejection restores and reactivates the in-memory baseline. Acceptance still requires human git review and commit.
 
@@ -202,7 +203,7 @@ Profiles are user-global (`$DSH_HOME/profiles/<name>`; project-level `.dsh` prof
 
 ### Optional dsh guardrail plugin set
 
-This topology is partially source-implemented. The run recorder, deterministic workbench tools, and fixed-path HMR candidate coordinator ship as package source; the unknown-effect retry row remains a disabled, unit-tested candidate. None has been installed or mounted into a shared profile, and no repository candidate has been applied. Focused event-contract tests exercise HMR admission and session attribution; a real pinned DSH Loader/HMR composition probe remains required before claiming that integration. The remaining policy, output-filtering, budget, approval, and export rows are design-only.
+This topology is partially source-implemented. The run recorder, deterministic workbench tools, and fixed-path HMR candidate coordinator ship as package source; the unknown-effect retry row remains a disabled, unit-tested candidate. None has been installed or mounted into a shared profile, and no repository candidate has been applied. Focused event-contract tests and a pinned local DSH Loader/HMR composition probe exercise HMR admission, rollback, and session attribution; they do not prove a production mount. The remaining policy, output-filtering, budget, approval, and export rows are design-only.
 
 | Responsibility | Verified DSH extension point | Required behavior and limit |
 | --- | --- | --- |

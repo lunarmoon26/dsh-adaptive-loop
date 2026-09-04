@@ -36,6 +36,8 @@ export interface Config {
   approvalFile?: string;
   /** Exact approval scope passed to `dal approval verify`. */
   approvalScope: string;
+  /** Absolute Node launcher files for the DAL CLI, all outside workspaceRoot. */
+  approvalCommand?: string[];
   /** Pinned DSH package version used by the workbench profile. */
   dshVersion: string;
   /** DSH profile identity used by the workbench. */
@@ -113,6 +115,7 @@ interface ResolvedConfig {
   stagingRootRelative: string;
   approvalFile: string;
   approvalScope: string;
+  approvalCommand: ApprovalCommandFile[];
   timeoutMs: number;
   gitTree: string;
   dshVersion: string;
@@ -122,9 +125,15 @@ interface ResolvedConfig {
 interface ApprovalVerification {
   approvalFile: string;
   approvalScope: string;
+  approvalCommand: string[];
   candidateSha256: string;
   workspaceRoot: string;
   timeoutMs: number;
+}
+
+interface ApprovalCommandFile {
+  path: string;
+  sha256: string;
 }
 
 type ApprovalVerifier = (verification: ApprovalVerification) => Promise<void>;
@@ -281,6 +290,67 @@ function digestSnapshot(snapshot: Snapshot): string {
   return hash.digest("hex");
 }
 
+function digestBytes(bytes: Buffer): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+async function resolveApprovalCommand(
+  configured: string[] | undefined,
+  workspaceRoot: string,
+): Promise<ApprovalCommandFile[]> {
+  const command = configured ?? [fileURLToPath(new URL("../../../dist/cli.js", import.meta.url))];
+  if (
+    !Array.isArray(command)
+    || command.length === 0
+    || command.length > 4
+    || command.some((path) => typeof path !== "string" || path === "" || path.length > 2048 || /[\0\r\n]/.test(path))
+  ) {
+    fail("CANDIDATE_CONFIG_INVALID", "approvalCommand must contain one to four absolute launcher files");
+  }
+  const resolved: ApprovalCommandFile[] = [];
+  for (const [index, path] of command.entries()) {
+    if (!isAbsolute(path)) {
+      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be absolute`);
+    }
+    let canonical: string;
+    let info;
+    try {
+      canonical = await realpath(path);
+      info = await lstat(canonical);
+    } catch (error) {
+      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be an existing regular file`, error);
+    }
+    if (!info.isFile() || info.isSymbolicLink()) {
+      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must resolve to a regular file`);
+    }
+    if (canonical === workspaceRoot || inside(workspaceRoot, canonical)) {
+      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be outside workspaceRoot`);
+    }
+    resolved.push({ path: canonical, sha256: digestBytes(await readFile(canonical)) });
+  }
+  return resolved;
+}
+
+async function assertApprovalCommandStable(command: ApprovalCommandFile[]): Promise<void> {
+  for (const file of command) {
+    try {
+      const canonical = await realpath(file.path);
+      const info = await lstat(canonical);
+      if (
+        canonical !== file.path
+        || !info.isFile()
+        || info.isSymbolicLink()
+        || digestBytes(await readFile(canonical)) !== file.sha256
+      ) {
+        fail("CANDIDATE_APPROVAL_COMMAND_DRIFT", "the pinned approval command changed after coordinator startup");
+      }
+    } catch (error) {
+      if (error instanceof CandidateError) throw error;
+      fail("CANDIDATE_APPROVAL_COMMAND_DRIFT", "the pinned approval command is no longer available", error);
+    }
+  }
+}
+
 function snapshotSync(files: FileTarget[], key: "sourcePath" | "stagingPath"): Snapshot {
   const snapshot: Snapshot = new Map();
   for (const file of files) {
@@ -384,6 +454,7 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
   if (approvalFile === stagingRoot || inside(stagingRoot, approvalFile)) {
     fail("CANDIDATE_CONFIG_INVALID", "approvalFile must not overlap stagingRoot");
   }
+  const approvalCommand = await resolveApprovalCommand(config.approvalCommand, workspaceRoot);
 
   const files: FileTarget[] = [];
   for (const relativePath of relatives.sort()) {
@@ -409,6 +480,7 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
     stagingRootRelative,
     approvalFile,
     approvalScope: config.approvalScope,
+    approvalCommand,
     timeoutMs,
     gitTree,
     dshVersion: config.dshVersion,
@@ -419,9 +491,9 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
 async function verifyWithDalCli(verification: ApprovalVerification): Promise<void> {
   await new Promise<void>((resolveApproval, rejectApproval) => {
     execFile(
-      "pnpm",
+      process.execPath,
       [
-        "dal",
+        ...verification.approvalCommand,
         "approval",
         "verify",
         verification.approvalFile,
@@ -657,6 +729,7 @@ export class CandidateCoordinator extends Service {
 
     if (!matchesEntry) {
       this.generation = { ...this.generation, hmrSequence: this.sequence, admitted: false };
+      this.rejectPendingReload("a successful HMR reload did not include the configured candidate entry");
       return;
     }
 
@@ -665,6 +738,7 @@ export class CandidateCoordinator extends Service {
       candidateSha256 = digestSnapshot(snapshotSync(this.config.files, "sourcePath"));
     } catch {
       this.generation = { ...this.generation, hmrSequence: this.sequence, admitted: false };
+      this.rejectPendingReload("the configured entry could not be read after a successful reload");
       return;
     }
     const pending = this.pending;
@@ -684,6 +758,10 @@ export class CandidateCoordinator extends Service {
       return;
     }
 
+    if (pending !== undefined) {
+      this.rejectPendingReload("the configured entry reloaded with bytes that did not match the pending candidate");
+    }
+
     this.generation = {
       candidateId: this.generation.candidateSha256 === candidateSha256 ? this.generation.candidateId : null,
       candidateSha256,
@@ -696,11 +774,13 @@ export class CandidateCoordinator extends Service {
   }
 
   private async verifyApproval(candidateSha256: string): Promise<void> {
+    await assertApprovalCommandStable(this.config.approvalCommand);
     await assertRegularFile(this.config.approvalFile, this.config.workspaceRoot, "approvalFile");
     try {
       await this.approvalVerifier({
         approvalFile: this.config.approvalFile,
         approvalScope: this.config.approvalScope,
+        approvalCommand: this.config.approvalCommand.map((file) => file.path),
         candidateSha256,
         workspaceRoot: this.config.workspaceRoot,
         timeoutMs: this.config.timeoutMs,
@@ -708,6 +788,15 @@ export class CandidateCoordinator extends Service {
     } catch (error) {
       fail("CANDIDATE_APPROVAL_DENIED", "exact candidate approval verification failed", error);
     }
+    await assertApprovalCommandStable(this.config.approvalCommand);
+  }
+
+  private rejectPendingReload(message: string): void {
+    const pending = this.pending;
+    if (pending === undefined) return;
+    this.pending = undefined;
+    clearTimeout(pending.timer);
+    pending.reject(new CandidateError("CANDIDATE_HMR_MISMATCH", message));
   }
 }
 

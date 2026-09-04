@@ -68,8 +68,16 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
 - Multi-file candidates publish imported dependencies first and the loaded entry
   last. Candidate bytes stay in a fixed inactive staging directory until an exact
   `apply_optimization_candidate` decision verifies at the copy operation.
+- Approval verification runs through one bounded chain of absolute launcher files
+  outside the candidate worktree. Their startup digests must still match at the
+  operation; workspace package scripts never select the verifier.
+- Any successful reload that omits the configured entry or activates different
+  bytes aborts pending admission and triggers baseline restoration.
 - HMR activation is evaluation admission, not promotion. Only a later human git
   review and commit promotes the workspace source.
+- `candidate_generation` is a recorder observation. Standalone run ingestion
+  checks shape and consistency but neither authenticates HMR admission nor grants
+  application or promotion authority.
 
 ## What a proposal may and may not touch
 

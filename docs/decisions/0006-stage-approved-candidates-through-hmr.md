@@ -34,7 +34,7 @@ Skills and instructions alone cannot evaluate changes to DSH's live Cordis capab
 
 ## Decision
 
-Use `@lunarmoon26/dal-hmr-candidate` as a purpose-specific executor in an isolated linked worktree. Its startup configuration fixes one loaded entry, a bounded file list, staging and approval paths, approval scope, and DSH version/profile. It stages inactive copies, invokes the fixed local `pnpm dal approval verify` command for the complete staged digest, writes dependencies before the entry, consumes public `hmr/reload`, and restores the in-memory baseline on failed admission or explicit rejection. `dal-run-record` binds the current candidate ID, digest, base git tree, DSH version/profile, and HMR sequence at `session/created`; any later successful reload makes the run ineligible.
+Use `@lunarmoon26/dal-hmr-candidate` as a purpose-specific executor in an isolated linked worktree. Its startup configuration fixes one loaded entry, a bounded file list, staging and approval paths, approval scope, a bounded chain of absolute DAL CLI launcher files outside the worktree, and DSH version/profile. It stages inactive copies, digests the launcher files at startup, invokes them through the current Node runtime for exact approval verification, rejects launcher drift, writes dependencies before the entry, consumes public `hmr/reload`, and restores the in-memory baseline on failed admission or explicit rejection. A successful reload that omits the configured entry or activates another digest immediately aborts pending admission. `dal-run-record` binds the current candidate ID, digest, base git tree, DSH version/profile, and HMR sequence at `session/created`; any later successful reload makes the run ineligible.
 
 The coordinator cannot install or mount itself, edit a profile, choose arbitrary paths after startup, change an evaluator, or commit/promote a candidate. Human git review remains the only promotion path.
 
@@ -44,11 +44,12 @@ The coordinator cannot install or mount itself, edit a profile, choose arbitrary
 - Positive: approval, HMR activation, session attribution, rollback, and promotion remain distinct facts.
 - Negative: only configured files are covered; profile YAML, skills, and instructions retain their existing human application path.
 - Negative: HMR success proves plugin activation, not task quality or production safety.
-- Follow-up: execute and pin a real DSH Loader/HMR composition probe before claiming that integration beyond event-contract tests.
+- Residual: the pinned local DSH Loader/HMR composition probe proves the exercised workbench path, not a shared-profile or production mount.
 
 ## Confirmation
 
 - Coordinator tests cover exact approval, successful matching reload, unrelated reload, timeout rollback, explicit rejection, and linked-worktree enforcement.
+- Approval tests prove workspace package scripts are not executed, launcher files must remain outside the candidate worktree, and nonmatching successful reloads abort pending admission.
 - Run-record schema and tests require a stable admitted generation for `evaluation_eligible: true`.
 - Bundle tests keep the coordinator disabled until a separately approved profile mount.
 - Repository checks remain credential-free and make no provider request.

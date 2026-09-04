@@ -70,6 +70,7 @@ function config(root: string, overrides: Partial<Config> = {}): Config {
     files: ["plugins/target/index.mjs"],
     approvalFile: ".dal/outbox/candidate-approval.json",
     approvalScope: scope,
+    approvalCommand: [tsxCli, dalCli],
     dshVersion: "0.1.1-rc.2",
     profile: "hmr-test",
     timeoutMs: 2_000,
@@ -144,6 +145,11 @@ describe("HMR candidate coordinator", () => {
       const staged = await coordinator.status();
       expect(staged.stagedSha256).not.toBe(staged.sourceSha256);
       await writeApproval(paths.approvalFile, staged.stagedSha256!);
+      const workspaceScriptMarker = join(paths.root, "workspace-approval-script-ran");
+      await writeFile(join(paths.root, "package.json"), `${JSON.stringify({
+        private: true,
+        scripts: { dal: `node -e 'require("node:fs").writeFileSync(${JSON.stringify(workspaceScriptMarker)}, "ran")'` },
+      }, null, 2)}\n`, "utf8");
 
       const applying = coordinator.applyPrepared();
       await eventually(
@@ -158,6 +164,7 @@ describe("HMR candidate coordinator", () => {
         hmrSequence: 1,
         admitted: true,
       });
+      await expect(readFile(workspaceScriptMarker, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
 
       const recorder = new RunSessionRecorder(
         { storeRoot: ".dal/runs", maxErrorFacts: 64 },
@@ -255,6 +262,73 @@ describe("HMR candidate coordinator", () => {
     }
   });
 
+  it("aborts pending admission on an unrelated successful reload", async () => {
+    const paths = await fixture();
+    await mkdir(dirname(paths.approvalFile), { recursive: true });
+    await writeFile(paths.approvalFile, "test-only verifier input\n", "utf8");
+    const ctx = new Context();
+    try {
+      const coordinator = await CandidateCoordinator.create(ctx, config(paths.root), async () => undefined);
+      const baseline = await coordinator.prepare("cand-hmr-unrelated-001");
+      await writeFile(paths.stagedEntry, "export const generation = 4;\n", "utf8");
+
+      const result = coordinator.applyPrepared().catch((error: unknown) => error);
+      await eventually(
+        async () => (await readFile(paths.entry, "utf8")).includes("generation = 4"),
+        "candidate bytes were not published",
+      );
+      emitReload(ctx, join(paths.root, "plugins", "other.mjs"));
+      await eventually(
+        async () => (await readFile(paths.entry, "utf8")).includes("generation = 0"),
+        "unrelated reload did not trigger baseline restoration",
+      );
+      emitReload(ctx, paths.entry);
+
+      await expect(result).resolves.toMatchObject({ code: "CANDIDATE_NOT_ADMITTED" });
+      expect(coordinator.currentGeneration()).toMatchObject({
+        candidateId: null,
+        candidateSha256: baseline.sourceSha256,
+        admitted: false,
+      });
+    } finally {
+      await ctx.fiber.dispose();
+    }
+  });
+
+  it("aborts pending admission when the configured entry reloads with another digest", async () => {
+    const paths = await fixture();
+    await mkdir(dirname(paths.approvalFile), { recursive: true });
+    await writeFile(paths.approvalFile, "test-only verifier input\n", "utf8");
+    const ctx = new Context();
+    try {
+      const coordinator = await CandidateCoordinator.create(ctx, config(paths.root), async () => undefined);
+      const baseline = await coordinator.prepare("cand-hmr-digest-mismatch-001");
+      await writeFile(paths.stagedEntry, "export const generation = 6;\n", "utf8");
+
+      const result = coordinator.applyPrepared().catch((error: unknown) => error);
+      await eventually(
+        async () => (await readFile(paths.entry, "utf8")).includes("generation = 6"),
+        "candidate bytes were not published",
+      );
+      await writeFile(paths.entry, "export const generation = 99;\n", "utf8");
+      emitReload(ctx, paths.entry);
+      await eventually(
+        async () => (await readFile(paths.entry, "utf8")).includes("generation = 0"),
+        "digest mismatch did not trigger baseline restoration",
+      );
+      emitReload(ctx, paths.entry);
+
+      await expect(result).resolves.toMatchObject({ code: "CANDIDATE_NOT_ADMITTED" });
+      expect(coordinator.currentGeneration()).toMatchObject({
+        candidateId: null,
+        candidateSha256: baseline.sourceSha256,
+        admitted: false,
+      });
+    } finally {
+      await ctx.fiber.dispose();
+    }
+  });
+
   it("publishes no live bytes when exact candidate approval is denied", async () => {
     const paths = await fixture();
     const ctx = new Context();
@@ -308,6 +382,73 @@ describe("HMR candidate coordinator", () => {
       await expect(CandidateCoordinator.create(ctx, config(root), async () => undefined)).rejects.toMatchObject({
         code: "CANDIDATE_WORKTREE_REQUIRED",
       });
+    } finally {
+      await ctx.fiber.dispose();
+    }
+  });
+
+  it("rejects an approval command sourced from the candidate worktree", async () => {
+    const paths = await fixture();
+    const ctx = new Context();
+    try {
+      await expect(CandidateCoordinator.create(
+        ctx,
+        config(paths.root, { approvalCommand: [join(paths.root, "package.json")] }),
+        async () => undefined,
+      )).rejects.toMatchObject({ code: "CANDIDATE_CONFIG_INVALID" });
+    } finally {
+      await ctx.fiber.dispose();
+    }
+  });
+
+  it("refuses application when a pinned approval launcher changes", async () => {
+    const paths = await fixture();
+    const launcher = join(dirname(paths.root), "approval-launcher.mjs");
+    await writeFile(launcher, "export {};\n", "utf8");
+    await mkdir(dirname(paths.approvalFile), { recursive: true });
+    await writeFile(paths.approvalFile, "test-only verifier input\n", "utf8");
+    const ctx = new Context();
+    try {
+      const coordinator = await CandidateCoordinator.create(
+        ctx,
+        config(paths.root, { approvalCommand: [launcher] }),
+        async () => undefined,
+      );
+      await coordinator.prepare("cand-hmr-launcher-drift-001");
+      await writeFile(paths.stagedEntry, "export const generation = 5;\n", "utf8");
+      await writeFile(launcher, "export const changed = true;\n", "utf8");
+
+      await expect(coordinator.applyPrepared()).rejects.toMatchObject({
+        code: "CANDIDATE_APPROVAL_COMMAND_DRIFT",
+      });
+      expect(await readFile(paths.entry, "utf8")).toBe("export const generation = 0;\n");
+    } finally {
+      await ctx.fiber.dispose();
+    }
+  });
+
+  it("rechecks approval launcher digests after the verifier returns", async () => {
+    const paths = await fixture();
+    const launcher = join(dirname(paths.root), "approval-launcher.mjs");
+    await writeFile(launcher, "export {};\n", "utf8");
+    await mkdir(dirname(paths.approvalFile), { recursive: true });
+    await writeFile(paths.approvalFile, "test-only verifier input\n", "utf8");
+    const ctx = new Context();
+    try {
+      const coordinator = await CandidateCoordinator.create(
+        ctx,
+        config(paths.root, { approvalCommand: [launcher] }),
+        async () => {
+          await writeFile(launcher, "export const changed = true;\n", "utf8");
+        },
+      );
+      await coordinator.prepare("cand-hmr-launcher-race-001");
+      await writeFile(paths.stagedEntry, "export const generation = 7;\n", "utf8");
+
+      await expect(coordinator.applyPrepared()).rejects.toMatchObject({
+        code: "CANDIDATE_APPROVAL_COMMAND_DRIFT",
+      });
+      expect(await readFile(paths.entry, "utf8")).toBe("export const generation = 0;\n");
     } finally {
       await ctx.fiber.dispose();
     }

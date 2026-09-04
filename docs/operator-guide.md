@@ -79,16 +79,18 @@ Mounting `@lunarmoon26/dal-hmr-candidate` is itself an `install_or_mount_plugin`
       - plugins/example/src/config.ts
     approvalFile: .dal/outbox/dal-hmr-candidate-approval.json
     approvalScope: prop-example-candidate
+    approvalCommand:
+      - /absolute/path/outside/worktree/to/dal/dist/cli.js
     dshVersion: 0.1.1-rc.2
     profile: isolated-workbench
 ```
 
-The profile values fix every writable path before the agent runs. Keep the coordinator package outside `files`; every listed file must already exist and may not traverse a symlink.
+The profile values fix every writable path before the agent runs. Keep the coordinator package outside `files`; every listed file must already exist and may not traverse a symlink. Every `approvalCommand` item must be an absolute regular launcher file outside `workspaceRoot`; the coordinator invokes the chain with its current Node runtime, pins each digest at startup, and rejects later drift. A compiled DAL CLI uses one item as shown; a source-only development launcher may use a fixed external launcher and CLI entry as two items. Never point this field at a candidate-worktree script.
 
 1. Call `dal_candidate_prepare` with one candidate ID. It copies the live files to `.dal/hmr-candidate/`; it does not touch the loaded plugin.
 2. Edit only the staged copies, then call `dal_candidate_status`. Use its `staged_sha256` in a human `apply_optimization_candidate` decision whose scope exactly matches `approvalScope`, saved at `approvalFile`.
-3. Call `dal_candidate_apply`. It invokes `dal approval verify` at the operation, publishes dependencies before the entry file, and waits for a successful matching `hmr/reload`. Approval mismatch, failed activation, unrelated reload, or timeout cannot admit the candidate; activation failure restores the prior bytes.
-4. End that session. Evaluate only in a newly created session whose final run record reports `context.candidate_generation.evaluation_eligible: true`. Any successful HMR reload during the session makes the record ineligible.
+3. Call `dal_candidate_apply`. It invokes `dal approval verify` through the pinned external launcher files at the operation, publishes dependencies before the entry file, and waits for a successful matching `hmr/reload`. Approval mismatch, failed activation, unrelated or digest-mismatched reload, launcher drift, or timeout cannot admit the candidate; activation failure restores the prior bytes.
+4. End that session. Evaluate only in a newly created session whose final record from the mounted recorder reports `context.candidate_generation.evaluation_eligible: true`. Any successful HMR reload during the session makes the record ineligible. Generic run ingestion checks this field's consistency but does not independently authenticate admission or grant authority.
 5. On rejection, call `dal_candidate_reject` and wait for the prior digest to reactivate. On acceptance, a human reviews the worktree diff and commits it; no dal tool promotes or commits.
 
 The coordinator intentionally handles plugin source and imported configuration modules, not profile YAML, skills, or `AGENTS.md`. Those remain proposal surfaces with their existing human application path.
