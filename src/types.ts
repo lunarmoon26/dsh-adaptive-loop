@@ -799,6 +799,16 @@ export interface RunRecord {
     inference_parameters: Array<{ name: string; value: string }>;
     harness_pins?: Array<{ surface: string; uri: string; sha256: string }>;
     model_patch_sha256?: string | null;
+    candidate_generation?: {
+      candidate_id: string | null;
+      candidate_sha256: string | null;
+      start_hmr_sequence: number | null;
+      end_hmr_sequence: number | null;
+      evaluation_eligible: boolean;
+      git_tree: string | null;
+      dsh_version: string | null;
+      profile: string | null;
+    };
   };
   runtime_generation?: {
     session_id_sha256: string;

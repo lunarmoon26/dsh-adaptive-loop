@@ -1,0 +1,263 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-hmr-runtime-generation-stack-20260904",
+  "ingested_at": "2026-09-04T19:35:28.026Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-hmr-runtime-generation-stack-20260904.json",
+    "sha256": "eefd4ced98018544c49d12b2e79573565382def536f2750dcc3e5cee45f7b4c5"
+  },
+  "feedback_sha256": "74fbd036c9899a76ddd914279666d193dd9b72dc21827ead525b2beabfa2feb3",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-04T19:35:28.026Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-hmr-runtime-generation-stack-20260904",
+    "change_id": "chg-hmr-runtime-generation-stack-20260904",
+    "created_at": "2026-09-04T19:33:54.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "opencode-agent"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "4601f0c09e6f98eb2e21543e632f081d50281141",
+        "branch": "feat/hmr-adaptive-plugin-loop",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/spec.md#DAL-025"
+    },
+    "goal": "Stack the HMR candidate loop on the runtime-generation attestation branch while preserving both generation contracts and their fail-closed eligibility rules.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-generation-contracts-coexist",
+        "statement": "Run records preserve runtime_generation while adding independent candidate_generation evidence without weakening either contract.",
+        "result": "passed",
+        "evidence": [
+          "ev-recorder",
+          "ev-focused-tests"
+        ]
+      },
+      {
+        "id": "ac-session-bound-eligibility",
+        "statement": "Both generation identities bind only at session creation, checkpoints are candidate-ineligible, and final eligibility requires one unchanged admitted HMR generation.",
+        "result": "passed",
+        "evidence": [
+          "ev-recorder",
+          "ev-focused-tests",
+          "ev-real-hmr"
+        ]
+      },
+      {
+        "id": "ac-contract-ownership",
+        "statement": "Runtime generation remains DAL-024 and ADR 0005, HMR becomes DAL-025 and ADR 0006, and all source-bound capsules validate.",
+        "result": "passed",
+        "evidence": [
+          "ev-contract",
+          "ev-capsules"
+        ]
+      },
+      {
+        "id": "ac-stacked-repository-gate",
+        "statement": "Focused integration, real pinned HMR composition, and the complete repository verification gate pass on the rebased stack.",
+        "result": "passed",
+        "evidence": [
+          "ev-rebased-feature",
+          "ev-focused-tests",
+          "ev-real-hmr",
+          "ev-full-check"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The HMR candidate loop now stacks cleanly on runtime-generation attestation with combined session binding, final-only candidate eligibility, reconciled contracts, and passing focused and repository-wide verification.",
+      "exception": null
+    },
+    "what_worked": [
+      "Keeping runtime and candidate generation as independent recorder inputs preserved PR 5 behavior while making their shared session boundary explicit.",
+      "A combined recorder test proved both persisted identities and their different checkpoint/final qualification rules in one run.",
+      "The existing pinned Loader and HMR composition probe passed after the rebase without modifying the external checkout."
+    ],
+    "what_failed": [
+      "The initial rebase stopped on eight overlapping recorder, contract, evidence, and capsule files plus requirement and ADR numbering collisions."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "git-rebase",
+        "purpose": "Replay the HMR feature on the runtime-generation attestation branch and reconcile overlapping contracts.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-rebased-feature"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "vitest-focused",
+        "purpose": "Verify runtime generation, controller enrollment, HMR attribution, run recording, clustering, and provenance together.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused-tests"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "harness",
+        "name": "dsh-hmr-composition",
+        "purpose": "Exercise candidate admission and rollback through the pinned local Loader and HMR implementation.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-real-hmr"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "capsule-check",
+        "purpose": "Validate reconciled capsule schemas, freshness, and canonical source digests.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-capsules"
+        ]
+      },
+      {
+        "sequence": 5,
+        "kind": "tool",
+        "name": "pnpm-run-check",
+        "purpose": "Run the complete repository verification gate on the rebased feature stack.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-full-check"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-sibling-feature-collisions",
+        "category": "coordination",
+        "summary": "Sibling feature branches independently claimed the same requirement and ADR numbers and competing recorder constructor seams.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Reserve requirement and ADR identifiers before parallel feature work and add an explicit multi-source recorder integration test when either generation contract changes.",
+        "evidence": [
+          "ev-contract",
+          "ev-recorder"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-rebased-feature",
+        "kind": "commit",
+        "uri": "repo://commit/4601f0c09e6f98eb2e21543e632f081d50281141",
+        "summary": "The HMR feature was replayed directly on the runtime-generation attestation commit.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/spec.md",
+        "summary": "DAL-024 owns runtime generation and DAL-025 owns the bounded HMR candidate loop; ADRs 0005 and 0006 preserve the same separation.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-recorder",
+        "kind": "file",
+        "uri": "repo://plugins/dal-run-record/src/index.ts",
+        "summary": "The recorder binds both optional generation sources once at session creation and independently derives runtime stability and final-only candidate eligibility.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-focused-tests",
+        "kind": "test",
+        "uri": "command://vitest-runtime-hmr-integration",
+        "summary": "Six focused suites passed 50 tests with one opt-in composition case skipped; the combined runtime and candidate-generation recorder proof passed.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-real-hmr",
+        "kind": "test",
+        "uri": "command://vitest-hmr-real-composition",
+        "summary": "Three HMR-focused suites passed 33 tests including the real pinned Loader/HMR admission and rollback case.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-capsules",
+        "kind": "command",
+        "uri": "command://dal-capsule-check",
+        "summary": "All three reconciled local knowledge capsules validated against their canonical sources.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      },
+      {
+        "id": "ev-full-check",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, 34 test files with 214 passing tests and 7 opt-in skips, capsule validation, policy verification, core evaluation, and benchmark evaluation all passed without a hard stop.",
+        "sha256": null,
+        "observed_at": "2026-09-04T19:33:54.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-production-lifecycle",
+        "statement": "No shared-profile mount, production candidate application, authoritative DSH runtime-generation producer, or awaited final-disposal boundary was exercised.",
+        "level": "low",
+        "resolution": "Keep these as separately approved upstream or deployment proofs; do not infer them from the local stacked integration tests.",
+        "evidence": [
+          "ev-contract",
+          "ev-real-hmr"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The repository owner approved stacking and reconciling the feature branches.",
+        "Final code review remains pending in the stacked pull request.",
+        "Force-push and pull-request publication require a separate exact external-write approval bound to the final commit."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "runtime-generation",
+        "hmr-candidate",
+        "stacked-integration"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

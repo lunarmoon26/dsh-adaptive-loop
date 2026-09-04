@@ -4,7 +4,7 @@ Status: Current for v0
 
 ## Safety boundary
 
-`dal` reads JSON and local files, writes validated evidence under explicit local stores, and runs deterministic validators by default. A policy `allowed` result is evidence only. Purpose-specific executors exist for confined verification, fixed user-global installation, the governed proposer, and the isolated benchmark e2e path; each independently rechecks its confinement or exact approval at the operation. There is no generic shell/network/shared-config executor, model SDK, optimizer runtime, plugin installer or mounter, or candidate applier.
+`dal` reads JSON and local files, writes validated evidence under explicit local stores, and runs deterministic validators by default. A policy `allowed` result is evidence only. Purpose-specific executors exist for confined verification, fixed user-global installation, the governed proposer, the isolated benchmark e2e path, and staged HMR candidate application; each independently rechecks its confinement or exact approval at the operation. There is no generic shell/network/shared-config executor, model SDK, optimizer runtime, or plugin installer/mounter. The HMR coordinator is the sole candidate applier and can write only its startup-configured files in an isolated linked worktree.
 
 ## Install and verify
 
@@ -62,7 +62,38 @@ pnpm run dal approval verify <decision.json> \
   --candidate-sha256 <digest>
 ```
 
-v0 still denies candidate application after a valid decision because no candidate applier exists. Plugin installation/mounting and candidate application remain unavailable. Shared configuration and external transfer occur only through the fixed user-global installer or purpose-specific proposer/e2e paths after their exact approvals verify.
+Plugin installation/mounting remains unavailable through dal. Shared configuration and external transfer occur only through the fixed user-global installer or purpose-specific proposer/e2e paths after their exact approvals verify. Candidate application is available only through the isolated HMR workbench below; it verifies this exact command for the staged digest immediately before writing the configured live files.
+
+## Isolated HMR candidate loop
+
+Mounting `@lunarmoon26/dal-hmr-candidate` is itself an `install_or_mount_plugin` operation and needs a separate exact decision. Configure it only in a workbench profile that points at a linked git worktree, never a primary checkout or shared profile:
+
+```yaml
+- id: dal-hmr-candidate
+  name: '@lunarmoon26/dal-hmr-candidate'
+  config:
+    workspaceRoot: /absolute/path/to/linked-worktree
+    entry: plugins/example/src/index.ts
+    files:
+      - plugins/example/src/index.ts
+      - plugins/example/src/config.ts
+    approvalFile: .dal/outbox/dal-hmr-candidate-approval.json
+    approvalScope: prop-example-candidate
+    approvalCommand:
+      - /absolute/path/outside/worktree/to/dal/dist/cli.js
+    dshVersion: 0.1.1-rc.2
+    profile: isolated-workbench
+```
+
+The profile values fix every writable path before the agent runs. Keep the coordinator package outside `files`; every listed file must already exist and may not traverse a symlink. Every `approvalCommand` item must be an absolute regular launcher file outside `workspaceRoot`; the coordinator invokes the chain with its current Node runtime, pins each digest at startup, and rejects later drift. A compiled DAL CLI uses one item as shown; a source-only development launcher may use a fixed external launcher and CLI entry as two items. Never point this field at a candidate-worktree script.
+
+1. Call `dal_candidate_prepare` with one candidate ID. It copies the live files to `.dal/hmr-candidate/`; it does not touch the loaded plugin.
+2. Edit only the staged copies, then call `dal_candidate_status`. Use its `staged_sha256` in a human `apply_optimization_candidate` decision whose scope exactly matches `approvalScope`, saved at `approvalFile`.
+3. Call `dal_candidate_apply`. It invokes `dal approval verify` through the pinned external launcher files at the operation, publishes dependencies before the entry file, and waits for a successful matching `hmr/reload`. Approval mismatch, failed activation, unrelated or digest-mismatched reload, launcher drift, or timeout cannot admit the candidate; activation failure restores the prior bytes.
+4. End that session. Evaluate only in a newly created session whose final record from the mounted recorder reports `context.candidate_generation.evaluation_eligible: true`. Any successful HMR reload during the session makes the record ineligible. Generic run ingestion checks this field's consistency but does not independently authenticate admission or grant authority.
+5. On rejection, call `dal_candidate_reject` and wait for the prior digest to reactivate. On acceptance, a human reviews the worktree diff and commits it; no dal tool promotes or commits.
+
+The coordinator intentionally handles plugin source and imported configuration modules, not profile YAML, skills, or `AGENTS.md`. Those remain proposal surfaces with their existing human application path.
 
 ## Offline evaluation and scorecards
 
@@ -80,7 +111,7 @@ Use `--store` only for isolated test evidence. Policy quarantine lookup reads `d
 
 - A hard stop caused by a post-change regression selects `rollback`; other hard stops select `quarantine`.
 - A policy check whose target SHA-256 matches a hard-stop scorecard in the configured evaluation store is denied. An unreadable or invalid quarantine evidence store fails closed.
-- v0 never changes the target. Rollback means a human restores the last reviewed version through the owning repository/dsh procedure and records evidence.
+- The scorecard path never changes its target. The isolated HMR coordinator can restore its in-memory pre-candidate snapshot; every other rollback remains a human repository/dsh procedure with recorded evidence.
 - A hard-stopped digest remains permanently unusable in v0. Release requires a corrected artifact with a new digest, a clean uncontaminated scorecard, human review, and—where relevant—a separate sensitive-action approval.
 - Never delete or rewrite the triggering scorecard or guardrail decision to manufacture a release.
 
@@ -144,7 +175,7 @@ pnpm run dal cluster run --store .dal/runs --output .dal/clusters --format json
 1. Review the summary and cluster records. Cluster digests are the proposer input; raw traces never enter a model context.
 2. Drive one proposal per bounded change through the staged lifecycle, naming the editable surface and a falsifiable prediction from `proposed` onward. Human stages require human actors.
 3. Evaluate through the sandbox path; a hard stop quarantines the candidate.
-4. Apply by committing the skill/tool/harness change to VCS yourself — v0 never applies changes — then record `applied -> measured` with measurement evidence.
+4. Promote by committing the reviewed skill/tool/harness change to VCS yourself; HMR admission is temporary evaluation state, not promotion. Then record `applied -> measured` with measurement evidence.
 5. Commit the resulting `.dal/` evidence alongside the change so the team's next reconcile sees both.
 
 Never delete evidence to unblock a proposal: corrections are new records with `supersedes`, and quarantined digests require a new artifact digest. A reset rebaselines the whole workspace; it never unblocks a specific proposal.

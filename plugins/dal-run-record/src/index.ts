@@ -58,6 +58,16 @@ export interface RecordedEventLike {
   data: Record<string, unknown>;
 }
 
+export interface CandidateGenerationLike {
+  candidateId: string | null;
+  candidateSha256: string;
+  hmrSequence: number;
+  admitted: boolean;
+  gitTree: string;
+  dshVersion: string;
+  profile: string;
+}
+
 interface ToolErrorFact {
   name: string;
   code: string;
@@ -87,6 +97,8 @@ interface SessionAccumulator {
     binding: RuntimeGenerationBinding;
     source: RuntimeGenerationSourceLike;
   } | null;
+  freshSession: boolean;
+  candidateGeneration: CandidateGenerationLike | null;
 }
 
 function sha256(text: string): string {
@@ -135,7 +147,32 @@ export class RunSessionRecorder {
   constructor(
     private readonly config: ResolvedConfig,
     private readonly runtimeGenerationSource?: RuntimeGenerationSourceLike,
+    private readonly readCandidateGeneration: () => CandidateGenerationLike | null = () => null,
   ) {}
+
+  private currentCandidateGeneration(): CandidateGenerationLike | null {
+    try {
+      const generation = this.readCandidateGeneration();
+      if (
+        generation === null
+        || (generation.candidateId !== null && typeof generation.candidateId !== "string")
+        || !/^[0-9a-f]{64}$/.test(generation.candidateSha256)
+        || !Number.isSafeInteger(generation.hmrSequence)
+        || generation.hmrSequence < 0
+        || typeof generation.admitted !== "boolean"
+        || !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(generation.gitTree)
+        || typeof generation.dshVersion !== "string"
+        || generation.dshVersion === ""
+        || typeof generation.profile !== "string"
+        || generation.profile === ""
+      ) {
+        return null;
+      }
+      return { ...generation };
+    } catch {
+      return null;
+    }
+  }
 
   private accumulator(session: RecordedSessionLike): SessionAccumulator | undefined {
     const existing = this.sessions.get(session.id);
@@ -167,22 +204,29 @@ export class RunSessionRecorder {
       inference: [],
       generationBindingAttempted: false,
       runtimeGeneration: null,
+      freshSession: false,
+      candidateGeneration: null,
     };
     this.sessions.set(session.id, created);
     return created;
   }
 
-  /** Bind exactly once at session creation; late or malformed bindings stay absent. */
-  bindRuntimeGeneration(session: RecordedSessionLike): void {
-    const state = this.accumulator(session);
-    if (state === undefined || state.generationBindingAttempted) {
-      return;
-    }
-    state.generationBindingAttempted = true;
-    if (state.eventCount > 0 || this.runtimeGenerationSource === undefined) {
-      return;
-    }
+  /** Bind runtime and candidate identity exactly once at the new-session boundary. */
+  create(session: RecordedSessionLike): void {
     try {
+      const state = this.accumulator(session);
+      if (state === undefined || state.generationBindingAttempted) {
+        return;
+      }
+      state.generationBindingAttempted = true;
+      if (state.eventCount > 0) {
+        return;
+      }
+      state.freshSession = true;
+      state.candidateGeneration = this.currentCandidateGeneration();
+      if (this.runtimeGenerationSource === undefined) {
+        return;
+      }
       const binding = this.runtimeGenerationSource.bindSession(session);
       if (!isRuntimeGenerationBinding(binding)) {
         return;
@@ -209,6 +253,11 @@ export class RunSessionRecorder {
     } catch {
       // A missing generation is safer than a partially trusted binding.
     }
+  }
+
+  /** Backward-compatible name for callers that bind only runtime generation. */
+  bindRuntimeGeneration(session: RecordedSessionLike): void {
+    this.create(session);
   }
 
   /** Counter-only projection; never throws and never touches the filesystem. */
@@ -351,6 +400,18 @@ export class RunSessionRecorder {
     const outcome = this.outcomeOf(state);
     const generation = state.runtimeGeneration;
     const stableForSession = final && generation !== null && generationStable(generation);
+    const endGeneration = this.currentCandidateGeneration();
+    const startGeneration = state.candidateGeneration;
+    const evaluationEligible = final
+      && state.freshSession
+      && startGeneration !== null
+      && endGeneration !== null
+      && startGeneration.admitted
+      && endGeneration.admitted
+      && startGeneration.candidateId !== null
+      && startGeneration.candidateId === endGeneration.candidateId
+      && startGeneration.candidateSha256 === endGeneration.candidateSha256
+      && startGeneration.hmrSequence === endGeneration.hmrSequence;
     const record = {
       $schema: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
       schema_version: "1.0.0",
@@ -381,6 +442,16 @@ export class RunSessionRecorder {
         context_policy_sha256: await fileDigestOrNull(join(state.cwd, "config", "policy.v1.json")),
         inference_parameters: state.inference,
         ...(generation === null ? {} : { harness_pins: generation.binding.harness_pins }),
+        candidate_generation: {
+          candidate_id: startGeneration?.candidateId ?? null,
+          candidate_sha256: startGeneration?.candidateSha256 ?? null,
+          start_hmr_sequence: startGeneration?.hmrSequence ?? null,
+          end_hmr_sequence: endGeneration?.hmrSequence ?? null,
+          evaluation_eligible: evaluationEligible,
+          git_tree: startGeneration?.gitTree ?? null,
+          dsh_version: startGeneration?.dshVersion ?? null,
+          profile: startGeneration?.profile ?? null,
+        },
       },
       ...(generation === null
         ? {}
@@ -478,6 +549,12 @@ interface EventWiringContext {
   get(name: string, strict?: boolean): unknown;
 }
 
+interface CandidateGenerationContext {
+  dalCandidate?: {
+    currentGeneration(): CandidateGenerationLike;
+  };
+}
+
 export function apply(ctx: Context, config: Config): void {
   const resolved: ResolvedConfig = {
     storeRoot: config.storeRoot ?? ".dal/runs",
@@ -488,9 +565,12 @@ export function apply(ctx: Context, config: Config): void {
   const source = isRuntimeGenerationSource(suppliedSource)
     ? generationSourceBoundToContext(wiring, suppliedSource)
     : undefined;
-  const recorder = new RunSessionRecorder(resolved, source);
+  const recorder = new RunSessionRecorder(resolved, source, () => {
+    const candidate = (ctx as unknown as CandidateGenerationContext).dalCandidate;
+    return candidate?.currentGeneration() ?? null;
+  });
   wiring.on("session/created", (session) => {
-    recorder.bindRuntimeGeneration(session as RecordedSessionLike);
+    recorder.create(session as RecordedSessionLike);
   });
   wiring.on("session/event", (session, event) => {
     recorder.onEvent(session as RecordedSessionLike, event as RecordedEventLike);

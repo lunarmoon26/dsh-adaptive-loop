@@ -1,6 +1,6 @@
 # 0003: Permit only purpose-specific approved executors
 
-Status: Accepted
+Status: Accepted; candidate-applier boundary refined by [`0006-stage-approved-candidates-through-hmr.md`](0006-stage-approved-candidates-through-hmr.md)
 Date: 2026-08-31
 Related: [`../spec.md`](../spec.md), [`../architecture.md`](../architecture.md), [`../governance.md`](../governance.md)
 

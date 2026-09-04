@@ -1,0 +1,243 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-hmr-main-rebase-20260904",
+  "ingested_at": "2026-09-04T20:08:59.522Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-hmr-main-rebase-20260904.json",
+    "sha256": "1f4f737c99ece409c605c232298c2292c5ccb8aabc1d569b1072e85df67746e9"
+  },
+  "feedback_sha256": "3f80228f79419ed70bc06844661036e4fafdab58f3e360ed3d86fe4f2e97f80e",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-04T20:08:59.522Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-hmr-main-rebase-20260904",
+    "change_id": "chg-hmr-runtime-generation-stack-20260904",
+    "created_at": "2026-09-04T20:07:59.000Z",
+    "supersedes": "fb-hmr-runtime-generation-stack-review-20260904",
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "opencode-agent"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "36180055d14fa41e07303e28a70a9eb4f238ab26",
+        "branch": "feat/hmr-adaptive-plugin-loop",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/spec.md#DAL-025"
+    },
+    "goal": "Move the reviewed HMR feature from its stacked runtime-generation parent onto the merged main branch without changing feature content or weakening its verification evidence.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-merged-main-base",
+        "statement": "The HMR-only commits are replayed directly onto the merged runtime-generation main commit.",
+        "result": "passed",
+        "evidence": [
+          "ev-merged-base",
+          "ev-rebased-head"
+        ]
+      },
+      {
+        "id": "ac-tree-preservation",
+        "statement": "The rebased branch tree is byte-equivalent to the previously reviewed and published HMR head before this feedback record is added.",
+        "result": "passed",
+        "evidence": [
+          "ev-tree-equivalence"
+        ]
+      },
+      {
+        "id": "ac-hmr-only-diff",
+        "statement": "The prospective main-based comparison contains only the expected HMR feature surface rather than the already-merged runtime-generation patch.",
+        "result": "passed",
+        "evidence": [
+          "ev-main-diff"
+        ]
+      },
+      {
+        "id": "ac-post-rebase-gate",
+        "statement": "The complete repository verification gate passes on the rebased tree.",
+        "result": "passed",
+        "evidence": [
+          "ev-full-check"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The HMR feature now has the merged runtime-generation commit on main as its direct base, retains the previously reviewed feature tree, and passes the complete repository gate.",
+      "exception": null
+    },
+    "what_worked": [
+      "The merged runtime-generation tree exactly matched its reviewed source head, allowing the HMR-only commits to replay without conflicts.",
+      "A direct old-head versus rebased-head comparison proved behavior-bearing repository content was unchanged.",
+      "Comparing both two-dot and three-dot ranges against main produced the same bounded HMR feature surface after the rebase."
+    ],
+    "what_failed": [
+      "Retargeting the pull request before rewriting squash-merge ancestry caused the hosting service to include the already-merged dependency in its comparison and report the branch as conflicting.",
+      "The earlier completion feedback references the pre-main-rebase commit identity and is therefore superseded by this record."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "pull-request-inspection",
+        "purpose": "Confirm the dependency merge and identify the inflated comparison caused by squash-merge ancestry.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-merged-base"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "git-rebase",
+        "purpose": "Replay only the HMR commits onto the merged main commit.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-rebased-head",
+          "ev-tree-equivalence"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "git-comparison",
+        "purpose": "Prove tree preservation and verify the prospective main-based change surface.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tree-equivalence",
+          "ev-main-diff"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "pnpm-run-check",
+        "purpose": "Run the complete repository gate after the ancestry rewrite.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-full-check"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-retarget-before-ancestry-rewrite",
+        "category": "coordination",
+        "summary": "The pull request base was changed before accounting for the dependency pull request's squash merge, briefly producing an inflated and conflicting hosted comparison.",
+        "impact": "low",
+        "recoverable": true,
+        "suggested_action": "After a stacked dependency merges, inspect whether its source commit is an ancestor of the target base before retargeting the dependent pull request.",
+        "evidence": [
+          "ev-merged-base",
+          "ev-main-diff"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-merged-base",
+        "kind": "commit",
+        "uri": "repo://commit/599986699323f3e431dfb15ac19cc0a42a294016",
+        "summary": "The dependency pull request merged runtime-generation attestation into main with a content-equivalent squash commit.",
+        "sha256": null,
+        "observed_at": "2026-09-04T20:07:59.000Z"
+      },
+      {
+        "id": "ev-rebased-head",
+        "kind": "commit",
+        "uri": "repo://commit/36180055d14fa41e07303e28a70a9eb4f238ab26",
+        "summary": "The reviewed HMR commit series was replayed directly onto the merged main commit without conflicts.",
+        "sha256": null,
+        "observed_at": "2026-09-04T20:07:59.000Z"
+      },
+      {
+        "id": "ev-tree-equivalence",
+        "kind": "command",
+        "uri": "command://git-tree-equivalence-after-main-rebase",
+        "summary": "The rebased head and the previously published reviewed head had no file-content differences.",
+        "sha256": null,
+        "observed_at": "2026-09-04T20:07:59.000Z"
+      },
+      {
+        "id": "ev-main-diff",
+        "kind": "command",
+        "uri": "command://git-main-comparison-after-rebase",
+        "summary": "Two-dot and three-dot comparisons against merged main agreed on the same 37-file HMR feature surface.",
+        "sha256": null,
+        "observed_at": "2026-09-04T20:07:59.000Z"
+      },
+      {
+        "id": "ev-full-check",
+        "kind": "test",
+        "uri": "command://pnpm-run-check-post-main-rebase",
+        "summary": "Typecheck, build, 34 test files with 219 passing tests and 7 opt-in skips, capsule validation, policy verification, core evaluation, and benchmark evaluation all passed without a hard stop.",
+        "sha256": null,
+        "observed_at": "2026-09-04T20:07:59.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-hosted-recalculation",
+        "statement": "The hosting service has not yet recomputed pull request mergeability for the rebased commit because publication remains approval-gated.",
+        "level": "low",
+        "resolution": "After exact external-write approval, publish the rebased head and confirm the pull request reports the intended base, bounded diff, successful CI, and clean mergeability.",
+        "evidence": [
+          "ev-main-diff",
+          "ev-full-check"
+        ]
+      },
+      {
+        "id": "un-hmr-admission-receipt",
+        "statement": "HMR recorder attribution has no independently persisted admission receipt and therefore is not an authorization source.",
+        "level": "low",
+        "resolution": "Add a separately designed receipt and verifier only when a future automated consumer needs authenticated HMR admission evidence.",
+        "evidence": [
+          "ev-full-check"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The repository owner reported that dependency pull request 5 merged, activating the previously agreed retargeting step.",
+        "Final maintainer review remains pending in pull request 6.",
+        "Publishing the rebased head requires a new exact external-write approval bound to its final commit."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "runtime-generation",
+        "hmr-candidate",
+        "main-rebase",
+        "stacked-integration"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

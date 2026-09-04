@@ -7,6 +7,7 @@
   "started_at": "2026-08-28T01:15:00.000Z",
   "finished_at": "2026-08-28T01:15:18.000Z",
   "outcome": "succeeded",
+  "record_stage": "final",
   "failure": null,
   "context": {
     "task_set": "held-in",
@@ -21,7 +22,17 @@
     "grader_version": "1.0.0",
     "seeds": [8],
     "context_policy_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
-    "inference_parameters": [{ "name": "temperature", "value": "0.2" }]
+    "inference_parameters": [{ "name": "temperature", "value": "0.2" }],
+    "candidate_generation": {
+      "candidate_id": "cand-fixture-001",
+      "candidate_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "start_hmr_sequence": 7,
+      "end_hmr_sequence": 7,
+      "evaluation_eligible": true,
+      "git_tree": "6666666666666666666666666666666666666666",
+      "dsh_version": "0.1.1-rc.2",
+      "profile": "hmr-test"
+    }
   },
   "artifacts": [
     {

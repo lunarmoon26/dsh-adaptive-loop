@@ -1,8 +1,8 @@
 {
   "name": "@lunarmoon26/dal-modes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
-  "description": "DSH Adaptive Loop plugin bundle: run-mode evidence recording on by default, with improvement tools and the G2 unknown-effect guard shipped as disabled rows.",
+  "description": "DSH Adaptive Loop plugin bundle: run recording on by default, with improvement tools, the HMR candidate coordinator, and the G2 guard shipped as disabled rows.",
   "license": "MIT",
   "files": [
     "cordis.patch.yml"
