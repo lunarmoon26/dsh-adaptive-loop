@@ -1,6 +1,6 @@
 # Requirement Evidence
 
-Status: Runtime-generation and HMR candidate-loop post-review verification and superseding final feedback complete
+Status: Runtime-generation and HMR candidate-loop merged-base rebase, post-review verification, and superseding feedback complete
 Changes: `chg-control-supervisor-foundation-20260902`, `chg-runtime-generation-attestation-20260902`, `chg-hmr-adaptive-plugin-loop-20260904`, `chg-hmr-runtime-generation-stack-20260904`
 Evidence date: 2026-09-04
 
@@ -113,6 +113,8 @@ Observed combined-stack post-review result: the runtime-generation/HMR integrati
 Required combined-stack task feedback validated and ingested at `.dal/store/fb-hmr-runtime-generation-stack-20260904.json`; feedback digest `74fbd036c9899a76ddd914279666d193dd9b72dc21827ead525b2beabfa2feb3`.
 
 The final security-review record superseded that preliminary combined-stack record at `.dal/store/fb-hmr-runtime-generation-stack-review-20260904.json`; feedback digest `77d13779e852bceb02180ba5dd770aa3c0b6f4319305f31dcbdf74cce6c5590b`.
+
+After PR #5's content-equivalent squash merge, the three HMR-only commits were rebased onto merged `main`. The pre- and post-rebase feature trees matched, two-dot and three-dot comparisons agreed on the same 37-file HMR surface, and the complete repository gate again passed 219 tests with 7 opt-in skips. The merged-base feedback superseded the pre-main-rebase record at `.dal/store/fb-hmr-main-rebase-20260904.json`; feedback digest `3f80228f79419ed70bc06844661036e4fafdab58f3e360ed3d86fe4f2e97f80e`.
 
 Required task feedback validated and ingested at `.dal/store/fb-benchmark-integrity-g2-20260901.json`; feedback digest `f138825219f80ae3778bd1ed24c09bf4b2b0021c74fb695c800ffb585b3b45b6`. The clean-CI portability follow-up superseded it at `.dal/store/fb-benchmark-integrity-g2-ci-20260901.json`; digest `9e667c5e61f68110e20774bca792fe21dcd4c139b1a3743ee2aee54fd66b1e5c`. The completed artifact refresh now supersedes both at `.dal/store/fb-benchmark-integrity-g2-image-20260901.json`; digest `ae06da3bd906852f0701ba9ba7f19d9c4a89e576242f2ed56f691de99dbcec24`.
 
