@@ -284,6 +284,86 @@
             "null"
           ],
           "maxLength": 64
+        },
+        "candidate_generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "candidate_id",
+            "candidate_sha256",
+            "start_hmr_sequence",
+            "end_hmr_sequence",
+            "evaluation_eligible",
+            "git_tree",
+            "dsh_version",
+            "profile"
+          ],
+          "properties": {
+            "candidate_id": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+                }
+              ]
+            },
+            "candidate_sha256": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+                }
+              ]
+            },
+            "start_hmr_sequence": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "end_hmr_sequence": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "evaluation_eligible": {
+              "type": "boolean"
+            },
+            "git_tree": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+            },
+            "dsh_version": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/semver"
+                }
+              ]
+            },
+            "profile": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+                }
+              ]
+            }
+          }
         }
       }
     },

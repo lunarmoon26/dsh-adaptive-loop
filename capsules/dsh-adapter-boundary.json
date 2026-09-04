@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.4.0",
+  "capsule_version": "1.5.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-09-02",
+  "checked_at": "2026-09-04",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-v0-2026-09-02",
-      "sha256": "aadc9eb56334a404d9a6b67782f7b74a9b8d0066f49de27ca973a8a7311aa8a2",
+      "revision": "dal-v0-2026-09-04",
+      "sha256": "f4c18419aa5d77d66ce0133d2f7ac5e73addcdb30ce21ebffb1d5e8302baf384",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-v0-2026-09-02",
-      "sha256": "cc256dbcdee1de1a5ca3b30afce33c81cc6a1eba79cc70f964379cfa5119c304",
+      "revision": "dal-v0-2026-09-04",
+      "sha256": "4887857cf9085d816fad081b1bca70f72a335f28068006a491439e0a2761fab2",
       "local_path": "../ROADMAP.md",
       "required": true
     },
@@ -56,7 +56,7 @@
     },
     {
       "id": "claim-optional-cordis",
-      "text": "Cordis mode and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
+      "text": "Cordis run, improvement, HMR-candidate, and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-roadmap",
@@ -65,7 +65,7 @@
     },
     {
       "id": "claim-provider-neutral",
-      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA or SkillOpt optimizer runtimes and candidate application do not run in v0.",
+      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA and SkillOpt optimizer runtimes do not run in v0, while plugin candidate application is limited to the exact-approved isolated HMR workbench.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research",
@@ -142,7 +142,7 @@
     },
     {
       "id": "ptr-future-only",
-      "when": "Proposing plugin deployment, optimizer execution, candidate application, provider expansion, or supply-chain integration",
+      "when": "Proposing production plugin deployment, optimizer execution, broader candidate application, provider expansion, or supply-chain integration",
       "uri": "repo://ROADMAP.md",
       "source_ids": [
         "src-dal-roadmap"

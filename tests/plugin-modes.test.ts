@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   apply as applyRunRecord,
   RunSessionRecorder,
+  type CandidateGenerationLike,
   type RuntimeGenerationSourceLike,
 } from "../plugins/dal-run-record/src/index.js";
 import { apply as applyImproveTools } from "../plugins/dal-improve-tools/src/index.js";
@@ -63,6 +64,18 @@ function runtimeGenerationSource(): RuntimeGenerationSourceLike & { advance(): v
     advance: () => {
       transitionSequence += 1;
     },
+  };
+}
+
+function candidateGeneration(): CandidateGenerationLike {
+  return {
+    candidateId: "cand-combined-generation-001",
+    candidateSha256: "c".repeat(64),
+    hmrSequence: 11,
+    admitted: true,
+    gitTree: "d".repeat(40),
+    dshVersion: "0.1.1-rc.2",
+    profile: "hmr-test",
   };
 }
 
@@ -205,6 +218,57 @@ describe("run-mode recorder", () => {
       harness_pins: [
         { surface: "plugin", uri: "dsh://plugins/dal-run-record/0.1.3", sha256: "b".repeat(64) },
       ],
+    });
+    await expect(assertSchema(SCHEMA_IDS.runRecord, final, "Run record")).resolves.toBeUndefined();
+  });
+
+  it("records runtime and candidate generations together at session creation", async () => {
+    const root = await workspace();
+    const source = runtimeGenerationSource();
+    const generation = candidateGeneration();
+    const recorder = new RunSessionRecorder(
+      { storeRoot: ".dal/runs", maxErrorFacts: 64 },
+      source,
+      () => generation,
+    );
+    const activeSession = session("session-combined-generation", root);
+    recorder.create(activeSession);
+    recorder.onEvent(activeSession, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(activeSession, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 1));
+    await recorder.flush(activeSession);
+    await recorder.dispose(activeSession);
+
+    const checkpoint = JSON.parse(
+      await readFile(join(root, ".dal", "runs", "run-session-combined-generation-s1.json"), "utf8"),
+    ) as {
+      record_stage: string;
+      runtime_generation: { stable_for_session: boolean };
+      context: { candidate_generation: { evaluation_eligible: boolean } };
+    };
+    const final = JSON.parse(
+      await readFile(join(root, ".dal", "runs", "run-session-combined-generation-s1.final.json"), "utf8"),
+    ) as {
+      record_stage: string;
+      runtime_generation: { stable_for_session: boolean };
+      context: { candidate_generation: Record<string, unknown> };
+    };
+    expect(checkpoint).toMatchObject({
+      record_stage: "checkpoint",
+      runtime_generation: { stable_for_session: false },
+      context: { candidate_generation: { evaluation_eligible: false } },
+    });
+    expect(final).toMatchObject({
+      record_stage: "final",
+      runtime_generation: { stable_for_session: true },
+      context: {
+        candidate_generation: {
+          candidate_id: generation.candidateId,
+          candidate_sha256: generation.candidateSha256,
+          start_hmr_sequence: generation.hmrSequence,
+          end_hmr_sequence: generation.hmrSequence,
+          evaluation_eligible: true,
+        },
+      },
     });
     await expect(assertSchema(SCHEMA_IDS.runRecord, final, "Run record")).resolves.toBeUndefined();
   });
@@ -368,7 +432,7 @@ describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => 
 });
 
 describe("mode bundle manifest", () => {
-  it("declares a dsh.bundle patch with the recorder on and the tools off", async () => {
+  it("declares a dsh.bundle patch with the recorder on and workbench plugins off", async () => {
     const root = resolve(import.meta.dirname, "..", "plugins", "dal-modes");
     const manifest = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as {
       name: string;
@@ -380,9 +444,11 @@ describe("mode bundle manifest", () => {
     expect(patch).toContain("id: dal-run-record");
     expect(patch).toContain("name: '@lunarmoon26/dal-run-record'");
     expect(patch).toContain("id: dal-improve-tools");
+    expect(patch).toContain("id: dal-hmr-candidate");
+    expect(patch).toContain("name: '@lunarmoon26/dal-hmr-candidate'");
     expect(patch).toContain("id: dal-unknown-effect-guard");
     expect(patch).toContain("name: '@lunarmoon26/dal-unknown-effect-guard'");
-    expect(patch.match(/disabled: true/g)).toHaveLength(2);
+    expect(patch.match(/disabled: true/g)).toHaveLength(3);
     expect(patch).toContain("disabled: true");
   });
 

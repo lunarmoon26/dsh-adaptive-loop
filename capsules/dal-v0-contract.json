@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.4.0",
+  "capsule_version": "1.5.0",
   "title": "DAL v0 safety and evidence contract",
-  "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, or runtime-generation behavior",
-  "checked_at": "2026-09-02",
+  "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
+  "checked_at": "2026-09-04",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-v0-runtime-generation-2026-09-02",
-      "sha256": "044d5c2ad593b6d58df0b91859d7c890b7d2edbbc8be32474a365300d1bf5a9b",
+      "revision": "dal-v0-runtime-hmr-2026-09-04",
+      "sha256": "5417379dde6579d690c5eef366acaca0c6de503e966fbe3358c0f81b2f61c077",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -21,8 +21,8 @@
       "id": "src-dal-governance",
       "kind": "local_file",
       "uri": "repo://docs/governance.md",
-      "revision": "dal-v0-2026-08-31",
-      "sha256": "e07c31019a8f229364732a7ce19a4d49c756eb85406039852304a3388024e12a",
+      "revision": "dal-v0-2026-09-04",
+      "sha256": "1d493b14f8ce4d659f0caa3c9b1fc87320b6604e115942f1539b0c0dc6b98e2f",
       "local_path": "../docs/governance.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-evaluation",
       "kind": "local_file",
       "uri": "repo://docs/evaluation-and-guardrails.md",
-      "revision": "dal-v0-2026-08-31",
-      "sha256": "43ff7a7e7e7ee53918aaa1a046e75219c6d8812090ec91f385a55d839c663c2f",
+      "revision": "dal-v0-2026-09-04",
+      "sha256": "7f694674f93fe972dd00e2ecae34c6e4d90a0ff3b9cdff858e67fd42ebcd179d",
       "local_path": "../docs/evaluation-and-guardrails.md",
       "required": true
     },
@@ -48,7 +48,7 @@
   "claims": [
     {
       "id": "claim-local-only",
-      "text": "Version 0 is local-only by default. Its fixed user-global installer and purpose-specific proposer/e2e paths independently verify exact approvals; no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, or candidate applier ships.",
+      "text": "Version 0 is local-only by default. Purpose-specific installer, proposer, e2e, and HMR paths independently verify exact approvals; no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, arbitrary candidate applier, or automatic promotion path ships.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",
@@ -103,6 +103,15 @@
       "source_ids": [
         "src-dal-spec",
         "src-runtime-generation-contract"
+      ]
+    },
+    {
+      "id": "claim-hmr-candidate",
+      "text": "The isolated HMR workbench stages a bounded plugin candidate, verifies its exact digest before touching configured live files, admits only a matching successful DSH reload, rejects checkpoints and generation-spanning runs, and leaves promotion to human git review.",
+      "source_ids": [
+        "src-dal-spec",
+        "src-dal-governance",
+        "src-dal-evaluation"
       ]
     }
   ],

@@ -39,11 +39,12 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
   awaited `session/flush`, and may attempt a final drain on observe-only
   `session/disposed`. Disposal listener promises are contained but not awaited,
   so they cannot prove final persistence before process teardown.
-- Runtime-generation binding, when available, is synchronous at
+- Runtime- and candidate-generation binding is synchronous at
   `session/created`, before the first event. The optional launcher-owned
   `runtimeGeneration` service returns a precomputed binding plus a monotonic
-  transition sequence. The recorder does not infer composition from later
-  events and does not late-bind.
+  transition sequence; the optional `dalCandidate` service reports the admitted
+  HMR generation. The recorder does not infer identity from later events or
+  late-bind either source, and candidate checkpoints are evaluation-ineligible.
 - Event vocabulary includes `turn/start|end`, `step/start|end`,
   `assistant/message` (+`usage`), `tool/call` (name + raw arguments),
   `tool/result` (error name/code), `request/header` (config incl. provider/
@@ -55,6 +56,20 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
   and Loader producer contract is documented in
   `docs/runtime-generation-attestation.md`; until it exists, recorder output
   remains unattested and controller-ineligible.
+
+## HMR candidate admission
+
+- `hmr/reload` carries `Map<oldPlugin, { filename, runtime? }>` and is emitted
+  only after every selected plugin replacement succeeds. Import or activation
+  failure restores the prior module cache/runtime and emits no success event.
+- Candidate admission matches the configured entry's canonical file URL, not a
+  plugin display name. Every successful HMR event advances the observed sequence;
+  therefore an unrelated reload still invalidates an in-flight evaluation run.
+- Multi-file candidates publish imported dependencies first and the loaded entry
+  last. Candidate bytes stay in a fixed inactive staging directory until an exact
+  `apply_optimization_candidate` decision verifies at the copy operation.
+- HMR activation is evaluation admission, not promotion. Only a later human git
+  review and commit promotes the workspace source.
 
 ## What a proposal may and may not touch
 
