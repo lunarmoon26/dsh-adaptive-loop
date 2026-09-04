@@ -35,15 +35,26 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
 ## Sessions and recording
 
 - The session is an append-only event log (`ctx.sessions`); persistence
-  plugins subscribe to `session/event` (fire-and-forget) and drain on
-  `session/flush` and `session/disposed`. Observer failures are contained and
-  never fail an append.
+  plugins subscribe to `session/event` (fire-and-forget), drain durably on
+  awaited `session/flush`, and may attempt a final drain on observe-only
+  `session/disposed`. Disposal listener promises are contained but not awaited,
+  so they cannot prove final persistence before process teardown.
+- Runtime-generation binding, when available, is synchronous at
+  `session/created`, before the first event. The optional launcher-owned
+  `runtimeGeneration` service returns a precomputed binding plus a monotonic
+  transition sequence. The recorder does not infer composition from later
+  events and does not late-bind.
 - Event vocabulary includes `turn/start|end`, `step/start|end`,
   `assistant/message` (+`usage`), `tool/call` (name + raw arguments),
   `tool/result` (error name/code), `request/header` (config incl. provider/
   model + system text), `request/context` (route metadata).
 - Model-visible means logged: the durable event log is the canonical history;
   projections must record digests/counts, never raw arguments or results.
+- Current DSH does not expose enough authoritative resolver/config/mutation
+  state for DAL to produce verified runtime manifests. The required launcher
+  and Loader producer contract is documented in
+  `docs/runtime-generation-attestation.md`; until it exists, recorder output
+  remains unattested and controller-ineligible.
 
 ## What a proposal may and may not touch
 

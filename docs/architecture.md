@@ -2,7 +2,7 @@
 
 Status: Implemented v0; evidence tracked in [`requirement-evidence.md`](requirement-evidence.md)
 Audience: developers, reviewers, dsh plugin authors, and optimizer-adapter authors
-Last contract review: 2026-08-31; pinned upstream evidence remains in [`research-evidence.md`](research-evidence.md)
+Last contract review: 2026-09-02; pinned upstream evidence remains in [`research-evidence.md`](research-evidence.md)
 
 ## Purpose and scope
 
@@ -21,6 +21,7 @@ Last contract review: 2026-08-31; pinned upstream evidence remains in [`research
 | 7 | A candidate improves one score but fails privacy, policy, budget, or golden behavior | The evaluation suite finishes | The scorecard hard-stops and quarantines the candidate digest |
 | 8 | A benchmark candidate attempts to inspect goals, grader code, or effect logs | The e2e attempt starts | Candidate receives only a minimal read-only workspace and typed service access; oracle data stays on the grader network |
 | 9 | A controller estimate receives mixed generations, contexts, or inadequate denominators | The estimate is requested | Mixed evidence fails closed; inadequate evidence publishes a non-authorizing `insufficient_evidence` state |
+| 10 | A run lacks authoritative generation evidence or spans a Loader/HMR transition | Controller enrollment is requested | Repository evidence and its JCS manifest are verified; missing, unstable, downgraded, or mismatched evidence fails closed |
 
 Hard constraints:
 
@@ -45,6 +46,7 @@ Hard constraints:
 | Guardrail evaluator | Structured, non-executing capability request | Immutable allow/deny/approval-required decision | Local deterministic policy; no requested tool execution |
 | Evaluation harness | Pinned local fixture suite and target digest | Immutable scorecard and hard-stop disposition | Deterministic v0 runner; no model/provider/network |
 | Controller estimator | Controller policy plus one run-record batch | Immutable state with context/generation identities and proportion intervals | Observation only; no proposal, budget, model, execution, or promotion authority |
+| Runtime generation producer | Effective Loader tree/config, resolver results, artifacts, and mutation lifecycle | Immutable manifest/evidence plus synchronous session binding | DSH launcher-owned and not implemented here; DAL validates and consumes the contract only |
 | Tau workflow service and grader | Seed state, effect requests, full evaluator task | Checksummed journal, authenticated snapshot, deterministic verdict | Separate containers/networks; candidate has typed service access but no journal, token, grader, or full task |
 | Optional dsh plugin set | Protected tool calls, live agent control, and durable session events | Privacy-safe run records, workbench tools, and a disabled G2 retry guard | Source and focused tests ship; no mount/application authority; DSH owns execution and session lifecycle |
 | Future evaluation/observability adapter | Flushed sanitized trajectory plus independent side-effect receipts | Promptfoo input or OpenTelemetry/OpenInference projection | Optional; no authority; external transfer requires exact approval |
@@ -57,13 +59,14 @@ Hard constraints:
 - Treat improvements as staged state transitions. Evaluation evidence and application authority are separate records.
 - Treat optimizer providers as adapters over versioned JSON, not as owners of policy or persistence.
 - Keep task-class controller state separate from the candidate-scoped proposal lifecycle; controller output is evidence or recommendation, never authorization.
+- Keep runtime-generation identity separate from appraisal: JCS manifest bytes identify composition; evidence records assurance and per-session transition stability.
 - Pin capsule claims to source identity, digest, and refresh time.
 - Put deterministic schema, privacy, capability, sandbox-declaration, budget, provenance, and approval checks ahead of score-based evaluation.
 - Treat hard-stop scorecards as quarantine evidence, never as mutation instructions.
 - Attach future DSH enforcement to the narrow owning waterfall or capability operation instead of inserting a control-flow gateway around the agent loop.
 - Evaluate agent behavior from ordered Turn/Step/tool/approval events plus independently observed side effects; text output alone is insufficient.
 
-Current significant decisions: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md) preserves the local staged core while allowing only named operation-owned executors; [`decisions/0004-separate-run-to-run-supervisor.md`](decisions/0004-separate-run-to-run-supervisor.md) separates task-class controller observations from candidate proposal state.
+Current significant decisions: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md) preserves the local staged core while allowing only named operation-owned executors; [`decisions/0004-separate-run-to-run-supervisor.md`](decisions/0004-separate-run-to-run-supervisor.md) separates task-class controller observations from candidate proposal state; [`decisions/0005-separate-runtime-generation-identity-from-evidence.md`](decisions/0005-separate-runtime-generation-identity-from-evidence.md) separates canonical runtime identity from assurance and session-transition appraisal.
 
 ## Level-one building blocks
 
@@ -127,9 +130,9 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 
 ### Run-to-run controller observation
 
-1. A human-authored controller policy fixes the logical task class, exact run task set, estimator identity, metric sources, targets, deadbands, and sample minima.
+1. A human-authored controller policy fixes the logical task class, exact run task set, runtime-generation digest profile/minimum assurance, estimator identity, metric sources, targets, deadbands, and sample minima.
 2. The estimator validates every run-store record, then selects the requested task set and batch.
-3. It normalizes and compares context and generation identities, excluding seeds from context while retaining them as observations; any mixed or unpinned evidence fails closed.
+3. It rejects unattested, unstable, or under-qualified sessions, loads each canonical repository-local evidence document and referenced manifest, recomputes the RFC 8785 digest, then normalizes and compares context and generation identities. Seeds remain observations; mixed, unpinned, unavailable, or mismatched evidence fails closed.
 4. It computes harness, business, or named-check proportions with explicit exclusions and 95% Wilson intervals.
 5. It derives estimate time from policy/run evidence, binds the state ID to the complete canonical snapshot, and publishes the snapshot exclusively. A ready or insufficient state changes no proposal, budget, harness, or runtime.
 
@@ -149,6 +152,7 @@ Current integration uses dsh behavior that already exists:
 - dsh loads project `AGENTS.md` through its agent-instructions plugin.
 - dsh discovers `<project>/.agents/skills/<name>/SKILL.md` without a shared profile edit.
 - dsh's workflow/session packages provide useful future event and cancellation vocabulary, but their observe-only events cannot guarantee a final structured write on hard process loss.
+- DAL's recorder can consume a launcher-owned `runtimeGeneration` service at `session/created`; current DSH does not yet produce the authoritative config/resolver/artifact evidence required for that service.
 
 ### Deployment model
 
@@ -197,6 +201,7 @@ This topology is partially source-implemented. The run recorder and deterministi
 | Repeated-failure and aggregate budget state | `session/event` plus `agent/pre-step` or `tools/pre-execute` | Reconstruct bounded per-agent state from durable events. Observers cannot veto committed events; enforce the next operation through a decision waterfall or cooperative cancellation. Advisory steering/injection remains logged and cannot replace a hard stop. |
 | Unknown-effect retry guard (disabled G2 candidate) | `tools/pre-execute` plus `tools/result` | Claim same-key effect calls before dispatch, retain the per-agent lock on `unknown`, and release only after a terminal `get_effect_status` result. Source/tests are not deployment authority; mount and application each require exact approval. |
 | Permission escalation | `approval/request` waterfall | Supply one terminal, one-shot answerer and retain paired audit facts. A DSH grant does not satisfy DAL sensitive-action approval unless an adapter separately verifies exact action, scope, target digest, decision, and expiry. Headless absence fails closed. |
+| Runtime-generation binding | `session/created` plus a launcher-owned generation service and Loader/HMR transition counter | Bind before the first event, return no binding during mutation, and never decrement the transition counter on failure/rollback. Current DAL consumes and tests the structural contract; DSH production remains upstream work. |
 | Trajectory capture and export | Canonical session log, `session/event`, and explicit session flush | Pin DSH commit/profile/config, sequence range, event-format identity, and flush receipt. Treat Turn/Step/tool/approval events as recorded trajectory, not proof that external side effects are replayable. |
 
 The event-to-evaluation path first flushes the session, then projects the selected event range into a privacy-safe trajectory and joins independent workspace/process side-effect receipts. The local deterministic evaluator remains the first authority. A future pinned Promptfoo custom provider may consume that snapshot for CI assertions; optional PyRIT attacks and Langfuse/Phoenix projections remain separate adapters. No adapter can mutate policy, approvals, the canonical log, or scorecards.

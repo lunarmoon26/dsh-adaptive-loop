@@ -28,6 +28,23 @@ export interface Config {
 
 type ResolvedConfig = Required<Config>;
 
+export interface RuntimeGenerationBinding {
+  manifest_sha256: string;
+  digest_profile: "rfc8785-jcs-sha256-v1";
+  evidence_uri: string;
+  assurance: "declared" | "observed" | "verified";
+  transition_sequence: number;
+  harness_sha256: string;
+  model_patch_sha256: string | null;
+  harness_pins: Array<{ surface: string; uri: string; sha256: string }>;
+}
+
+/** Launcher-owned service contract. The transition sequence must only increase. */
+export interface RuntimeGenerationSourceLike {
+  bindSession(session: RecordedSessionLike): RuntimeGenerationBinding | null;
+  transitionSequence(): number;
+}
+
 /** Structural mirrors of the dsh session/event contracts; no dsh runtime import. */
 export interface RecordedSessionLike {
   id: string;
@@ -65,6 +82,11 @@ interface SessionAccumulator {
   model: string | null;
   systemDigest: string | null;
   inference: Array<{ name: string; value: string }>;
+  generationBindingAttempted: boolean;
+  runtimeGeneration: {
+    binding: RuntimeGenerationBinding;
+    source: RuntimeGenerationSourceLike;
+  } | null;
 }
 
 function sha256(text: string): string {
@@ -110,7 +132,10 @@ function failureCategory(code: string): string {
 export class RunSessionRecorder {
   private readonly sessions = new Map<string, SessionAccumulator>();
 
-  constructor(private readonly config: ResolvedConfig) {}
+  constructor(
+    private readonly config: ResolvedConfig,
+    private readonly runtimeGenerationSource?: RuntimeGenerationSourceLike,
+  ) {}
 
   private accumulator(session: RecordedSessionLike): SessionAccumulator | undefined {
     const existing = this.sessions.get(session.id);
@@ -140,9 +165,50 @@ export class RunSessionRecorder {
       model: null,
       systemDigest: null,
       inference: [],
+      generationBindingAttempted: false,
+      runtimeGeneration: null,
     };
     this.sessions.set(session.id, created);
     return created;
+  }
+
+  /** Bind exactly once at session creation; late or malformed bindings stay absent. */
+  bindRuntimeGeneration(session: RecordedSessionLike): void {
+    const state = this.accumulator(session);
+    if (state === undefined || state.generationBindingAttempted) {
+      return;
+    }
+    state.generationBindingAttempted = true;
+    if (state.eventCount > 0 || this.runtimeGenerationSource === undefined) {
+      return;
+    }
+    try {
+      const binding = this.runtimeGenerationSource.bindSession(session);
+      if (!isRuntimeGenerationBinding(binding)) {
+        return;
+      }
+      state.runtimeGeneration = {
+        binding: {
+          manifest_sha256: binding.manifest_sha256,
+          digest_profile: binding.digest_profile,
+          evidence_uri: binding.evidence_uri,
+          assurance: binding.assurance,
+          transition_sequence: binding.transition_sequence,
+          harness_sha256: binding.harness_sha256,
+          model_patch_sha256: binding.model_patch_sha256,
+          harness_pins: binding.harness_pins.map((pin) => ({
+            surface: pin.surface,
+            uri: pin.uri,
+            sha256: pin.sha256,
+          })).sort((left, right) =>
+            compareText(JSON.stringify(left), JSON.stringify(right)),
+          ),
+        },
+        source: this.runtimeGenerationSource,
+      };
+    } catch {
+      // A missing generation is safer than a partially trusted binding.
+    }
   }
 
   /** Counter-only projection; never throws and never touches the filesystem. */
@@ -273,13 +339,18 @@ export class RunSessionRecorder {
       this.sessions.delete(session.id);
       return;
     }
-    await this.writeRecord(state, true);
-    this.sessions.delete(session.id);
+    try {
+      await this.writeRecord(state, true);
+    } finally {
+      this.sessions.delete(session.id);
+    }
   }
 
   private async writeRecord(state: SessionAccumulator, final: boolean): Promise<void> {
     const lastSeq = state.maxSeq;
     const outcome = this.outcomeOf(state);
+    const generation = state.runtimeGeneration;
+    const stableForSession = final && generation !== null && generationStable(generation);
     const record = {
       $schema: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
       schema_version: "1.0.0",
@@ -289,6 +360,7 @@ export class RunSessionRecorder {
       started_at: new Date(state.createdAt).toISOString(),
       finished_at: new Date().toISOString(),
       outcome: outcome.outcome,
+      record_stage: final ? "final" : "checkpoint",
       failure: outcome.failure,
       context: {
         task_set: identifier(basename(state.cwd), "workspace"),
@@ -302,13 +374,26 @@ export class RunSessionRecorder {
             ? null
             : { id: state.model, version: state.provider },
         prompt_sha256: state.systemDigest,
-        harness_sha256: null,
-        model_patch_sha256: null,
+        harness_sha256: generation?.binding.harness_sha256 ?? null,
+        model_patch_sha256: generation?.binding.model_patch_sha256 ?? null,
         grader_version: null,
         seeds: [],
         context_policy_sha256: await fileDigestOrNull(join(state.cwd, "config", "policy.v1.json")),
         inference_parameters: state.inference,
+        ...(generation === null ? {} : { harness_pins: generation.binding.harness_pins }),
       },
+      ...(generation === null
+        ? {}
+        : {
+            runtime_generation: {
+              session_id_sha256: sha256(state.sessionId),
+              manifest_sha256: generation.binding.manifest_sha256,
+              digest_profile: generation.binding.digest_profile,
+              evidence_uri: generation.binding.evidence_uri,
+              assurance: generation.binding.assurance,
+              stable_for_session: stableForSession,
+            },
+          }),
       artifacts: [],
       business_outcome: null,
       ...(state.trace.length > 0 ? { trace: state.trace } : {}),
@@ -390,6 +475,7 @@ export class RunSessionRecorder {
 
 interface EventWiringContext {
   on(name: string, listener: (...args: unknown[]) => unknown): unknown;
+  get(name: string, strict?: boolean): unknown;
 }
 
 export function apply(ctx: Context, config: Config): void {
@@ -397,15 +483,103 @@ export function apply(ctx: Context, config: Config): void {
     storeRoot: config.storeRoot ?? ".dal/runs",
     maxErrorFacts: config.maxErrorFacts ?? 64,
   };
-  const recorder = new RunSessionRecorder(resolved);
   const wiring = ctx as unknown as EventWiringContext;
+  const suppliedSource = wiring.get("runtimeGeneration");
+  const source = isRuntimeGenerationSource(suppliedSource)
+    ? generationSourceBoundToContext(wiring, suppliedSource)
+    : undefined;
+  const recorder = new RunSessionRecorder(resolved, source);
+  wiring.on("session/created", (session) => {
+    recorder.bindRuntimeGeneration(session as RecordedSessionLike);
+  });
   wiring.on("session/event", (session, event) => {
     recorder.onEvent(session as RecordedSessionLike, event as RecordedEventLike);
   });
   wiring.on("session/flush", async (session) => {
     await recorder.flush(session as RecordedSessionLike);
   });
-  wiring.on("session/disposed", (session) => {
-    void recorder.dispose(session as RecordedSessionLike);
+  wiring.on("session/disposed", async (session) => {
+    try {
+      await recorder.dispose(session as RecordedSessionLike);
+    } catch {
+      // Persistence observers cannot fail session disposal.
+    }
   });
+}
+
+function generationStable(generation: SessionAccumulator["runtimeGeneration"]): boolean {
+  if (generation === null) return false;
+  try {
+    return generation.source.transitionSequence() === generation.binding.transition_sequence;
+  } catch {
+    return false;
+  }
+}
+
+function generationSourceBoundToContext(
+  ctx: EventWiringContext,
+  source: RuntimeGenerationSourceLike,
+): RuntimeGenerationSourceLike {
+  return {
+    bindSession: (session) => source.bindSession(session),
+    transitionSequence: () => ctx.get("runtimeGeneration") === source
+      ? source.transitionSequence()
+      : Number.NaN,
+  };
+}
+
+function isRuntimeGenerationSource(value: unknown): value is RuntimeGenerationSourceLike {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as RuntimeGenerationSourceLike).bindSession === "function"
+    && typeof (value as RuntimeGenerationSourceLike).transitionSequence === "function";
+}
+
+function isRuntimeGenerationBinding(value: unknown): value is RuntimeGenerationBinding {
+  if (typeof value !== "object" || value === null) return false;
+  const binding = value as Partial<RuntimeGenerationBinding>;
+  if (!isSha256(binding.manifest_sha256)
+    || binding.digest_profile !== "rfc8785-jcs-sha256-v1"
+    || !isUri(binding.evidence_uri)
+    || !isAssurance(binding.assurance)
+    || !Number.isSafeInteger(binding.transition_sequence)
+    || (binding.transition_sequence ?? -1) < 0
+    || !isSha256(binding.harness_sha256)
+    || !(binding.model_patch_sha256 === null || isSha256(binding.model_patch_sha256))
+    || !Array.isArray(binding.harness_pins)
+    || binding.harness_pins.length > 64) {
+    return false;
+  }
+  const identities = new Set<string>();
+  for (const pin of binding.harness_pins) {
+    if (typeof pin !== "object" || pin === null
+      || Object.keys(pin).sort().join("\u0000") !== "sha256\u0000surface\u0000uri"
+      || typeof pin.surface !== "string" || pin.surface.length === 0 || pin.surface.length > 64
+      || !isUri(pin.uri) || !isSha256(pin.sha256)) {
+      return false;
+    }
+    const identity = `${pin.surface}\u0000${pin.uri}`;
+    if (identities.has(identity)) return false;
+    identities.add(identity);
+  }
+  return true;
+}
+
+function isSha256(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isUri(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length >= 4
+    && value.length <= 2048
+    && /^[A-Za-z][A-Za-z0-9+.-]*:\/\/\S+$/.test(value);
+}
+
+function isAssurance(value: unknown): value is RuntimeGenerationBinding["assurance"] {
+  return value === "declared" || value === "observed" || value === "verified";
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

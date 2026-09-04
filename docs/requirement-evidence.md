@@ -1,7 +1,7 @@
 # Requirement Evidence
 
-Status: Controller observation focused gate passed; complete repository gate and task feedback pending
-Change: `chg-control-supervisor-foundation-20260902`
+Status: Runtime-generation attestation focused gate passed; complete repository gate and task feedback pending
+Changes: `chg-control-supervisor-foundation-20260902`, `chg-runtime-generation-attestation-20260902`
 Evidence date: 2026-09-02
 
 This matrix maps canonical requirements to executable or inspectable evidence. ‚ÄúPass‚Äù means the named evidence was observed in the current workspace; it does not imply model-backed benchmark quality or candidate promotion.
@@ -26,6 +26,7 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | DAL-021 SkillOpt-shaped optimizer adapter | `src/optimizer-adapter.ts`, optimizer schemas | `tests/optimizer-adapter.test.ts` | Pass |
 | DAL-022 benchmark measurement integrity | Workflow task/receipt/run schemas; grader/service/e2e driver; disabled G2 source | Grader, service, topology, receipt, summary, branch, clustering, and G2 tests | Pass |
 | DAL-023 run-to-run controller observation | Controller policy/state schemas; `src/control/`; CLI and evidence-store integration | `tests/controller.test.ts`, init/reset/CLI tests | Focused pass; full gate pending |
+| DAL-024 runtime generation attestation | Runtime manifest/evidence schemas; `src/runtime-generation.ts`; recorder binding; controller evidence gate | `tests/runtime-generation.test.ts`, controller/plugin/provenance tests | Focused pass (27 passed, 5 opt-in skipped); full gate pass (206 passed, 6 opt-in skipped) |
 
 ## DAL-022 acceptance closure
 
@@ -58,11 +59,24 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | Existing persisted policy snapshots remain valid | Controller defaults stay outside `policy.v1`; guardrail CLI regression test | Pass |
 | Command performs no proposer, model, network, sandbox, budget, transition, application, promotion, or rollback action | Static boundary review and command implementation | Pass |
 
+## DAL-024 acceptance closure
+
+| Criterion | Evidence | Result |
+| --- | --- | --- |
+| Closed runtime manifest has deterministic RFC 8785 JCS identity and complete artifact references | Manifest schema/validator, digest fixture, malformed-I-JSON and closure tests | Pass |
+| Appraisal is separate and distinguishes declared, observed, and verified assurance | Evidence schema/validator and required-claim tests | Pass |
+| Session binding occurs only at creation and transition attempts remain visible after rollback | Recorder source contract, explicit checkpoint stage, monotonic sequence check, checkpoint/transition tests | Pass (synthetic service); production final-write availability is not proved because DSH disposal is not awaited |
+| Existing harness identity remains independent | Run schema/type and recorder/controller assertions | Pass |
+| Existing controller 1.0 policy/state snapshots remain valid without implicit attestation | Version-conditional schemas and legacy migration tests | Pass |
+| Controller loads evidence and manifest through checked descriptors and fails closed on missing, unstable, downgraded, mixed, duplicate-session, unavailable, replayed, symlink-traversing, or forged identity | Controller estimator/store and focused negative tests | Pass |
+| DSH emits authoritative effective config, resolver receipts, artifacts, and transition evidence | Upstream launcher/Loader integration | Not implemented; no runtime-proof claim |
+
 ## Observed commands
 
 ```text
 CI=true pnpm run typecheck
 CI=true pnpm exec vitest run tests/controller.test.ts tests/init.test.ts tests/reset.test.ts tests/cli.test.ts
+CI=true pnpm exec vitest run tests/runtime-generation.test.ts tests/controller.test.ts tests/plugin-modes.test.ts tests/e2e-provenance.test.ts
 CI=true pnpm exec vitest run tests/e2e-summary.test.ts tests/e2e-topology.test.ts tests/execution-receipt.test.ts tests/branch.test.ts
 pnpm dal capsule check capsules/dal-v0-contract.json
 pnpm dal capsule check capsules/dsh-adapter-boundary.json

@@ -2,8 +2,9 @@
 
 Status: Controller observation foundation implemented; governor, response model, predictive selection, canary, and rollback control proposed
 Change: `chg-control-supervisor-foundation-20260902`
+Attestation extension: `chg-runtime-generation-attestation-20260902`
 Semantic owner: this document
-Exact persisted syntax: [`../schemas/controller-policy.v1.schema.json`](../schemas/controller-policy.v1.schema.json) and [`../schemas/controller-state.v1.schema.json`](../schemas/controller-state.v1.schema.json)
+Exact persisted syntax: [`../schemas/controller-policy.v1.schema.json`](../schemas/controller-policy.v1.schema.json), [`../schemas/controller-state.v1.schema.json`](../schemas/controller-state.v1.schema.json), and the [runtime generation contract](runtime-generation-attestation.md)
 
 ## Research question and claim boundary
 
@@ -32,6 +33,7 @@ A controller policy is human-authored, schema-valid, privacy-safe configuration.
 
 - one policy identity and creation time;
 - one logical `task_class` and exact run-record `task_set`;
+- one runtime-generation digest profile and minimum observed/verified assurance;
 - the versioned estimator (`dal-wilson-score-v1`);
 - one or more uniquely named proportion metrics;
 - each metric's observation source, target, deadband, and minimum sample count.
@@ -58,14 +60,14 @@ The command:
 1. validates and privacy-scans the controller policy;
 2. reads and validates run records from the selected store;
 3. selects records with the exact policy task set and requested non-null batch ID;
-4. requires every selected run to share one normalized measurement context and one harness generation;
+4. requires every selected run to carry stable, policy-qualified, repository-verifiable runtime-generation evidence and to share one normalized measurement context and one generation;
 5. estimates each configured binary proportion with a two-sided 95% Wilson score interval;
 6. marks each metric sufficient only when its included sample count reaches its configured minimum;
 7. marks the state `ready` only when every metric is sufficient, otherwise `insufficient_evidence`;
 8. derives the estimate timestamp from the immutable inputs and binds the state ID to the complete canonical snapshot rather than the wall clock; and
 9. publishes one exclusive JSON state file, returning `idempotent` for an identical retry and rejecting conflicting content.
 
-Measurement context binds task set, environment snapshot, tool versions, model identity, grader version, context-policy digest, and inference parameters. Generation identity binds prompt, harness, model-patch, and harness-pin digests. Seeds remain observations rather than context so different declared rollouts can contribute to one compatible batch.
+Measurement context binds task set, environment snapshot, tool versions, model identity, grader version, context-policy digest, and inference parameters. Generation identity binds prompt, legacy harness, model-patch, harness-pin, and RFC 8785 runtime-manifest digests. The policy digest binds its required assurance. Each input run digest binds the exact evidence URI and appraisal fields. Seeds remain observations rather than context so different declared rollouts can contribute to one compatible batch.
 
 The command performs no model call, network request, proposal transition, branch selection, sandbox execution, budget mutation, candidate application, or profile change.
 
@@ -89,6 +91,6 @@ The next accepted increment may add deadband, hysteresis, leaky integral state, 
 - Controller output is evidence or recommendation, never authorization.
 - `maximum_budget` remains an immutable policy anchor; a governor may allocate only within it.
 - Evaluator, holdout, permissions, promotion policy, audit log, and rollback mechanism remain outside optimizer and controller control.
-- Mixed measurement contexts, mixed generations, duplicate run identities, duplicate check identities, and unpinned harness generations fail closed.
+- Mixed measurement contexts or generations, duplicate identities, unpinned legacy harnesses, and missing, unstable, under-qualified, unavailable, or digest-invalid runtime attestations fail closed.
 - Unsafe multi-surface proposals are rejected rather than silently projected into a different candidate.
 - Canary deployment and executable rollback are not represented as implemented modes until a real generation deployment seam exists.

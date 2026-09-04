@@ -1,0 +1,45 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/runtime-generation-evidence.v1.schema.json",
+  "schema_version": "1.0.0",
+  "manifest_sha256": "9da7af8cc4672fd3fcf19c1d958b3b205cb8a6175c064c7fc5b2bf77e86a8d2c",
+  "manifest_uri": "repo://tests/fixtures/runtime-generation/manifest.json",
+  "digest_profile": "rfc8785-jcs-sha256-v1",
+  "assurance": "verified",
+  "producer": {
+    "name": "dsh-runtime-generation",
+    "version": "1.0.0"
+  },
+  "session_binding": {
+    "session_id_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "bound_transition_sequence": 7,
+    "final_transition_sequence": 7
+  },
+  "stable_for_session": true,
+  "claims": [
+    {
+      "id": "artifact-closure",
+      "status": "passed",
+      "evidence": ["repo://tests/fixtures/runtime-generation/manifest.json"]
+    },
+    {
+      "id": "effective-config",
+      "status": "passed",
+      "evidence": ["dsh://runtime/configuration"]
+    },
+    {
+      "id": "launcher-composition",
+      "status": "passed",
+      "evidence": ["dsh://runtime/loader-tree"]
+    },
+    {
+      "id": "resolver-closure",
+      "status": "passed",
+      "evidence": ["dsh://runtime/resolver-receipts"]
+    },
+    {
+      "id": "session-binding",
+      "status": "passed",
+      "evidence": ["dsh-session://fixture-business-fail"]
+    }
+  ]
+}
