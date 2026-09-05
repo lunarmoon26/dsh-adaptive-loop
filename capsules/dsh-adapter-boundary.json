@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.5.1",
+  "capsule_version": "1.6.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-09-04",
+  "checked_at": "2026-09-05",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-v0-hmr-hardening-2026-09-04",
-      "sha256": "8fc0e1e1958709543b9fb3b9ad61ab7e9f32c39e7d090374e4d4f0d00f8e2d25",
+      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
+      "sha256": "b903a973bbc593f75d2156834ac740611bd34358240a7d63dd74b005f87c2af2",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-v0-2026-09-04",
-      "sha256": "4887857cf9085d816fad081b1bca70f72a335f28068006a491439e0a2761fab2",
+      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
+      "sha256": "48530a21856c758f4ba73978828bddf6900583889faf9dd0f846f702591d68cf",
       "local_path": "../ROADMAP.md",
       "required": true
     },
@@ -56,7 +56,7 @@
     },
     {
       "id": "claim-optional-cordis",
-      "text": "Cordis run, improvement, HMR-candidate, and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
+      "text": "Cordis run, improvement, quarantined HMR-staging, and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-roadmap",
@@ -65,7 +65,7 @@
     },
     {
       "id": "claim-provider-neutral",
-      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA and SkillOpt optimizer runtimes do not run in v0, while plugin candidate application is limited to the exact-approved isolated HMR workbench.",
+      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA and SkillOpt optimizer runtimes do not run in v0, and HMR plugin candidate application is unavailable pending authoritative imported-closure identity and awaited readiness.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research",
@@ -169,6 +169,6 @@
   "limits": [
     "Pinned upstream interfaces are pre-stable and require fresh source inspection before integration.",
     "The unavailable expected local SkillOpt checkout remains an evidence gap.",
-    "No authoritative DSH runtime-generation producer, final-disposal durability, mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
+    "No authoritative DSH runtime-generation producer, HMR readiness or imported-closure identity, final-disposal durability, mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
   ]
 }

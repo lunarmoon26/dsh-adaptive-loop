@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-plugin-contract",
-  "capsule_version": "1.2.1",
+  "capsule_version": "1.3.0",
   "title": "dsh plugin contract for the proposer",
   "audience": "Proposer models and maintainers changing skills or plugin sources",
-  "checked_at": "2026-09-04",
+  "checked_at": "2026-09-05",
   "refresh_after": "2027-03-01",
   "sources": [
     {
       "id": "src-dsh-plugin-contract",
       "kind": "local_file",
       "uri": "repo://docs/dsh-plugin-contract.md",
-      "revision": "dsh-plugin-contract-v1.2.1-2026-09-04",
-      "sha256": "d6f83b45e0c0afb7c1cb615a26426907ff4304f69bd365099d22c173bb09cb50",
+      "revision": "dsh-plugin-contract-v1.3.0-2026-09-05",
+      "sha256": "9dfb7edbe4b33a8a5b908353acfb792b18284b83cbac27e7b575bef08e1d1656",
       "local_path": "../docs/dsh-plugin-contract.md",
       "required": true
     }
@@ -35,7 +35,7 @@
     },
     {
       "id": "claim-events",
-      "text": "Session events form an append-only log; recorder plugins bind runtime and candidate generation on session/created, subscribe to session/event, drain durably on awaited session/flush, and attempt contained final writes on observe-only session/disposed; projections store digests and counts, never raw arguments or results.",
+      "text": "Session events form an append-only log; recorder plugins bind launcher-owned runtime state on session/created but do not trust the quarantined candidate helper's mutable in-process diagnostic service for eligibility. They subscribe to session/event, drain durably on awaited session/flush, and attempt contained final writes on observe-only session/disposed; projections store digests and counts, never raw arguments or results.",
       "source_ids": [
         "src-dsh-plugin-contract"
       ]
@@ -48,8 +48,8 @@
       ]
     },
     {
-      "id": "claim-hmr-admission",
-      "text": "DSH hmr/reload identifies successfully replaced plugin entries; candidate admission uses an external pinned approval launcher, matches the canonical entry URL and active digest, aborts on nonmatching successful reloads, publishes the entry last, and treats HMR activation as evaluation state rather than promotion.",
+      "id": "claim-hmr-quarantine",
+      "text": "Current DSH hmr/reload can precede replacement-Fiber readiness and cannot identify a multi-file imported closure. DAL therefore exposes inactive staging and diagnostic event sequencing only; application fails before approval verification or live writes, and no generation is admitted.",
       "source_ids": [
         "src-dsh-plugin-contract"
       ]
@@ -67,6 +67,6 @@
   ],
   "limits": [
     "Condensed for proposer context; the canonical source evidence is docs/research-evidence.md with pinned identities.",
-    "This capsule documents the inspected harness contract; runtime-composition evidence is tracked separately."
+    "This capsule documents the inspected harness contract; runtime-composition evidence is tracked separately, and hmr/reload is not readiness or imported-closure proof."
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@lunarmoon26/dal-hmr-candidate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -8,7 +8,7 @@
     "lib"
   ],
   "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
-  "description": "Approval-gated DSH workbench coordinator for staged plugin candidates, HMR admission, fresh-session attribution, and rollback.",
+  "description": "Quarantined DSH workbench helper for staging fixed plugin candidates without permitting HMR application or admission.",
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
