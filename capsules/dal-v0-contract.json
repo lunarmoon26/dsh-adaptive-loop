@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.5.1",
+  "capsule_version": "1.6.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
-  "checked_at": "2026-09-04",
+  "checked_at": "2026-09-05",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-v0-runtime-hmr-hardening-2026-09-04",
-      "sha256": "e5645786fa4be8b695a757183b504ceaeadde452dbbf0387168447bea3577a18",
+      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
+      "sha256": "583f118a57fbd0f0cb382c41147dd8d6df653901f03731ccfd85ca9c866e0294",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -21,8 +21,8 @@
       "id": "src-dal-governance",
       "kind": "local_file",
       "uri": "repo://docs/governance.md",
-      "revision": "dal-v0-hmr-hardening-2026-09-04",
-      "sha256": "6757610df93a41afa2d0f76ed4e53d5523b6e7abb7b0779ffded340037bf5472",
+      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
+      "sha256": "706120d12d8a522c7dcbba329be94c7dee1860db5096063e5d79a83fc6699543",
       "local_path": "../docs/governance.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-evaluation",
       "kind": "local_file",
       "uri": "repo://docs/evaluation-and-guardrails.md",
-      "revision": "dal-v0-hmr-hardening-2026-09-04",
-      "sha256": "588dfde93d531f936f88a2e3628b137d4ecf326428c76368427a736e41998520",
+      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
+      "sha256": "d06fbed83392ce37932f56e924071356e2b5d2e024946b18c3781f5cec77c91f",
       "local_path": "../docs/evaluation-and-guardrails.md",
       "required": true
     },
@@ -48,7 +48,7 @@
   "claims": [
     {
       "id": "claim-local-only",
-      "text": "Version 0 is local-only by default. Purpose-specific installer, proposer, e2e, and HMR paths independently verify exact approvals; no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, arbitrary candidate applier, or automatic promotion path ships.",
+      "text": "Version 0 is local-only by default. Purpose-specific installer, proposer, and e2e paths independently verify exact approvals; the HMR helper provides inactive staging only, and no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, candidate applier, or automatic promotion path ships.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",
@@ -107,7 +107,7 @@
     },
     {
       "id": "claim-hmr-candidate",
-      "text": "The isolated HMR workbench stages a bounded plugin candidate, verifies its exact digest through startup-pinned launcher files outside the candidate worktree before touching configured live files, admits only a matching successful DSH reload, rejects checkpoints and generation-spanning runs, and leaves promotion to human git review.",
+      "text": "The isolated HMR helper can stage and digest a bounded plugin candidate, but application fails before approval verification or any live-file write. Observed hmr/reload events are diagnostic only, no state becomes admitted, drifted rejection never overwrites live files, and promotion remains human-controlled.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",
@@ -152,7 +152,7 @@
   ],
   "limits": [
     "This capsule summarizes reviewed v0 contracts and does not replace schema validation.",
-    "It provides no authoritative DSH runtime-generation production, final-disposal durability, OS sandbox, optimizer, model, or external-service proof.",
+    "It provides no authoritative DSH runtime-generation production, HMR readiness or imported-closure identity, final-disposal durability, OS sandbox, optimizer, model, or external-service proof.",
     "Validate source digests and freshness before using these claims."
   ]
 }

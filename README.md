@@ -4,9 +4,9 @@
 
 `dal` is a local, human-governed evidence and improvement loop for **closed-loop, repetitive agent workflows** — task classes with bounded objectives, observable state transitions, and deterministic graders (customer-service-style workflows, ops routines, benchmarkable business processes). Open-ended creative coding is an open-loop problem and is explicitly out of scope for improvement claims: with no bounded objective to evaluate against, dal makes no recursive-self-improvement claim there.
 
-Version 0 validates structured task feedback, stores immutable local records, evaluates non-executing capability requests, runs pinned offline safety/regression suites, clusters failures deterministically, estimates observation-only run-to-run controller state, seals a holdout, produces governed model proposal drafts, searches candidate branches with UCB1, executes confined deterministic verifiers, evaluates exact approved plugin candidates through existing DSH HMR, and records human-controlled proposal state.
+Version 0 validates structured task feedback, stores immutable local records, evaluates non-executing capability requests, runs pinned offline safety/regression suites, clusters failures deterministically, estimates observation-only run-to-run controller state, seals a holdout, produces governed model proposal drafts, searches candidate branches with UCB1, executes confined deterministic verifiers, stages plugin candidates without applying them, and records human-controlled proposal state.
 
-It does **not** invoke an LLM or optimizer outside the approval-bound proposer, execute a requested action unconfined, install a plugin, change dsh configuration without an approved decision, or promote a candidate. Its sole candidate applier is fixed to configured files in an isolated linked worktree and verifies an exact decision first.
+It does **not** invoke an LLM or optimizer outside the approval-bound proposer, execute a requested action unconfined, install a plugin, change dsh configuration without an approved decision, apply a plugin candidate, or promote a candidate. HMR staging is fixed to configured files in an isolated linked worktree and application is code-quarantined.
 
 ## What it is for (and not for)
 
@@ -71,10 +71,10 @@ The `plugins/` tree ships one dsh bundle (`@lunarmoon26/dal-modes`) with separab
 
 - **Run mode** (`@lunarmoon26/dal-run-record`) — on by default: projects session events into privacy-safe run records under `.dal/runs` (counts, digests, outcome and failure codes; never prompt text, message content, tool arguments, or results).
 - **Improvement mode** (`@lunarmoon26/dal-improve-tools`) — off by default: workbench tools over the deterministic dal CLI (cluster, prepare payload, summarize, branch evaluate, reset status). Nothing approval-gated — `propose run` and `reset execute` stay CLI-only.
-- **HMR candidate workbench** (`@lunarmoon26/dal-hmr-candidate`) — off by default: stages fixed plugin/config-module files, verifies exact candidate approval before publishing them, admits only a matching successful dsh HMR reload, marks generation-spanning runs ineligible, and restores the prior bytes on rejection. Promotion remains a human git commit.
+- **HMR candidate staging** (`@lunarmoon26/dal-hmr-candidate`) — off by default and code-quarantined: stages fixed plugin/config-module files and reports digests, but rejects application before approval verification or any live-file write. It admits no runtime generation.
 - **G2 candidate** (`@lunarmoon26/dal-unknown-effect-guard`) — off by default: per-agent pre-execution lock for unknown workflow-effect retries. It is source/test evidence only, not an installed or applied generation.
 
-Mounting the bundle into a profile (`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools ./plugins/dal-hmr-candidate`, then configure/enable the workbench rows) is an approval-gated `install_or_mount_plugin` operation; see [`docs/spec.md`](docs/spec.md) DAL-019 and [`docs/operator-guide.md`](docs/operator-guide.md). Each staged candidate separately needs an exact `apply_optimization_candidate` decision. The G2 package remains excluded and needs its own mount and application decisions.
+Mounting the bundle into a profile (`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools ./plugins/dal-hmr-candidate`, then configure/enable the workbench rows) is an approval-gated `install_or_mount_plugin` operation; see [`docs/spec.md`](docs/spec.md) DAL-019 and [`docs/operator-guide.md`](docs/operator-guide.md). Enabling the HMR row still cannot apply a candidate. The G2 package remains excluded and needs its own mount and application decisions.
 
 ## Deliberate rejection examples
 
@@ -117,7 +117,7 @@ Improvement proposals may change only the editable surfaces (`prompt`, `tool_des
 
 ## How it is meant to be used
 
-Agents work normally during the day; each task ends with a structured feedback record and, on failure, a run record. Those records and derived controller observations live in VCS-tracked stores (`.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, `.dal/control-states`). At the end of the day one human reconciles: pull, summarize, cluster failures, estimate state when a reviewed controller policy exists, review, drive proposals through the staged lifecycle, optionally evaluate an approved plugin candidate in the isolated HMR workbench, and promote changes only by committing them. See the operator guide for the exact runbook.
+Agents work normally during the day; each task ends with a structured feedback record and, on failure, a run record. Those records and derived controller observations live in VCS-tracked stores (`.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, `.dal/control-states`). At the end of the day one human reconciles: pull, summarize, cluster failures, estimate state when a reviewed controller policy exists, review, drive proposals through the staged lifecycle, evaluate through the deterministic or private isolated evaluator paths, and promote changes only by committing them. The HMR helper is inactive staging only. See the operator guide for the exact runbook.
 
 ## Benchmark workspace
 

@@ -3,14 +3,16 @@
 # address these rows by id, with the last write winning per row.
 #
 # Run mode (evidence recording) is the default posture: enabled here. The
-# improvement-mode workbench tools and HMR candidate coordinator ship disabled;
-# a workbench profile enables and configures their rows in its own layer:
+# improvement-mode workbench tools and HMR candidate coordinator ship disabled.
+# HMR application is additionally quarantined in code; enabling the row exposes
+# staging/status only until the readiness contract is implemented. A workbench
+# profile configures rows in its own layer:
 #
 #   - id: dal-improve-tools
 #     name: '@lunarmoon26/dal-improve-tools'
 #   - id: dal-hmr-candidate
 #     name: '@lunarmoon26/dal-hmr-candidate'
-#     config: # workspaceRoot, entry, files, approvalScope, dshVersion, profile
+#     config: # workspaceRoot, entry, files, dshVersion, profile
 #
 # Mounting this bundle into a profile is an approval-gated
 # install_or_mount_plugin operation.
