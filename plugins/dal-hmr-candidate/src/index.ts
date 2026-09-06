@@ -32,17 +32,17 @@ export interface Config {
   files: string[];
   /** Fixed staging directory relative to workspaceRoot. */
   stagingRoot?: string;
-  /** Fixed approval decision path relative to workspaceRoot. */
+  /** Retained for configuration compatibility; ignored while admission is quarantined. */
   approvalFile?: string;
-  /** Exact approval scope passed to `dal approval verify`. */
-  approvalScope: string;
-  /** Absolute Node launcher files for the DAL CLI, all outside workspaceRoot. */
+  /** Retained for configuration compatibility; ignored while admission is quarantined. */
+  approvalScope?: string;
+  /** Retained for configuration compatibility; ignored while admission is quarantined. */
   approvalCommand?: string[];
   /** Pinned DSH package version used by the workbench profile. */
   dshVersion: string;
   /** DSH profile identity used by the workbench. */
   profile: string;
-  /** HMR admission and approval-command timeout. */
+  /** Retained for configuration compatibility; ignored while admission is quarantined. */
   timeoutMs?: number;
 }
 
@@ -85,17 +85,7 @@ type Snapshot = Map<string, FileState>;
 
 interface PreparedCandidate {
   id: string;
-  baseline: Snapshot;
   baselineSha256: string;
-}
-
-interface PendingActivation {
-  candidateId: string | null;
-  candidateSha256: string;
-  admitted: boolean;
-  resolve(generation: CandidateGeneration): void;
-  reject(error: Error): void;
-  timer: NodeJS.Timeout;
 }
 
 interface ReloadLike {
@@ -108,35 +98,14 @@ interface HmrEventContext {
 
 interface ResolvedConfig {
   workspaceRoot: string;
-  entryPath: string;
   entryUrl: string;
   files: FileTarget[];
   stagingRoot: string;
   stagingRootRelative: string;
-  approvalFile: string;
-  approvalScope: string;
-  approvalCommand: ApprovalCommandFile[];
-  timeoutMs: number;
   gitTree: string;
   dshVersion: string;
   profile: string;
 }
-
-interface ApprovalVerification {
-  approvalFile: string;
-  approvalScope: string;
-  approvalCommand: string[];
-  candidateSha256: string;
-  workspaceRoot: string;
-  timeoutMs: number;
-}
-
-interface ApprovalCommandFile {
-  path: string;
-  sha256: string;
-}
-
-type ApprovalVerifier = (verification: ApprovalVerification) => Promise<void>;
 
 declare module "@deepseek-ai/cordis" {
   interface Context {
@@ -144,7 +113,6 @@ declare module "@deepseek-ai/cordis" {
   }
 }
 
-const DEFAULT_TIMEOUT_MS = 10_000;
 const IDENTIFIER = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 
 export class CandidateError extends Error {
@@ -290,67 +258,6 @@ function digestSnapshot(snapshot: Snapshot): string {
   return hash.digest("hex");
 }
 
-function digestBytes(bytes: Buffer): string {
-  return createHash("sha256").update(bytes).digest("hex");
-}
-
-async function resolveApprovalCommand(
-  configured: string[] | undefined,
-  workspaceRoot: string,
-): Promise<ApprovalCommandFile[]> {
-  const command = configured ?? [fileURLToPath(new URL("../../../dist/cli.js", import.meta.url))];
-  if (
-    !Array.isArray(command)
-    || command.length === 0
-    || command.length > 4
-    || command.some((path) => typeof path !== "string" || path === "" || path.length > 2048 || /[\0\r\n]/.test(path))
-  ) {
-    fail("CANDIDATE_CONFIG_INVALID", "approvalCommand must contain one to four absolute launcher files");
-  }
-  const resolved: ApprovalCommandFile[] = [];
-  for (const [index, path] of command.entries()) {
-    if (!isAbsolute(path)) {
-      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be absolute`);
-    }
-    let canonical: string;
-    let info;
-    try {
-      canonical = await realpath(path);
-      info = await lstat(canonical);
-    } catch (error) {
-      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be an existing regular file`, error);
-    }
-    if (!info.isFile() || info.isSymbolicLink()) {
-      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must resolve to a regular file`);
-    }
-    if (canonical === workspaceRoot || inside(workspaceRoot, canonical)) {
-      fail("CANDIDATE_CONFIG_INVALID", `approvalCommand[${index}] must be outside workspaceRoot`);
-    }
-    resolved.push({ path: canonical, sha256: digestBytes(await readFile(canonical)) });
-  }
-  return resolved;
-}
-
-async function assertApprovalCommandStable(command: ApprovalCommandFile[]): Promise<void> {
-  for (const file of command) {
-    try {
-      const canonical = await realpath(file.path);
-      const info = await lstat(canonical);
-      if (
-        canonical !== file.path
-        || !info.isFile()
-        || info.isSymbolicLink()
-        || digestBytes(await readFile(canonical)) !== file.sha256
-      ) {
-        fail("CANDIDATE_APPROVAL_COMMAND_DRIFT", "the pinned approval command changed after coordinator startup");
-      }
-    } catch (error) {
-      if (error instanceof CandidateError) throw error;
-      fail("CANDIDATE_APPROVAL_COMMAND_DRIFT", "the pinned approval command is no longer available", error);
-    }
-  }
-}
-
 function snapshotSync(files: FileTarget[], key: "sourcePath" | "stagingPath"): Snapshot {
   const snapshot: Snapshot = new Map();
   for (const file of files) {
@@ -390,18 +297,11 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
   if (!Array.isArray(config.files) || config.files.length === 0) {
     fail("CANDIDATE_CONFIG_INVALID", "files must contain at least the loaded plugin entry");
   }
-  if (typeof config.approvalScope !== "string" || config.approvalScope === "") {
-    fail("CANDIDATE_CONFIG_INVALID", "approvalScope is required");
-  }
   if (!/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(config.dshVersion)) {
     fail("CANDIDATE_CONFIG_INVALID", "dshVersion must be a semantic version");
   }
   if (typeof config.profile !== "string" || config.profile.length === 0 || config.profile.length > 128 || /[\r\n]/.test(config.profile)) {
     fail("CANDIDATE_CONFIG_INVALID", "profile must be a non-empty single-line identity");
-  }
-  const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 120_000) {
-    fail("CANDIDATE_CONFIG_INVALID", "timeoutMs must be an integer from 100 through 120000");
   }
   const workspaceRoot = await realpath(resolve(config.workspaceRoot ?? process.cwd()));
   const gitMarker = join(workspaceRoot, ".git");
@@ -443,19 +343,6 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
   if (!inside(workspaceRoot, stagingRoot)) {
     fail("CANDIDATE_CONFIG_INVALID", "stagingRoot must be inside workspaceRoot");
   }
-  const approvalFileRelative = canonicalRelative(
-    config.approvalFile ?? ".dal/outbox/dal-hmr-candidate-approval.json",
-    "approvalFile",
-  );
-  if (!approvalFileRelative.startsWith(".dal/")) {
-    fail("CANDIDATE_CONFIG_INVALID", "approvalFile must stay under .dal/");
-  }
-  const approvalFile = resolve(workspaceRoot, approvalFileRelative);
-  if (approvalFile === stagingRoot || inside(stagingRoot, approvalFile)) {
-    fail("CANDIDATE_CONFIG_INVALID", "approvalFile must not overlap stagingRoot");
-  }
-  const approvalCommand = await resolveApprovalCommand(config.approvalCommand, workspaceRoot);
-
   const files: FileTarget[] = [];
   for (const relativePath of relatives.sort()) {
     const sourcePath = resolve(workspaceRoot, relativePath);
@@ -463,9 +350,6 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
       fail("CANDIDATE_CONFIG_INVALID", `${relativePath} overlaps the staging root`);
     }
     await assertRegularFile(sourcePath, workspaceRoot, relativePath);
-    if (sourcePath === approvalFile) {
-      fail("CANDIDATE_CONFIG_INVALID", `${relativePath} overlaps approvalFile`);
-    }
     files.push({ relativePath, sourcePath, stagingPath: resolve(stagingRoot, relativePath) });
   }
 
@@ -473,254 +357,145 @@ async function resolveConfig(config: Config): Promise<ResolvedConfig> {
   const entryUrl = pathToFileURL(await realpath(entryPath)).href;
   return {
     workspaceRoot,
-    entryPath,
     entryUrl,
     files,
     stagingRoot,
     stagingRootRelative,
-    approvalFile,
-    approvalScope: config.approvalScope,
-    approvalCommand,
-    timeoutMs,
     gitTree,
     dshVersion: config.dshVersion,
     profile: config.profile,
   };
 }
 
-async function verifyWithDalCli(verification: ApprovalVerification): Promise<void> {
-  await new Promise<void>((resolveApproval, rejectApproval) => {
-    execFile(
-      process.execPath,
-      [
-        ...verification.approvalCommand,
-        "approval",
-        "verify",
-        verification.approvalFile,
-        "--action",
-        "apply_optimization_candidate",
-        "--scope",
-        verification.approvalScope,
-        "--candidate-sha256",
-        verification.candidateSha256,
-      ],
-      {
-        cwd: verification.workspaceRoot,
-        timeout: verification.timeoutMs,
-        maxBuffer: 1024 * 1024,
-      },
-      (error) => {
-        if (error === null) resolveApproval();
-        else rejectApproval(error);
-      },
-    );
-  });
-}
-
 export class CandidateCoordinator extends Service {
-  private sequence = 0;
-  private generation: CandidateGeneration;
-  private prepared: PreparedCandidate | undefined;
-  private pending: PendingActivation | undefined;
-  private busy = false;
+  #sequence = 0;
+  #generation: CandidateGeneration;
+  #prepared: PreparedCandidate | undefined;
+  #busy = false;
+  readonly #config: ResolvedConfig;
 
-  static async create(
-    ctx: Context,
-    config: Config,
-    approvalVerifier: ApprovalVerifier = verifyWithDalCli,
-  ): Promise<CandidateCoordinator> {
+  static async create(ctx: Context, config: Config): Promise<CandidateCoordinator> {
     const resolved = await resolveConfig(config);
-    return new CandidateCoordinator(ctx, resolved, approvalVerifier);
+    return new CandidateCoordinator(ctx, resolved);
   }
 
   private constructor(
     ctx: Context,
-    private readonly config: ResolvedConfig,
-    private readonly approvalVerifier: ApprovalVerifier,
+    config: ResolvedConfig,
   ) {
     super(ctx, "dalCandidate");
-    this.generation = {
+    this.#config = config;
+    this.#generation = {
       candidateId: null,
-      candidateSha256: digestSnapshot(snapshotSync(config.files, "sourcePath")),
+      candidateSha256: digestSnapshot(snapshotSync(this.#config.files, "sourcePath")),
       hmrSequence: 0,
       admitted: false,
-      gitTree: config.gitTree,
-      dshVersion: config.dshVersion,
-      profile: config.profile,
+      gitTree: this.#config.gitTree,
+      dshVersion: this.#config.dshVersion,
+      profile: this.#config.profile,
     };
+    for (const method of ["currentGeneration", "status", "prepare", "applyPrepared", "reject"] as const) {
+      Object.defineProperty(this, method, {
+        configurable: false,
+        enumerable: false,
+        value: this[method],
+        writable: false,
+      });
+    }
     (ctx as unknown as HmrEventContext).on("hmr/reload", (reloads) => {
-      this.observeReload(reloads);
+      this.#observeReload(reloads);
     });
   }
 
-  currentGeneration(): CandidateGeneration {
-    return { ...this.generation };
-  }
+  currentGeneration = (): CandidateGeneration => {
+    return { ...this.#generation };
+  };
 
-  async status(): Promise<CandidateStatus> {
-    const sourceSha256 = digestSnapshot(await snapshot(this.config.files, "sourcePath", this.config.workspaceRoot));
+  status = async (): Promise<CandidateStatus> => {
+    const sourceSha256 = digestSnapshot(await snapshot(this.#config.files, "sourcePath", this.#config.workspaceRoot));
     let stagedSha256: string | undefined;
-    if (this.prepared !== undefined) {
+    if (this.#prepared !== undefined) {
       try {
-        stagedSha256 = digestSnapshot(await snapshot(this.config.files, "stagingPath", this.config.workspaceRoot));
+        stagedSha256 = digestSnapshot(await snapshot(this.#config.files, "stagingPath", this.#config.workspaceRoot));
       } catch {
         stagedSha256 = undefined;
       }
     }
     return {
-      ...(this.prepared === undefined ? {} : { preparedCandidateId: this.prepared.id }),
+      ...(this.#prepared === undefined ? {} : { preparedCandidateId: this.#prepared.id }),
       sourceSha256,
       ...(stagedSha256 === undefined ? {} : { stagedSha256 }),
-      ...(this.generation.candidateId === null ? {} : { activeCandidateId: this.generation.candidateId }),
-      activeCandidateSha256: this.generation.candidateSha256,
-      hmrSequence: this.generation.hmrSequence,
-      admitted: this.generation.admitted,
-      stagingRoot: this.config.stagingRootRelative,
-      gitTree: this.config.gitTree,
-      dshVersion: this.config.dshVersion,
-      profile: this.config.profile,
+      ...(this.#generation.candidateId === null ? {} : { activeCandidateId: this.#generation.candidateId }),
+      activeCandidateSha256: this.#generation.candidateSha256,
+      hmrSequence: this.#generation.hmrSequence,
+      admitted: this.#generation.admitted,
+      stagingRoot: this.#config.stagingRootRelative,
+      gitTree: this.#config.gitTree,
+      dshVersion: this.#config.dshVersion,
+      profile: this.#config.profile,
     };
-  }
+  };
 
-  async prepare(candidateId: string): Promise<CandidateStatus> {
-    return this.exclusive(async () => {
+  prepare = async (candidateId: string): Promise<CandidateStatus> => {
+    return this.#exclusive(async () => {
       if (!IDENTIFIER.test(candidateId) || candidateId.length < 3 || candidateId.length > 128) {
         fail("CANDIDATE_ID_INVALID", "candidate id must satisfy the DAL identifier contract");
       }
-      if (this.generation.candidateId !== null) {
+      if (this.#generation.candidateId !== null) {
         fail("CANDIDATE_ACTIVE", "reject or promote the active candidate before preparing another");
       }
-      const baseline = await snapshot(this.config.files, "sourcePath", this.config.workspaceRoot);
-      for (const target of this.config.files) {
-        await writeAtomic(this.config.workspaceRoot, target.stagingPath, baseline.get(target.relativePath)!);
+      const baseline = await snapshot(this.#config.files, "sourcePath", this.#config.workspaceRoot);
+      for (const target of this.#config.files) {
+        await writeAtomic(this.#config.workspaceRoot, target.stagingPath, baseline.get(target.relativePath)!);
       }
-      this.prepared = { id: candidateId, baseline, baselineSha256: digestSnapshot(baseline) };
+      this.#prepared = { id: candidateId, baselineSha256: digestSnapshot(baseline) };
       return this.status();
     });
-  }
+  };
 
-  async applyPrepared(): Promise<CandidateGeneration> {
-    return this.exclusive(async () => {
-      const prepared = this.prepared;
-      if (prepared === undefined) fail("CANDIDATE_NOT_PREPARED", "prepare a candidate before applying it");
-      const candidate = await snapshot(this.config.files, "stagingPath", this.config.workspaceRoot);
-      const candidateSha256 = digestSnapshot(candidate);
-      if (candidateSha256 === prepared.baselineSha256) {
-        fail("CANDIDATE_UNCHANGED", "the staged candidate is byte-identical to the baseline");
-      }
-      const liveSha256 = digestSnapshot(await snapshot(this.config.files, "sourcePath", this.config.workspaceRoot));
-      if (liveSha256 !== prepared.baselineSha256) {
-        fail("CANDIDATE_BASELINE_DRIFT", "live candidate files changed after staging; prepare again");
-      }
-      await this.verifyApproval(candidateSha256);
+  applyPrepared = async (): Promise<CandidateGeneration> => {
+    fail(
+      "CANDIDATE_ADMISSION_QUARANTINED",
+      "HMR candidate application is quarantined until DSH provides runtime-closure identity and an awaited activation-readiness boundary",
+    );
+  };
 
-      try {
-        const admitted = await this.activate(candidate, prepared.id, candidateSha256, true);
-        if (!this.matchesCurrent(admitted)) {
-          fail("CANDIDATE_GENERATION_MOVED", "runtime changed before candidate admission completed");
-        }
-        return admitted;
-      } catch (error) {
-        try {
-          await this.activate(prepared.baseline, null, prepared.baselineSha256, false);
-        } catch (rollbackError) {
-          fail("CANDIDATE_ROLLBACK_FAILED", "candidate activation failed and the prior generation was not confirmed", rollbackError);
-        }
-        fail("CANDIDATE_NOT_ADMITTED", "candidate activation failed; the prior generation was restored", error);
-      }
-    });
-  }
-
-  async reject(): Promise<CandidateGeneration> {
-    return this.exclusive(async () => {
-      const prepared = this.prepared;
+  reject = async (): Promise<CandidateGeneration> => {
+    return this.#exclusive(async () => {
+      const prepared = this.#prepared;
       if (prepared === undefined) fail("CANDIDATE_NOT_PREPARED", "there is no prepared candidate to reject");
-      const liveSha256 = digestSnapshot(await snapshot(this.config.files, "sourcePath", this.config.workspaceRoot));
-      if (liveSha256 === prepared.baselineSha256 && this.generation.candidateId === null) {
-        this.prepared = undefined;
+      const liveSha256 = digestSnapshot(await snapshot(this.#config.files, "sourcePath", this.#config.workspaceRoot));
+      if (liveSha256 === prepared.baselineSha256 && this.#generation.candidateId === null) {
+        this.#prepared = undefined;
         return this.currentGeneration();
       }
-      if (liveSha256 !== this.generation.candidateSha256) {
-        fail("CANDIDATE_SOURCE_DRIFT", "live candidate files changed outside the admitted generation; refusing to overwrite them");
-      }
-      const restored = await this.activate(prepared.baseline, null, prepared.baselineSha256, false);
-      this.prepared = undefined;
-      return restored;
+      fail(
+        "CANDIDATE_REJECTION_QUARANTINED",
+        "live candidate files changed after staging; quarantined rejection refuses to overwrite them",
+      );
     });
-  }
+  };
 
-  private async exclusive<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.busy) fail("CANDIDATE_BUSY", "another candidate operation is still active");
-    this.busy = true;
+  async #exclusive<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.#busy) fail("CANDIDATE_BUSY", "another candidate operation is still active");
+    this.#busy = true;
     try {
       return await operation();
     } finally {
-      this.busy = false;
+      this.#busy = false;
     }
   }
 
-  private matchesCurrent(expected: CandidateGeneration): boolean {
-    return this.generation.candidateId === expected.candidateId
-      && this.generation.candidateSha256 === expected.candidateSha256
-      && this.generation.hmrSequence === expected.hmrSequence
-      && this.generation.admitted === expected.admitted;
-  }
-
-  private async activate(
-    desired: Snapshot,
-    candidateId: string | null,
-    candidateSha256: string,
-    admitted: boolean,
-  ): Promise<CandidateGeneration> {
-    if (this.pending !== undefined) fail("CANDIDATE_BUSY", "an HMR admission is already pending");
-    const activation = new Promise<CandidateGeneration>((resolveActivation, rejectActivation) => {
-      const timer = setTimeout(() => {
-        if (this.pending?.candidateSha256 === candidateSha256) this.pending = undefined;
-        rejectActivation(new CandidateError("CANDIDATE_HMR_TIMEOUT", "matching successful HMR reload was not observed"));
-      }, this.config.timeoutMs);
-      this.pending = {
-        candidateId,
-        candidateSha256,
-        admitted,
-        resolve: resolveActivation,
-        reject: rejectActivation,
-        timer,
-      };
-    });
-
-    try {
-      const orderedTargets = [
-        ...this.config.files.filter((target) => target.sourcePath !== this.config.entryPath),
-        ...this.config.files.filter((target) => target.sourcePath === this.config.entryPath),
-      ];
-      for (const target of orderedTargets) {
-        await writeAtomic(this.config.workspaceRoot, target.sourcePath, desired.get(target.relativePath)!);
-      }
-    } catch (error) {
-      this.cancelPending(error);
-      throw error;
-    }
-    return activation;
-  }
-
-  private cancelPending(cause: unknown): void {
-    const pending = this.pending;
-    if (pending === undefined) return;
-    this.pending = undefined;
-    clearTimeout(pending.timer);
-    pending.reject(new CandidateError("CANDIDATE_WRITE_FAILED", "failed to publish candidate bytes", { cause }));
-  }
-
-  private observeReload(value: unknown): void {
+  #observeReload(value: unknown): void {
     if (!(value instanceof Map)) return;
-    this.sequence += 1;
+    this.#sequence += 1;
     let matchesEntry = false;
     for (const reload of value.values()) {
       if (
         typeof reload === "object"
         && reload !== null
         && typeof (reload as ReloadLike).filename === "string"
-        && sameEntry(this.config.entryUrl, (reload as ReloadLike).filename)
+        && sameEntry(this.#config.entryUrl, (reload as ReloadLike).filename)
       ) {
         matchesEntry = true;
         break;
@@ -728,77 +503,35 @@ export class CandidateCoordinator extends Service {
     }
 
     if (!matchesEntry) {
-      this.generation = { ...this.generation, hmrSequence: this.sequence, admitted: false };
-      this.rejectPendingReload("a successful HMR reload did not include the configured candidate entry");
+      this.#generation = { ...this.#generation, hmrSequence: this.#sequence, admitted: false };
       return;
     }
 
     let candidateSha256: string;
     try {
-      candidateSha256 = digestSnapshot(snapshotSync(this.config.files, "sourcePath"));
+      candidateSha256 = digestSnapshot(snapshotSync(this.#config.files, "sourcePath"));
     } catch {
-      this.generation = { ...this.generation, hmrSequence: this.sequence, admitted: false };
-      this.rejectPendingReload("the configured entry could not be read after a successful reload");
-      return;
-    }
-    const pending = this.pending;
-    if (pending !== undefined && pending.candidateSha256 === candidateSha256) {
-      this.pending = undefined;
-      clearTimeout(pending.timer);
-      this.generation = {
-        candidateId: pending.candidateId,
-        candidateSha256,
-        hmrSequence: this.sequence,
-        admitted: pending.admitted,
-        gitTree: this.config.gitTree,
-        dshVersion: this.config.dshVersion,
-        profile: this.config.profile,
-      };
-      pending.resolve({ ...this.generation });
+      this.#generation = { ...this.#generation, hmrSequence: this.#sequence, admitted: false };
       return;
     }
 
-    if (pending !== undefined) {
-      this.rejectPendingReload("the configured entry reloaded with bytes that did not match the pending candidate");
-    }
-
-    this.generation = {
-      candidateId: this.generation.candidateSha256 === candidateSha256 ? this.generation.candidateId : null,
+    this.#generation = {
+      candidateId: null,
       candidateSha256,
-      hmrSequence: this.sequence,
+      hmrSequence: this.#sequence,
       admitted: false,
-      gitTree: this.config.gitTree,
-      dshVersion: this.config.dshVersion,
-      profile: this.config.profile,
+      gitTree: this.#config.gitTree,
+      dshVersion: this.#config.dshVersion,
+      profile: this.#config.profile,
     };
   }
-
-  private async verifyApproval(candidateSha256: string): Promise<void> {
-    await assertApprovalCommandStable(this.config.approvalCommand);
-    await assertRegularFile(this.config.approvalFile, this.config.workspaceRoot, "approvalFile");
-    try {
-      await this.approvalVerifier({
-        approvalFile: this.config.approvalFile,
-        approvalScope: this.config.approvalScope,
-        approvalCommand: this.config.approvalCommand.map((file) => file.path),
-        candidateSha256,
-        workspaceRoot: this.config.workspaceRoot,
-        timeoutMs: this.config.timeoutMs,
-      });
-    } catch (error) {
-      fail("CANDIDATE_APPROVAL_DENIED", "exact candidate approval verification failed", error);
-    }
-    await assertApprovalCommandStable(this.config.approvalCommand);
-  }
-
-  private rejectPendingReload(message: string): void {
-    const pending = this.pending;
-    if (pending === undefined) return;
-    this.pending = undefined;
-    clearTimeout(pending.timer);
-    pending.reject(new CandidateError("CANDIDATE_HMR_MISMATCH", message));
-  }
 }
+
+Object.defineProperty(CandidateCoordinator, "create", {
+  configurable: false,
+  value: CandidateCoordinator.create,
+  writable: false,
+});
 
 function registerTools(ctx: Context, coordinator: CandidateCoordinator): void {
   ctx.tools.register(defineTool({
@@ -838,7 +571,7 @@ function registerTools(ctx: Context, coordinator: CandidateCoordinator): void {
   ctx.tools.register(defineTool({
     name: "dal_candidate_status",
     description:
-      "Read the staged/source digests and current successful-HMR sequence. Use after editing staged files to obtain the exact candidate digest for human approval, and before starting a fresh evaluation session.",
+      "Read staged/source digests and the observed HMR event sequence. The sequence is diagnostic only: it does not prove activation readiness or runtime-closure identity.",
     parameters: {},
     output: {
       schema: {
@@ -858,7 +591,7 @@ function registerTools(ctx: Context, coordinator: CandidateCoordinator): void {
           profile: { type: "string", required: true },
         },
       },
-      render: (_args, value) => [{ type: "text", text: `HMR sequence ${value.hmr_sequence}; candidate ${value.active_candidate_id ?? "none"}; admitted ${value.admitted}.` }],
+      render: (_args, value) => [{ type: "text", text: `Observed HMR sequence ${value.hmr_sequence}; admitted ${value.admitted}.` }],
     },
     async execute() {
       const status = await coordinator.status();
@@ -881,58 +614,44 @@ function registerTools(ctx: Context, coordinator: CandidateCoordinator): void {
   ctx.tools.register(defineTool({
     name: "dal_candidate_apply",
     description:
-      "Verify the configured exact apply_optimization_candidate decision for the current staged digest, copy the staged bytes into the watched plugin worktree, and wait for a successful matching dsh HMR reload. End this session after success; evaluation must use a fresh session.",
+      "Report that HMR candidate application is quarantined. This tool never verifies approval, changes loaded files, or admits a candidate until DSH exposes runtime-closure identity and awaited activation readiness.",
     parameters: {},
     output: {
       schema: {
         type: "object",
         additionalProperties: false,
         properties: {
-          candidate_id: { type: "string", required: true },
-          candidate_sha256: { type: "string", required: true },
-          hmr_sequence: { type: "integer", required: true },
-          admitted: { type: "boolean", required: true },
-          git_tree: { type: "string", required: true },
-          dsh_version: { type: "string", required: true },
-          profile: { type: "string", required: true },
+          quarantined: { type: "boolean", required: true },
         },
       },
-      render: (_args, value) => [{ type: "text", text: `Admitted ${value.candidate_id} at HMR sequence ${value.hmr_sequence}. Start a fresh session for evaluation.` }],
+      render: () => [{ type: "text", text: "HMR candidate application remains quarantined." }],
     },
     async execute() {
-      const generation = await coordinator.applyPrepared();
-      return {
-        candidate_id: generation.candidateId!,
-        candidate_sha256: generation.candidateSha256,
-        hmr_sequence: generation.hmrSequence,
-        admitted: generation.admitted,
-        git_tree: generation.gitTree,
-        dsh_version: generation.dshVersion,
-        profile: generation.profile,
-      };
+      await coordinator.applyPrepared();
+      return { quarantined: true };
     },
   }));
 
   ctx.tools.register(defineTool({
     name: "dal_candidate_reject",
     description:
-      "Restore the exact pre-candidate plugin bytes and wait for dsh HMR to reactivate that prior generation. This is rollback only; it never promotes or commits a candidate.",
+      "Discard the prepared candidate record only when live source still matches its baseline. If live files drifted, fail without overwriting them.",
     parameters: {},
     output: {
       schema: {
         type: "object",
         additionalProperties: false,
         properties: {
-          restored_sha256: { type: "string", required: true },
+          source_sha256: { type: "string", required: true },
           hmr_sequence: { type: "integer", required: true },
         },
       },
-      render: (_args, value) => [{ type: "text", text: `Restored prior generation ${value.restored_sha256} at HMR sequence ${value.hmr_sequence}.` }],
+      render: (_args, value) => [{ type: "text", text: `Discarded the staged candidate record; live source remains ${value.source_sha256}.` }],
     },
     async execute() {
       const generation = await coordinator.reject();
       return {
-        restored_sha256: generation.candidateSha256,
+        source_sha256: generation.candidateSha256,
         hmr_sequence: generation.hmrSequence,
       };
     },

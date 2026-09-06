@@ -1,6 +1,6 @@
 # 0006: Stage approved plugin candidates through existing HMR
 
-Status: Accepted
+Status: Superseded by [`0007-quarantine-hmr-candidate-admission.md`](0007-quarantine-hmr-candidate-admission.md)
 Date: 2026-09-04
 Related: [`../spec.md`](../spec.md), [`../architecture.md`](../architecture.md), [`../governance.md`](../governance.md), [`0003-purpose-specific-approved-executors.md`](0003-purpose-specific-approved-executors.md)
 

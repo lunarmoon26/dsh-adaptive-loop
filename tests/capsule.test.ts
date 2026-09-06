@@ -8,7 +8,7 @@ import type { KnowledgeCapsule } from "../src/types.js";
 
 const capsuleDirectory = resolve(import.meta.dirname, "..", "capsules");
 const capsulePath = resolve(capsuleDirectory, "dal-v0-contract.json");
-const validationTime = new Date("2026-09-04T16:00:00.000Z");
+const validationTime = new Date("2026-09-05T16:00:00.000Z");
 
 async function readCapsule(): Promise<KnowledgeCapsule> {
   return JSON.parse(await readFile(capsulePath, "utf8")) as KnowledgeCapsule;

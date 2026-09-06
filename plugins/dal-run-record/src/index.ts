@@ -549,12 +549,6 @@ interface EventWiringContext {
   get(name: string, strict?: boolean): unknown;
 }
 
-interface CandidateGenerationContext {
-  dalCandidate?: {
-    currentGeneration(): CandidateGenerationLike;
-  };
-}
-
 export function apply(ctx: Context, config: Config): void {
   const resolved: ResolvedConfig = {
     storeRoot: config.storeRoot ?? ".dal/runs",
@@ -565,10 +559,9 @@ export function apply(ctx: Context, config: Config): void {
   const source = isRuntimeGenerationSource(suppliedSource)
     ? generationSourceBoundToContext(wiring, suppliedSource)
     : undefined;
-  const recorder = new RunSessionRecorder(resolved, source, () => {
-    const candidate = (ctx as unknown as CandidateGenerationContext).dalCandidate;
-    return candidate?.currentGeneration() ?? null;
-  });
+  // In-process HMR state is diagnostic only and cannot authorize candidate
+  // evaluation. A future trusted launcher-owned source needs its own contract.
+  const recorder = new RunSessionRecorder(resolved, source);
   wiring.on("session/created", (session) => {
     recorder.create(session as RecordedSessionLike);
   });

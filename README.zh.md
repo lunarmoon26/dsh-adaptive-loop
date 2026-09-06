@@ -2,9 +2,9 @@
 
 `dal` 是一个本地、由人治理的证据与自我改进循环，面向**闭环、重复性的智能体工作流**——目标有界、状态迁移可观测、评分器确定性的任务类别（客服类工作流、运维例行流程、可基准化的业务流程）。开放式创作型编程属于开环问题，明确排除在改进声明之外：没有可评估的有界目标，dal 就不对其做任何递归自我改进声明。
 
-版本 0 会验证结构化任务反馈、存储不可变的本地记录、评估不执行的权限请求、运行钉住的离线安全/回归套件、确定性聚类失败、估计仅观测的 Run-to-Run controller state、封存留出集（holdout）、产出受治理的模型提案草稿、用 UCB1 搜索候选分支、在受限环境执行确定性校验器、通过现有 DSH HMR 评估经精确审批的插件候选，并记录由人控制的提案状态。
+版本 0 会验证结构化任务反馈、存储不可变的本地记录、评估不执行的权限请求、运行钉住的离线安全/回归套件、确定性聚类失败、估计仅观测的 Run-to-Run controller state、封存留出集（holdout）、产出受治理的模型提案草稿、用 UCB1 搜索候选分支、在受限环境执行确定性校验器、暂存但不应用插件候选，并记录由人控制的提案状态。
 
-它**不会**在受审批约束的提案器之外调用 LLM 或优化器，不会无约束地执行所请求的操作，不会安装插件，不会在未经批准的决策下修改 dsh 配置，也不会自动晋升候选。唯一的候选应用器只能写入隔离 linked worktree 中预先配置的文件，并会先校验精确审批。
+它**不会**在受审批约束的提案器之外调用 LLM 或优化器，不会无约束地执行所请求的操作，不会安装插件，不会在未经批准的决策下修改 dsh 配置，不会应用插件候选，也不会自动晋升候选。HMR 仅在隔离 linked worktree 的预配置路径中暂存文件，应用操作已由代码隔离。
 
 ## 适用与不适用
 
@@ -69,10 +69,10 @@ pnpm run check
 
 - **Run 模式**（`@lunarmoon26/dal-run-record`）——默认开启：把会话事件投影为 `.dal/runs` 下隐私安全的运行记录（只有计数、摘要、结果与失败码；绝不包含提示词文本、消息内容、工具参数或结果）。
 - **Improvement 模式**（`@lunarmoon26/dal-improve-tools`）——默认关闭：基于确定性 dal CLI 的工作台工具（聚类、准备载荷、摘要、分支评估、重置状态）。不暴露任何受审批门控的操作——`propose run` 与 `reset execute` 仅限 CLI。
-- **HMR 候选工作台**（`@lunarmoon26/dal-hmr-candidate`）——默认关闭：在固定目录暂存插件/配置模块文件，在发布前校验精确候选审批，仅由匹配且成功的 dsh HMR 重载准入；跨代运行会标为不可评估，拒绝时恢复原字节。晋升仍只能由人工 git 提交完成。
+- **HMR 候选暂存**（`@lunarmoon26/dal-hmr-candidate`）——默认关闭且由代码隔离：在固定目录暂存插件/配置模块文件并报告摘要，但在校验审批或写入任何在线文件之前拒绝应用；不会准入任何运行时代际。
 - **G2 候选项**（`@lunarmoon26/dal-unknown-effect-guard`）——默认关闭：对结果未知的工作流副作用实施按智能体隔离的重试锁。当前只有源码与单元测试，既未安装，也未应用为新一代配置。
 
-把 bundle 挂载进 profile（`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools ./plugins/dal-hmr-candidate`，然后配置并启用工作台条目）属于受审批门控的 `install_or_mount_plugin` 操作；见 [`docs/spec.md`](docs/spec.md) DAL-019 与 [`docs/operator-guide.md`](docs/operator-guide.md)。每个暂存候选还需要独立、精确的 `apply_optimization_candidate` 审批。G2 包仍不在此命令中，挂载与应用都需各自审批。
+把 bundle 挂载进 profile（`dsh plugin --profile <name> add ./plugins/dal-modes ./plugins/dal-run-record ./plugins/dal-improve-tools ./plugins/dal-hmr-candidate`，然后配置并启用工作台条目）属于受审批门控的 `install_or_mount_plugin` 操作；见 [`docs/spec.md`](docs/spec.md) DAL-019 与 [`docs/operator-guide.md`](docs/operator-guide.md)。即使启用 HMR 条目也无法应用候选。G2 包仍不在此命令中，挂载与应用都需各自审批。
 
 ## 有意拒绝的示例
 
@@ -115,7 +115,7 @@ dal init                             # 在任意工作区内：存储、技能�
 
 ## 预期的使用方式
 
-智能体白天正常工作；每个任务以一条结构化反馈记录收尾，失败时再加一条运行记录。这些记录及其派生 controller observation 存放在受 VCS 跟踪的存储中（`.dal/outbox`、`.dal/store`、`.dal/runs`、`.dal/clusters`、`.dal/control-states`）。收工时由一位人负责对账：拉取、汇总、聚类失败、在有已审查 controller policy 时估计状态、评审、推动提案走完分阶段生命周期，并可在隔离 HMR 工作台评估经审批的插件候选；只有人工提交才能晋升变更。精确运行手册见运维指南。
+智能体白天正常工作；每个任务以一条结构化反馈记录收尾，失败时再加一条运行记录。这些记录及其派生 controller observation 存放在受 VCS 跟踪的存储中（`.dal/outbox`、`.dal/store`、`.dal/runs`、`.dal/clusters`、`.dal/control-states`）。收工时由一位人负责对账：拉取、汇总、聚类失败、在有已审查 controller policy 时估计状态、评审、推动提案走完分阶段生命周期，并通过确定性或私有隔离评估器进行评估；只有人工提交才能晋升变更。HMR 助手仅提供非活动暂存。精确运行手册见运维指南。
 
 ## 基准工作区
 

@@ -160,6 +160,7 @@ describe("run-mode recorder", () => {
     const ctx = new Context();
     const source = runtimeGenerationSource();
     ctx.provide("runtimeGeneration", source);
+    ctx.provide("dalCandidate", { currentGeneration: candidateGeneration });
     applyRunRecord(ctx, { storeRoot: ".dal/runs" });
     const id = "session-5";
     (ctx as unknown as { emit: (name: string, ...args: unknown[]) => void }).emit(
@@ -183,8 +184,16 @@ describe("run-mode recorder", () => {
     expect(await recordsIn(root)).toEqual([`run-${id}-s1.final.json`]);
     const record = JSON.parse(
       await readFile(join(root, ".dal", "runs", `run-${id}-s1.final.json`), "utf8"),
-    ) as { runtime_generation: { stable_for_session: boolean } };
+    ) as {
+      runtime_generation: { stable_for_session: boolean };
+      context: { candidate_generation: Record<string, unknown> };
+    };
     expect(record.runtime_generation.stable_for_session).toBe(true);
+    expect(record.context.candidate_generation).toMatchObject({
+      candidate_id: null,
+      candidate_sha256: null,
+      evaluation_eligible: false,
+    });
   });
 
   it("binds launcher evidence at session creation and qualifies only a stable final record", async () => {

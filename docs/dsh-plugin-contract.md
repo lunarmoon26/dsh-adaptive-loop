@@ -42,9 +42,11 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
 - Runtime- and candidate-generation binding is synchronous at
   `session/created`, before the first event. The optional launcher-owned
   `runtimeGeneration` service returns a precomputed binding plus a monotonic
-  transition sequence; the optional `dalCandidate` service reports the admitted
-  HMR generation. The recorder does not infer identity from later events or
-  late-bind either source, and candidate checkpoints are evaluation-ineligible.
+  transition sequence; the optional quarantined `dalCandidate` service reports
+  diagnostic source/HMR state with `admitted: false`. The production recorder
+  does not consume that mutable in-process service for eligibility, infer
+  identity from later events, or late-bind either source; candidate checkpoints
+  are evaluation-ineligible.
 - Event vocabulary includes `turn/start|end`, `step/start|end`,
   `assistant/message` (+`usage`), `tool/call` (name + raw arguments),
   `tool/result` (error name/code), `request/header` (config incl. provider/
@@ -57,27 +59,25 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
   `docs/runtime-generation-attestation.md`; until it exists, recorder output
   remains unattested and controller-ineligible.
 
-## HMR candidate admission
+## HMR observation and candidate quarantine
 
-- `hmr/reload` carries `Map<oldPlugin, { filename, runtime? }>` and is emitted
-  only after every selected plugin replacement succeeds. Import or activation
-  failure restores the prior module cache/runtime and emits no success event.
-- Candidate admission matches the configured entry's canonical file URL, not a
-  plugin display name. Every successful HMR event advances the observed sequence;
-  therefore an unrelated reload still invalidates an in-flight evaluation run.
-- Multi-file candidates publish imported dependencies first and the loaded entry
-  last. Candidate bytes stay in a fixed inactive staging directory until an exact
-  `apply_optimization_candidate` decision verifies at the copy operation.
-- Approval verification runs through one bounded chain of absolute launcher files
-  outside the candidate worktree. Their startup digests must still match at the
-  operation; workspace package scripts never select the verifier.
-- Any successful reload that omits the configured entry or activates different
-  bytes aborts pending admission and triggers baseline restoration.
-- HMR activation is evaluation admission, not promotion. Only a later human git
-  review and commit promotes the workspace source.
+- `hmr/reload` carries `Map<oldPlugin, { filename, runtime? }>` but current module
+  HMR emits it after replacement Fiber registration, before those Fibers settle.
+  A startup failure can therefore follow the event and leave the new Fiber
+  `failed` without restoring the prior runtime.
+- Separate atomic renames are not a transaction over a multi-file module closure.
+  A reload can import a hybrid generation even when a later event-time disk read
+  sees the complete candidate bytes.
+- `dal_candidate_prepare` and `dal_candidate_status` retain fixed inactive
+  staging. `dal_candidate_apply` always fails with
+  `CANDIDATE_ADMISSION_QUARANTINED` before approval verification or live writes.
+- No current HMR event creates evaluation admission. Runtime identity requires an
+  authoritative imported-artifact closure and awaited readiness receipt.
+- Promotion remains a separate human review and deployment action.
 - `candidate_generation` is a recorder observation. Standalone run ingestion
   checks shape and consistency but neither authenticates HMR admission nor grants
-  application or promotion authority.
+  application or promotion authority; current DAL produces no admitted candidate
+  generation through HMR.
 
 ## What a proposal may and may not touch
 
