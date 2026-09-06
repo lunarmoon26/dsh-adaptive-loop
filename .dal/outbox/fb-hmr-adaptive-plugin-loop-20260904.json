@@ -1,0 +1,250 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-hmr-adaptive-plugin-loop-20260904",
+  "change_id": "chg-hmr-adaptive-plugin-loop-20260904",
+  "created_at": "2026-09-04T00:21:55.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "opencode-agent" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "8a58e50f98783c05cc63bf627153ae38ca27214c",
+      "branch": "feat/hmr-adaptive-plugin-loop",
+      "dirty": true
+    },
+    "task_ref": "repo://docs/spec.md#DAL-024"
+  },
+  "goal": "Add a minimal approval-bound HMR loop for evaluating bounded workspace-owned plugin candidates without modifying DSH core or automatically promoting candidates.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-bounded-approved-staging",
+      "statement": "Candidate bytes remain inactive until an exact approval is verified, and only fixed files in a verified linked worktree can be published.",
+      "result": "passed",
+      "evidence": ["ev-coordinator", "ev-focused-tests"]
+    },
+    {
+      "id": "ac-hmr-admission",
+      "statement": "Only a successful HMR reload matching the configured entry and candidate digest admits the candidate; failed and unrelated reloads do not.",
+      "result": "passed",
+      "evidence": ["ev-focused-tests", "ev-real-hmr"]
+    },
+    {
+      "id": "ac-exact-rollback",
+      "statement": "Failed activation and explicit rejection restore and reactivate the exact snapshotted source bytes.",
+      "result": "passed",
+      "evidence": ["ev-focused-tests"]
+    },
+    {
+      "id": "ac-stable-generation-attribution",
+      "statement": "Run records are evaluation-eligible only for fresh sessions that remain on one admitted HMR generation and include minimal generation provenance.",
+      "result": "passed",
+      "evidence": ["ev-run-recorder", "ev-run-schema", "ev-focused-tests"]
+    },
+    {
+      "id": "ac-human-promotion-boundary",
+      "statement": "The coordinator cannot mount itself, edit shared profiles, commit, or promote a candidate; those actions remain human-controlled and separately approved.",
+      "result": "passed",
+      "evidence": ["ev-contract", "ev-coordinator"]
+    },
+    {
+      "id": "ac-repository-gate",
+      "statement": "The focused HMR proof and complete repository verification gate pass.",
+      "result": "passed",
+      "evidence": ["ev-focused-tests", "ev-real-hmr", "ev-full-check"]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "The repository now provides a bounded HMR candidate coordinator, stable-generation run attribution, additive persisted contracts, operator guidance, and passing focused and repository-wide verification.",
+    "exception": null
+  },
+  "what_worked": [
+    "The existing success-only HMR event was sufficient for conservative admission without a DSH core change.",
+    "Inactive staging and operation-time approval verification kept denied candidates from publishing live bytes.",
+    "Generation sequencing made reload-spanning session attribution fail closed.",
+    "An opt-in composition test exercised the coordinator against pinned local Loader, HMR, and Timer artifacts."
+  ],
+  "what_failed": [
+    "An initial repository gate found a validation clock older than the updated capsule check date.",
+    "The next gate found two dependent capsules whose source digests and claims had not yet been reconciled after documentation changes.",
+    "A handoff path label caused a brief false missing-worktree diagnosis; checking the registered repository path confirmed the worktree was intact."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "plugin",
+      "name": "dal-hmr-candidate",
+      "purpose": "Implement bounded staging, approval verification, HMR admission, status, and rollback.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-coordinator"]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Run focused coordinator, run-recorder, schema, and bundle tests.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-focused-tests"]
+    },
+    {
+      "sequence": 3,
+      "kind": "harness",
+      "name": "dsh-hmr-composition",
+      "purpose": "Exercise candidate admission and rollback with pinned local DSH HMR artifacts.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-real-hmr"]
+    },
+    {
+      "sequence": 4,
+      "kind": "tool",
+      "name": "pnpm-run-check",
+      "purpose": "Run the complete repository verification gate before capsule reconciliation.",
+      "outcome": "failed",
+      "duration_ms": null,
+      "evidence": ["ev-capsule-recovery"]
+    },
+    {
+      "sequence": 5,
+      "kind": "tool",
+      "name": "capsule-check",
+      "purpose": "Validate all reconciled local knowledge capsules against their canonical sources.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-capsules"]
+    },
+    {
+      "sequence": 6,
+      "kind": "tool",
+      "name": "pnpm-run-check",
+      "purpose": "Run the final complete repository verification gate.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-full-check"]
+    }
+  ],
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-capsule-reconciliation",
+      "category": "verification",
+      "summary": "Documentation changes initially left the capsule validation clock and two dependent capsule source bindings stale.",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "When changing canonical documentation, enumerate every capsule that references each changed source before running the full gate.",
+      "evidence": ["ev-capsule-recovery", "ev-capsules"]
+    },
+    {
+      "id": "fi-worktree-path-label",
+      "category": "context",
+      "summary": "An inaccurate path label in the handoff caused an unnecessary recovery detour.",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "Confirm the repository path through Git before diagnosing a missing temporary worktree.",
+      "evidence": []
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-contract",
+      "kind": "file",
+      "uri": "repo://docs/spec.md",
+      "summary": "DAL-024 defines the bounded HMR candidate loop and its human promotion boundary.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-coordinator",
+      "kind": "file",
+      "uri": "repo://plugins/dal-hmr-candidate/src/index.ts",
+      "summary": "The coordinator implements fixed-path staging, linked-worktree checks, operation-time approval, HMR admission, and rollback.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-run-recorder",
+      "kind": "file",
+      "uri": "repo://plugins/dal-run-record/src/index.ts",
+      "summary": "The recorder binds candidate generation at session creation and derives conservative evaluation eligibility.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-run-schema",
+      "kind": "file",
+      "uri": "repo://schemas/run-record.v1.schema.json",
+      "summary": "The additive run-record contract persists candidate generation and provenance fields.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-focused-tests",
+      "kind": "test",
+      "uri": "command://vitest-hmr-candidate",
+      "summary": "Focused coordinator, run-recorder, and bundle verification passed with 23 tests and 5 unrelated skips.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-real-hmr",
+      "kind": "test",
+      "uri": "command://vitest-hmr-real-composition",
+      "summary": "The opt-in pinned local DSH Loader, HMR, and Timer composition proof passed without changing DSH source or a shared profile.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-capsule-recovery",
+      "kind": "command",
+      "uri": "command://pnpm-run-check-initial",
+      "summary": "The initial full gate failed closed on stale capsule validation metadata; the source bindings and claims were reconciled before retry.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-capsules",
+      "kind": "command",
+      "uri": "command://dal-capsule-check",
+      "summary": "All three committed knowledge capsules validated against their current local sources.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    },
+    {
+      "id": "ev-full-check",
+      "kind": "test",
+      "uri": "command://pnpm-run-check",
+      "summary": "Typecheck, build, 33 test files with 199 passing tests and 7 skips, capsule validation, policy verification, core evaluation, and benchmark evaluation all passed without a hard stop.",
+      "sha256": null,
+      "observed_at": "2026-09-04T00:21:55.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-production-mount",
+      "statement": "A shared-profile or production plugin mount was not exercised because it is a separately approval-gated operation and outside this change's acceptance boundary.",
+      "level": "low",
+      "resolution": "Obtain an exact unexpired install-or-mount approval for a specific profile before running a separate production integration proof.",
+      "evidence": ["ev-contract", "ev-real-hmr"]
+    }
+  ],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Repository changes await maintainer review.",
+      "No sensitive-action approval was requested or consumed because no shared mount, production candidate application, promotion, or external data transfer occurred."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets", "hmr-candidate", "local-evidence"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "repository": "lunarmoon26/dsh-adaptive-loop",
+  "title": "Track authoritative DSH runtime-generation attestation support",
+  "body_path": ".dal/outbox/issue-runtime-generation-upstream-20260902.md",
+  "payload_canonicalization": "JSON.stringify({ body, repository, title })",
+  "payload_sha256": "f8c17d00c6e98918b593ad76ee43b2e29781a39ad6747b581800110c2130fab2",
+  "required_action": "send_data_externally",
+  "approval_scope": "destination=https://github.com/lunarmoon26/dsh-adaptive-loop/issues;data_class=public_technical_issue;dataset_sha256=f8c17d00c6e98918b593ad76ee43b2e29781a39ad6747b581800110c2130fab2;purpose=track_authoritative_dsh_runtime_generation_producer",
+  "approval_scope_sha256": "3b4df5201b6ccf177270aeb78a9a51539ddf2f79deca5af1a83cc1635e38d69d",
+  "status": "published",
+  "approval_decision": "dec-runtime-generation-upstream-issue-20260902",
+  "issue_url": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/4"
+}

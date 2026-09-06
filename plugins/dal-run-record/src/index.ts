@@ -48,6 +48,23 @@ interface ResolvedConfig {
   controllerObservation: ControllerObservationConfig | null;
 }
 
+export interface RuntimeGenerationBinding {
+  manifest_sha256: string;
+  digest_profile: "rfc8785-jcs-sha256-v1";
+  evidence_uri: string;
+  assurance: "declared" | "observed" | "verified";
+  transition_sequence: number;
+  harness_sha256: string;
+  model_patch_sha256: string | null;
+  harness_pins: Array<{ surface: string; uri: string; sha256: string }>;
+}
+
+/** Launcher-owned service contract. The transition sequence must only increase. */
+export interface RuntimeGenerationSourceLike {
+  bindSession(session: RecordedSessionLike): RuntimeGenerationBinding | null;
+  transitionSequence(): number;
+}
+
 /** Structural mirrors of the dsh session/event contracts; no dsh runtime import. */
 export interface RecordedSessionLike {
   id: string;
@@ -59,6 +76,16 @@ export interface RecordedEventLike {
   time: number;
   type: string;
   data: Record<string, unknown>;
+}
+
+export interface CandidateGenerationLike {
+  candidateId: string | null;
+  candidateSha256: string;
+  hmrSequence: number;
+  admitted: boolean;
+  gitTree: string;
+  dshVersion: string;
+  profile: string;
 }
 
 interface ToolErrorFact {
@@ -88,6 +115,13 @@ interface SessionAccumulator {
   seeds: number[];
   turnOpen: boolean;
   controllerContextMismatch: boolean;
+  generationBindingAttempted: boolean;
+  runtimeGeneration: {
+    binding: RuntimeGenerationBinding;
+    source: RuntimeGenerationSourceLike;
+  } | null;
+  freshSession: boolean;
+  candidateGeneration: CandidateGenerationLike | null;
 }
 
 const IDENTIFIER_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
@@ -338,8 +372,36 @@ export class RunSessionRecorder {
   private readonly sessions = new Map<string, SessionAccumulator>();
   private readonly config: ResolvedConfig;
 
-  constructor(config: Config = {}) {
+  constructor(
+    config: Config = {},
+    private readonly runtimeGenerationSource?: RuntimeGenerationSourceLike,
+    private readonly readCandidateGeneration: () => CandidateGenerationLike | null = () => null,
+  ) {
     this.config = resolvedConfig(config);
+  }
+
+  private currentCandidateGeneration(): CandidateGenerationLike | null {
+    try {
+      const generation = this.readCandidateGeneration();
+      if (
+        generation === null
+        || (generation.candidateId !== null && typeof generation.candidateId !== "string")
+        || !/^[0-9a-f]{64}$/.test(generation.candidateSha256)
+        || !Number.isSafeInteger(generation.hmrSequence)
+        || generation.hmrSequence < 0
+        || typeof generation.admitted !== "boolean"
+        || !/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(generation.gitTree)
+        || typeof generation.dshVersion !== "string"
+        || generation.dshVersion === ""
+        || typeof generation.profile !== "string"
+        || generation.profile === ""
+      ) {
+        return null;
+      }
+      return { ...generation };
+    } catch {
+      return null;
+    }
   }
 
   private accumulator(session: RecordedSessionLike): SessionAccumulator | undefined {
@@ -373,9 +435,62 @@ export class RunSessionRecorder {
       seeds: [],
       turnOpen: false,
       controllerContextMismatch: false,
+      generationBindingAttempted: false,
+      runtimeGeneration: null,
+      freshSession: false,
+      candidateGeneration: null,
     };
     this.sessions.set(session.id, created);
     return created;
+  }
+
+  /** Bind runtime and candidate identity exactly once at the new-session boundary. */
+  create(session: RecordedSessionLike): void {
+    try {
+      const state = this.accumulator(session);
+      if (state === undefined || state.generationBindingAttempted) {
+        return;
+      }
+      state.generationBindingAttempted = true;
+      if (state.eventCount > 0) {
+        return;
+      }
+      state.freshSession = true;
+      state.candidateGeneration = this.currentCandidateGeneration();
+      if (this.runtimeGenerationSource === undefined) {
+        return;
+      }
+      const binding = this.runtimeGenerationSource.bindSession(session);
+      if (!isRuntimeGenerationBinding(binding)) {
+        return;
+      }
+      state.runtimeGeneration = {
+        binding: {
+          manifest_sha256: binding.manifest_sha256,
+          digest_profile: binding.digest_profile,
+          evidence_uri: binding.evidence_uri,
+          assurance: binding.assurance,
+          transition_sequence: binding.transition_sequence,
+          harness_sha256: binding.harness_sha256,
+          model_patch_sha256: binding.model_patch_sha256,
+          harness_pins: binding.harness_pins.map((pin) => ({
+            surface: pin.surface,
+            uri: pin.uri,
+            sha256: pin.sha256,
+          })).sort((left, right) =>
+            compareText(JSON.stringify(left), JSON.stringify(right)),
+          ),
+        },
+        source: this.runtimeGenerationSource,
+      };
+    } catch {
+      // A missing generation is safer than a partially trusted binding.
+    }
+  }
+
+  /** Backward-compatible name for callers that bind only runtime generation. */
+  bindRuntimeGeneration(session: RecordedSessionLike): void {
+    this.create(session);
   }
 
   /** Counter-only projection; never throws and never touches the filesystem. */
@@ -551,6 +666,20 @@ export class RunSessionRecorder {
     const lastSeq = state.maxSeq;
     const outcome = this.outcomeOf(state);
     const observation = this.controllerObservationFor(state, final);
+    const generation = state.runtimeGeneration;
+    const stableForSession = final && generation !== null && generationStable(generation);
+    const endGeneration = this.currentCandidateGeneration();
+    const startGeneration = state.candidateGeneration;
+    const evaluationEligible = final
+      && state.freshSession
+      && startGeneration !== null
+      && endGeneration !== null
+      && startGeneration.admitted
+      && endGeneration.admitted
+      && startGeneration.candidateId !== null
+      && startGeneration.candidateId === endGeneration.candidateId
+      && startGeneration.candidateSha256 === endGeneration.candidateSha256
+      && startGeneration.hmrSequence === endGeneration.hmrSequence;
     const record = {
       $schema: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
       schema_version: "1.0.0",
@@ -560,9 +689,10 @@ export class RunSessionRecorder {
       started_at: new Date(state.createdAt).toISOString(),
       finished_at: new Date().toISOString(),
       outcome: outcome.outcome,
+      record_stage: final ? "final" : "checkpoint",
       failure: outcome.failure,
-      context:
-        observation === null
+      context: {
+        ...(observation === null
           ? {
               task_set: identifier(basename(state.cwd), "workspace"),
               environment_snapshot: `${process.platform} ${process.arch} node ${process.versions.node}`,
@@ -575,12 +705,13 @@ export class RunSessionRecorder {
                   ? null
                   : { id: state.model, version: state.provider },
               prompt_sha256: state.systemDigest,
-              harness_sha256: null,
-              model_patch_sha256: null,
+              harness_sha256: generation?.binding.harness_sha256 ?? null,
+              model_patch_sha256: generation?.binding.model_patch_sha256 ?? null,
               grader_version: null,
               seeds: state.seeds,
               context_policy_sha256: await fileDigestOrNull(join(state.cwd, "config", "policy.v1.json")),
               inference_parameters: canonicalSort(state.inference),
+              ...(generation === null ? {} : { harness_pins: generation.binding.harness_pins }),
             }
           : {
               task_set: observation.taskSet,
@@ -588,14 +719,37 @@ export class RunSessionRecorder {
               tool_versions: observation.toolVersions,
               model: observation.model,
               prompt_sha256: observation.promptSha256,
-              harness_sha256: observation.harnessSha256,
-              model_patch_sha256: observation.modelPatchSha256,
+              harness_sha256: generation?.binding.harness_sha256 ?? observation.harnessSha256,
+              model_patch_sha256: generation === null ? observation.modelPatchSha256 : generation.binding.model_patch_sha256,
               grader_version: observation.graderVersion,
               seeds: state.seeds,
               context_policy_sha256: observation.contextPolicySha256,
               inference_parameters: observation.inferenceParameters,
-              harness_pins: observation.harnessPins,
+              harness_pins: generation?.binding.harness_pins ?? observation.harnessPins,
+            }),
+        candidate_generation: {
+          candidate_id: startGeneration?.candidateId ?? null,
+          candidate_sha256: startGeneration?.candidateSha256 ?? null,
+          start_hmr_sequence: startGeneration?.hmrSequence ?? null,
+          end_hmr_sequence: endGeneration?.hmrSequence ?? null,
+          evaluation_eligible: evaluationEligible,
+          git_tree: startGeneration?.gitTree ?? null,
+          dsh_version: startGeneration?.dshVersion ?? null,
+          profile: startGeneration?.profile ?? null,
+        },
+      },
+      ...(generation === null
+        ? {}
+        : {
+            runtime_generation: {
+              session_id_sha256: sha256(state.sessionId),
+              manifest_sha256: generation.binding.manifest_sha256,
+              digest_profile: generation.binding.digest_profile,
+              evidence_uri: generation.binding.evidence_uri,
+              assurance: generation.binding.assurance,
+              stable_for_session: stableForSession,
             },
+          }),
       artifacts: [],
       business_outcome: null,
       batch_id: observation?.batchId ?? null,
@@ -655,6 +809,15 @@ export class RunSessionRecorder {
       return null;
     }
     const configuredTools = new Set(observation.toolVersions.map((tool) => tool.name));
+    const generation = state.runtimeGeneration;
+    if (generation !== null && (
+      !generationStable(generation) ||
+      generation.binding.harness_sha256 !== observation.harnessSha256 ||
+      generation.binding.model_patch_sha256 !== observation.modelPatchSha256 ||
+      JSON.stringify(canonicalSort(generation.binding.harness_pins)) !== JSON.stringify(observation.harnessPins)
+    )) {
+      return null;
+    }
     const usedTools = [...state.toolCalls.keys()].map((tool) => identifier(tool, "tool"));
     return usedTools.every((tool) => configuredTools.has(tool)) ? observation : null;
   }
@@ -711,19 +874,29 @@ export class RunSessionRecorder {
 
 interface EventWiringContext {
   on(name: string, listener: (...args: unknown[]) => unknown): unknown;
+  get(name: string, strict?: boolean): unknown;
 }
 
 export function apply(ctx: Context, config: Config): void {
-  const recorder = new RunSessionRecorder(config);
   const wiring = ctx as unknown as EventWiringContext;
+  const suppliedSource = wiring.get("runtimeGeneration");
+  const source = isRuntimeGenerationSource(suppliedSource)
+    ? generationSourceBoundToContext(wiring, suppliedSource)
+    : undefined;
+  // In-process HMR state is diagnostic only and cannot authorize candidate
+  // evaluation. A future trusted launcher-owned source needs its own contract.
+  const recorder = new RunSessionRecorder(config, source);
+  wiring.on("session/created", (session) => {
+    recorder.create(session as RecordedSessionLike);
+  });
   wiring.on("session/event", (session, event) => {
     recorder.onEvent(session as RecordedSessionLike, event as RecordedEventLike);
   });
   wiring.on("session/flush", async (session) => {
     await recorder.flush(session as RecordedSessionLike).catch(() => undefined);
   });
-  wiring.on("session/disposed", (session) => {
-    void recorder.dispose(session as RecordedSessionLike).catch(() => undefined);
+  wiring.on("session/disposed", async (session) => {
+    await recorder.dispose(session as RecordedSessionLike).catch(() => undefined);
   });
 }
 
@@ -743,4 +916,81 @@ function observedModelContradicts(
     (typeof provider === "string" && provider !== observation.model.version) ||
     (typeof model === "string" && model !== observation.model.id)
   );
+}
+
+function generationStable(generation: SessionAccumulator["runtimeGeneration"]): boolean {
+  if (generation === null) return false;
+  try {
+    return generation.source.transitionSequence() === generation.binding.transition_sequence;
+  } catch {
+    return false;
+  }
+}
+
+function generationSourceBoundToContext(
+  ctx: EventWiringContext,
+  source: RuntimeGenerationSourceLike,
+): RuntimeGenerationSourceLike {
+  return {
+    bindSession: (session) => source.bindSession(session),
+    transitionSequence: () => ctx.get("runtimeGeneration") === source
+      ? source.transitionSequence()
+      : Number.NaN,
+  };
+}
+
+function isRuntimeGenerationSource(value: unknown): value is RuntimeGenerationSourceLike {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as RuntimeGenerationSourceLike).bindSession === "function"
+    && typeof (value as RuntimeGenerationSourceLike).transitionSequence === "function";
+}
+
+function isRuntimeGenerationBinding(value: unknown): value is RuntimeGenerationBinding {
+  if (typeof value !== "object" || value === null) return false;
+  const binding = value as Partial<RuntimeGenerationBinding>;
+  if (!isSha256(binding.manifest_sha256)
+    || binding.digest_profile !== "rfc8785-jcs-sha256-v1"
+    || !isUri(binding.evidence_uri)
+    || !isAssurance(binding.assurance)
+    || !Number.isSafeInteger(binding.transition_sequence)
+    || (binding.transition_sequence ?? -1) < 0
+    || !isSha256(binding.harness_sha256)
+    || !(binding.model_patch_sha256 === null || isSha256(binding.model_patch_sha256))
+    || !Array.isArray(binding.harness_pins)
+    || binding.harness_pins.length > 64) {
+    return false;
+  }
+  const identities = new Set<string>();
+  for (const pin of binding.harness_pins) {
+    if (typeof pin !== "object" || pin === null
+      || Object.keys(pin).sort().join("\u0000") !== "sha256\u0000surface\u0000uri"
+      || typeof pin.surface !== "string" || pin.surface.length === 0 || pin.surface.length > 64
+      || !isUri(pin.uri) || !isSha256(pin.sha256)) {
+      return false;
+    }
+    const identity = `${pin.surface}\u0000${pin.uri}`;
+    if (identities.has(identity)) return false;
+    identities.add(identity);
+  }
+  return true;
+}
+
+function isSha256(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isUri(value: unknown): value is string {
+  return typeof value === "string"
+    && value.length >= 4
+    && value.length <= 2048
+    && /^[A-Za-z][A-Za-z0-9+.-]*:\/\/\S+$/.test(value);
+}
+
+function isAssurance(value: unknown): value is RuntimeGenerationBinding["assurance"] {
+  return value === "declared" || value === "observed" || value === "verified";
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

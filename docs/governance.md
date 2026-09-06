@@ -40,6 +40,8 @@ The tau-style e2e driver (`pnpm benchmark:e2e`) applies this binding to whole ru
 
 The G2 unknown-effect guard is repository source with a disabled bundle row, not an authorized installation or applied optimization. Mounting its package into any profile requires an exact `install_or_mount_plugin` decision. Promoting the same bytes as an optimization candidate separately requires an exact `apply_optimization_candidate` decision bound to the candidate digest. Either action must identify the target profile/generation and rollback generation; one approval cannot imply the other.
 
+The HMR workbench keeps authoring and application separate by making application unavailable. `dal_candidate_prepare` stages inactive copies under one startup-configured directory, and `dal_candidate_status` reports their digest. `dal_candidate_apply` fails with `CANDIDATE_ADMISSION_QUARANTINED` before approval verification or any loaded-file write because current DSH HMR lacks authoritative imported-closure identity and awaited Fiber readiness. An approval cannot override this code-owned block. Mounting the staging helper remains a separate `install_or_mount_plugin` action; any future application design requires its own reviewed contract and exact decision.
+
 ### Proposed DSH permission-escalation adapter
 
 DSH's inspected `approval/request` waterfall supports optional one-shot answerer plugins and fails closed when no answerer can decide. A future DAL adapter may answer only after trusted operation metadata is joined to the DSH call and the exact DAL action, scope, target digest, decision, and expiry verify at that operation. The DSH request itself carries a tool name, reason, and optional call ID but no tool arguments, so `allowed-once` alone is not an DAL sensitive-action approval.
@@ -55,7 +57,7 @@ Headless/CI composition defaults to deterministic rejection when no approved ans
 - The operation that changes a target independently verifies the sensitive-action approval at its execution boundary.
 - Post-application measurement does not retroactively authorize the application.
 
-v0 provides verification and transition recording plus three narrowly scoped executors: user-global install writes only the fixed governed assets, while proposer and benchmark e2e send only their exact digest-bound projections. It deliberately provides no generic shared-config writer or external sender, plugin installer or mounter, optimizer runner, or candidate applier.
+v0 provides verification and transition recording plus narrowly scoped executors: user-global install writes only the fixed governed assets, while proposer and benchmark e2e send only their exact digest-bound projections. The HMR coordinator can stage but not apply. DAL deliberately provides no generic shared-config writer or external sender, plugin installer or mounter, optimizer runner, candidate applier, or automatic promotion path.
 
 ## Data collection rules
 

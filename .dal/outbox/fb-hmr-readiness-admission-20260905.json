@@ -1,0 +1,243 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-hmr-readiness-admission-20260905",
+  "change_id": "chg-hmr-readiness-admission-20260905",
+  "created_at": "2026-09-05T02:37:56.000Z",
+  "supersedes": "fb-hmr-main-rebase-20260904",
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "opencode-agent" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "3be1b11e621b14b97d4dd5d63ffea4c13e66457a",
+      "branch": "fix/hmr-readiness-admission",
+      "dirty": true
+    },
+    "task_ref": "repo://docs/spec.md#DAL-025"
+  },
+  "goal": "Correct the unsupported HMR readiness and imported-closure assumptions, then quarantine candidate application without removing inactive staging.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-apply-quarantined",
+      "statement": "Candidate application fails before approval verification or any live-file write.",
+      "result": "passed",
+      "evidence": ["ev-coordinator", "ev-focused-tests"]
+    },
+    {
+      "id": "ac-reject-no-overwrite",
+      "statement": "Candidate rejection never overwrites live files that changed after staging.",
+      "result": "passed",
+      "evidence": ["ev-coordinator", "ev-focused-tests"]
+    },
+    {
+      "id": "ac-no-admitted-generation",
+      "statement": "No coordinator or production recorder path can create or trust an admitted HMR candidate generation.",
+      "result": "passed",
+      "evidence": ["ev-coordinator", "ev-recorder", "ev-focused-tests", "ev-final-review"]
+    },
+    {
+      "id": "ac-real-dsh-risks",
+      "statement": "Opt-in executable evidence reproduces pre-readiness reload observation, failed startup without baseline restoration, and hybrid multi-file activation.",
+      "result": "passed",
+      "evidence": ["ev-real-dsh"]
+    },
+    {
+      "id": "ac-contract-gate",
+      "statement": "Canonical documentation and capsules own the quarantine decision, and the complete repository gate passes.",
+      "result": "passed",
+      "evidence": ["ev-contract", "ev-capsules", "ev-full-check"]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "HMR candidate application and in-process admission are code-quarantined; inactive staging remains, current DSH risks are executable evidence, and all final verification gates pass.",
+    "exception": null
+  },
+  "what_worked": [
+    "Exact source inspection separated HMR event delivery from replacement-Fiber readiness.",
+    "Real DSH probes made failed-start and multi-file imported-closure gaps falsifiable.",
+    "Removing publication and approval execution was smaller and safer than preserving an unusable admission state machine.",
+    "Repeated focused review found and closed erased-private, mutable-service, and prototype-shadowing bypasses before publication."
+  ],
+  "what_failed": [
+    "The superseded design treated hmr/reload and event-time disk digests as admission evidence without testing readiness or imported closure identity.",
+    "The first full repository gate used a stale capsule validation date; after correction, one retry encountered transient shared-store test interference before the final gate passed."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "plugin",
+      "name": "dal-hmr-candidate",
+      "purpose": "Remove live publication, approval execution, rollback writes, and admitted-generation state while retaining bounded staging.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-coordinator", "ev-recorder"]
+    },
+    {
+      "sequence": 2,
+      "kind": "harness",
+      "name": "dsh-hmr-readiness-probe",
+      "purpose": "Exercise failed replacement startup and multi-file HMR closure behavior against pinned local DSH artifacts.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-real-dsh"]
+    },
+    {
+      "sequence": 3,
+      "kind": "tool",
+      "name": "vitest-focused",
+      "purpose": "Verify quarantine, drift safety, non-admission, recorder distrust, and integration boundaries.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-focused-tests"]
+    },
+    {
+      "sequence": 4,
+      "kind": "tool",
+      "name": "capsule-check",
+      "purpose": "Validate all reviewed capsule claims against their current local sources.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-capsules"]
+    },
+    {
+      "sequence": 5,
+      "kind": "tool",
+      "name": "security-review",
+      "purpose": "Review runtime-callable mutation and generation-spoofing paths plus documentation drift.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-final-review"]
+    },
+    {
+      "sequence": 6,
+      "kind": "tool",
+      "name": "pnpm-run-check",
+      "purpose": "Run typecheck, build, all tests, capsules, policy, core evaluation, and benchmark evaluation.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-full-check"]
+    }
+  ],
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-erased-private-review",
+      "category": "verification",
+      "summary": "Initial quarantine retained runtime-callable TypeScript-private mutation and mutable generation seams that required additional hardening rounds.",
+      "impact": "high",
+      "recoverable": true,
+      "suggested_action": "Threat-review emitted JavaScript visibility and same-realm service mutation whenever a TypeScript private member protects an authority boundary.",
+      "evidence": ["ev-coordinator", "ev-focused-tests", "ev-final-review"]
+    },
+    {
+      "id": "fi-full-gate-retry",
+      "category": "verification",
+      "summary": "The repository gate required retries for a pinned capsule date and one non-reproducing shared-store test race.",
+      "impact": "low",
+      "recoverable": true,
+      "suggested_action": "Keep capsule validation dates synchronized and isolate repository-level test stores when that separate test-maintenance work is scheduled.",
+      "evidence": ["ev-full-check"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-contract",
+      "kind": "file",
+      "uri": "repo://docs/decisions/0007-quarantine-hmr-candidate-admission.md",
+      "summary": "ADR 0007 supersedes HMR admission and defines the readiness, imported-closure, rollback, and recovery prerequisites for reconsideration.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-coordinator",
+      "kind": "file",
+      "uri": "repo://plugins/dal-hmr-candidate/src/index.ts",
+      "summary": "The coordinator writes only fixed staging targets, fails application immediately, refuses drifted rejection, and protects non-admitted state from same-runtime method replacement.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-recorder",
+      "kind": "file",
+      "uri": "repo://plugins/dal-run-record/src/index.ts",
+      "summary": "The production recorder no longer trusts mutable in-process candidate service state for evaluation eligibility.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-focused-tests",
+      "kind": "test",
+      "uri": "command://vitest-hmr-plugin-clustering-quarantine",
+      "summary": "Three focused suites passed 27 tests with 6 opt-in skips after final hardening.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-real-dsh",
+      "kind": "test",
+      "uri": "command://vitest-hmr-readiness-opt-in",
+      "summary": "All 6 coordinator tests passed, including executable failed-start and hybrid-closure probes against pinned DSH evidence.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-capsules",
+      "kind": "command",
+      "uri": "command://dal-capsule-check-hmr-quarantine",
+      "summary": "All three capsules validated with quarantine-aware claims and current source digests.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-full-check",
+      "kind": "test",
+      "uri": "command://pnpm-run-check-hmr-quarantine-final",
+      "summary": "The final gate passed typecheck, build, 34 test files with 214 passing tests and 7 opt-in skips, capsule validation, policy checks, core evaluation, and benchmark evaluation without a hard stop.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    },
+    {
+      "id": "ev-final-review",
+      "kind": "command",
+      "uri": "command://hmr-quarantine-security-review-final",
+      "summary": "Final focused review reported no findings; residual risk is limited to the explicitly unsupported DSH HMR readiness and same-realm containment boundaries.",
+      "sha256": null,
+      "observed_at": "2026-09-05T02:37:56.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-dsh-readiness-contract",
+      "statement": "Current DSH HMR still lacks authoritative imported-closure identity, awaited replacement readiness, and failed-start rollback.",
+      "level": "low",
+      "resolution": "Keep admission quarantined while private evaluator Phase 3 gathers version-pinned lifecycle evidence and an upstream contract is designed.",
+      "evidence": ["ev-contract", "ev-real-dsh"]
+    },
+    {
+      "id": "un-same-realm-containment",
+      "statement": "Non-overridable coordinator methods prevent accidental authority spoofing but do not make arbitrary same-realm code a security sandbox.",
+      "level": "low",
+      "resolution": "Keep trusted evaluation and any future deployment authority outside the candidate process.",
+      "evidence": ["ev-coordinator", "ev-final-review"]
+    }
+  ],
+  "human_review": {
+    "status": "pending",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": [
+      "Automated focused review is complete with no findings.",
+      "Maintainer review remains pending in the pull request.",
+      "No shared-profile mount, candidate application, or external data transfer was performed."
+    ],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets", "hmr-candidate", "readiness", "quarantine", "security-review"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

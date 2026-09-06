@@ -18,7 +18,7 @@
     "$schema": {
       "const": "https://recursive-dev-loop.dev/schemas/controller-policy.v1.schema.json"
     },
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "enum": ["1.0.0", "1.1.0"] },
     "policy_id": {
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
     },
@@ -28,6 +28,15 @@
     },
     "task_set": {
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
+    },
+    "runtime_generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest_profile", "minimum_assurance"],
+      "properties": {
+        "digest_profile": { "const": "rfc8785-jcs-sha256-v1" },
+        "minimum_assurance": { "enum": ["observed", "verified"] }
+      }
     },
     "estimator": {
       "type": "object",
@@ -58,6 +67,25 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.1.0" } }
+      },
+      "then": {
+        "properties": { "runtime_generation": {} },
+        "required": ["runtime_generation"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.0.0" } }
+      },
+      "then": {
+        "properties": { "runtime_generation": false }
+      }
+    }
+  ],
   "$defs": {
     "metric_source": {
       "oneOf": [

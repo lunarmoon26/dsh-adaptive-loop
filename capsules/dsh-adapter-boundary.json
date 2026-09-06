@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.4.1",
+  "capsule_version": "1.7.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-09-02",
+  "checked_at": "2026-09-06",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-v0-2026-09-02",
-      "sha256": "f2eb06887efa22c3a3e546eb2c76153b368ce6bb909432533edb9b07b19538ab",
+      "revision": "dal-v0-recorder-staging-integration-2026-09-06",
+      "sha256": "40fe272361ccdcdb54eebde434dc4f4d31a3936bf54917b2408c12cab011ab62",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,9 +30,18 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-v0-2026-09-05",
-      "sha256": "6a19aa339b8d7b615ad4d7543d6520d8c5374f71d28c19dfca2fc9518c9a48af",
+      "revision": "dal-v0-recorder-staging-integration-2026-09-06",
+      "sha256": "c3b5e609c1cf9dda9f5d4849de8891ae88b0e8f230144196c0c9cfa00160af8e",
       "local_path": "../ROADMAP.md",
+      "required": true
+    },
+    {
+      "id": "src-runtime-generation-contract",
+      "kind": "local_file",
+      "uri": "repo://docs/runtime-generation-attestation.md",
+      "revision": "runtime-generation-attestation-2026-09-02",
+      "sha256": "5b3f9137ba109c49c2eb6c163ae01aa8959dae82df717e93f2a46295127ea196",
+      "local_path": "../docs/runtime-generation-attestation.md",
       "required": true
     }
   ],
@@ -47,15 +56,16 @@
     },
     {
       "id": "claim-optional-cordis",
-      "text": "Cordis mode and G2 packages ship as workspace source only; profile installation or mounting remains opt-in, lifecycle-owned, disposal-safe, flush-aware, and separately approved.",
+      "text": "Cordis run, improvement, quarantined HMR-staging, and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
       "source_ids": [
         "src-dal-architecture",
-        "src-dal-roadmap"
+        "src-dal-roadmap",
+        "src-runtime-generation-contract"
       ]
     },
     {
       "id": "claim-provider-neutral",
-      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA or SkillOpt optimizer runtimes and candidate application do not run in v0.",
+      "text": "The SkillOpt-shaped prepare/evaluate adapter is deterministic and provider-neutral; GEPA and SkillOpt optimizer runtimes do not run in v0, and HMR plugin candidate application is unavailable pending authoritative imported-closure identity and awaited readiness.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-research",
@@ -102,6 +112,15 @@
         "src-dal-architecture",
         "src-dal-roadmap"
       ]
+    },
+    {
+      "id": "claim-runtime-generation-producer-boundary",
+      "text": "DAL ships the runtime manifest/evidence contract, recorder consumer, and controller verifier; authoritative effective Loader configuration, resolver receipts, artifact closure, transition sequencing, and readiness remain owned by a future pinned DSH launcher service.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-roadmap",
+        "src-runtime-generation-contract"
+      ]
     }
   ],
   "retrieval_pointers": [
@@ -123,7 +142,7 @@
     },
     {
       "id": "ptr-future-only",
-      "when": "Proposing plugin deployment, optimizer execution, candidate application, provider expansion, or supply-chain integration",
+      "when": "Proposing production plugin deployment, optimizer execution, broader candidate application, provider expansion, or supply-chain integration",
       "uri": "repo://ROADMAP.md",
       "source_ids": [
         "src-dal-roadmap"
@@ -137,11 +156,19 @@
         "src-dal-architecture",
         "src-dal-research"
       ]
+    },
+    {
+      "id": "ptr-runtime-generation",
+      "when": "Implementing generation identity, Loader mutation binding, resolver evidence, or session stability",
+      "uri": "repo://docs/runtime-generation-attestation.md",
+      "source_ids": [
+        "src-runtime-generation-contract"
+      ]
     }
   ],
   "limits": [
     "Pinned upstream interfaces are pre-stable and require fresh source inspection before integration.",
     "The unavailable expected local SkillOpt checkout remains an evidence gap.",
-    "No mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
+    "No authoritative DSH runtime-generation producer, HMR readiness or imported-closure identity, final-disposal durability, mounted plugin, optimizer runtime, model behavior, external evaluator, or full dsh lifecycle integration is proved by this capsule."
   ]
 }

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
+  "schema_version": "1.0.0",
+  "decision_id": "dec-runtime-generation-upstream-issue-20260902",
+  "request_id": "req-runtime-generation-upstream-issue-20260902",
+  "action": "send_data_externally",
+  "scope": {
+    "kind": "data_transfer",
+    "value": "destination=https://github.com/lunarmoon26/dsh-adaptive-loop/issues;data_class=public_technical_issue;dataset_sha256=f8c17d00c6e98918b593ad76ee43b2e29781a39ad6747b581800110c2130fab2;purpose=track_authoritative_dsh_runtime_generation_producer",
+    "sha256": "3b4df5201b6ccf177270aeb78a9a51539ddf2f79deca5af1a83cc1635e38d69d"
+  },
+  "decision": "approved",
+  "reviewer": {
+    "kind": "human",
+    "id": "workspace-user"
+  },
+  "decided_at": "2026-09-02T23:44:32.000Z",
+  "expires_at": "2026-09-09T23:59:59.000Z",
+  "rationale": "The workspace user approved publishing the exact digest-bound public technical tracking issue to the project repository.",
+  "evidence": [
+    "repo://.dal/outbox/issue-runtime-generation-upstream-20260902.request.json"
+  ],
+  "candidate_sha256": null
+}

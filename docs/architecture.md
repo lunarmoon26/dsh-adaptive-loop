@@ -2,11 +2,11 @@
 
 Status: Implemented v0; evidence tracked in [`requirement-evidence.md`](requirement-evidence.md)
 Audience: developers, reviewers, dsh plugin authors, and optimizer-adapter authors
-Last contract review: 2026-08-31; pinned upstream evidence remains in [`research-evidence.md`](research-evidence.md)
+Last contract review: 2026-09-05; pinned upstream evidence remains in [`research-evidence.md`](research-evidence.md)
 
 ## Purpose and scope
 
-`dal` is a local control plane around software-development tasks. It captures bounded task evidence, makes patterns queryable, and stages improvements for human decisions. It integrates with dsh v0 through repository instructions and a project-local skill. It does not mount a Cordis plugin or change a dsh profile.
+`dal` is a local control plane around software-development tasks. It captures bounded task evidence, makes patterns queryable, and stages improvements for human decisions. Its zero-configuration dsh integration remains repository instructions plus a project-local skill. Optional Cordis packages add run recording and deterministic workbench tools. The HMR package now provides inactive staging only; application and admission are quarantined.
 
 ## Quality scenarios and constraints
 
@@ -21,13 +21,16 @@ Last contract review: 2026-08-31; pinned upstream evidence remains in [`research
 | 7 | A candidate improves one score but fails privacy, policy, budget, or golden behavior | The evaluation suite finishes | The scorecard hard-stops and quarantines the candidate digest |
 | 8 | A benchmark candidate attempts to inspect goals, grader code, or effect logs | The e2e attempt starts | Candidate receives only a minimal read-only workspace and typed service access; oracle data stays on the grader network |
 | 9 | A controller estimate receives mixed generations, contexts, or inadequate denominators | The estimate is requested | Mixed evidence fails closed; inadequate evidence publishes a non-authorizing `insufficient_evidence` state |
+| 10 | A run lacks authoritative generation evidence or spans a Loader/HMR transition | Controller enrollment is requested | Repository evidence and its JCS manifest are verified; missing, unstable, downgraded, or mismatched evidence fails closed |
+| 11 | A staged plugin candidate requests HMR application | Current DSH lacks imported-closure identity and awaited Fiber readiness | DAL rejects before approval verification or a live-file write; no generation or run is admitted |
 
 Hard constraints:
 
-- Local-only is the default. There is no generic network/shared-config executor, optimizer runtime, plugin installer or mounter, or candidate applier; purpose-specific executors independently verify exact approval or confinement at their operation.
+- Local-only is the default. There is no generic network/shared-config executor, optimizer runtime, plugin installer/mounter, or candidate applier. The HMR package stages configured files in an isolated linked worktree but cannot publish them.
+- HMR admission stays unavailable until imported artifact identity, awaited readiness, failure rollback, and durable recovery have version-pinned evidence.
 - Exact data syntax lives in JSON Schema, not duplicated prose or TypeScript literals.
 - Every persistent mutation is local, explicit, and atomic at one-record granularity.
-- dsh integrations respect Cordis lifecycle ownership: future registrations use plugin effects and durable facts use session events.
+- dsh integrations respect Cordis lifecycle ownership: registrations use plugin effects, HMR owns module replacement, and durable facts use session events.
 - Deterministic guardrails run before evaluators; model/judge evidence never grants capabilities or approval.
 - Future evaluation or observability adapters consume sanitized projections only; the DSH session log and DAL immutable records remain authoritative.
 
@@ -38,32 +41,35 @@ Hard constraints:
 | Developer or dsh agent | Task facts and evidence references | Feedback JSON | Producer must summarize and redact; feedback contract owns fields |
 | `dal` CLI | JSON records, filters, capsule paths, decisions | Local records, deterministic reports, and explicitly approved proposer/install operations | Local by default; purpose-specific sensitive paths verify exact approvals at execution |
 | Local team store | Validated ingestion envelopes | Queryable JSON | Filesystem permissions and immutable-ID checks |
-| dsh | `AGENTS.md`, project skill, and optional plugin events | Task execution and session facts | dsh owns session lifecycle; DAL plugin source is not mounted or profile-authoritative by default |
+| dsh | `AGENTS.md`, project skill, and optional plugin/HMR events | Task execution, module registration, Fiber lifecycle, and session facts | Current `hmr/reload` is registration evidence, not activation readiness; DAL plugin source is not mounted or profile-authoritative by default |
 | Human reviewer | Review and decision identity | Scoped approval or rejection | Only authority for sensitive actions |
 | Deterministic optimizer adapter | Sanitized exchange JSON and bounded-edits candidate | Training set and validation verdict | Prepare/evaluate only; no optimizer execution or application authority |
 | GEPA or SkillOpt runtime | Future adapter data | Future candidate | Not installed or executed; external transfer requires approval |
 | Guardrail evaluator | Structured, non-executing capability request | Immutable allow/deny/approval-required decision | Local deterministic policy; no requested tool execution |
 | Evaluation harness | Pinned local fixture suite and target digest | Immutable scorecard and hard-stop disposition | Deterministic v0 runner; no model/provider/network |
 | Controller estimator | Controller policy plus one run-record batch | Immutable state with context/generation identities and proportion intervals | Observation only; no proposal, budget, model, execution, or promotion authority |
+| Runtime generation producer | Effective Loader tree/config, resolver results, artifacts, and mutation lifecycle | Immutable manifest/evidence plus synchronous session binding | DSH launcher-owned and not implemented here; DAL validates and consumes the contract only |
 | Tau workflow service and grader | Seed state, effect requests, full evaluator task | Checksummed journal, authenticated snapshot, deterministic verdict | Separate containers/networks; candidate has typed service access but no journal, token, grader, or full task |
-| Optional dsh plugin set | Protected tool calls, live agent control, and durable session events | Privacy-safe run records, workbench tools, and a disabled G2 retry guard | Source and focused tests ship; no mount/application authority; DSH owns execution and session lifecycle |
+| Optional dsh plugin set | Fixed staging paths, protected tool calls, live agent control, HMR, and durable session events | Privacy-safe run records, inactive candidate staging, workbench tools, and a disabled G2 retry guard | Source and focused tests ship; mounting requires separate authority; HMR candidate application is code-quarantined |
 | Future evaluation/observability adapter | Flushed sanitized trajectory plus independent side-effect receipts | Promptfoo input or OpenTelemetry/OpenInference projection | Optional; no authority; external transfer requires exact approval |
 
 ## Solution strategy
 
 - Reuse dsh's project instruction chain and `.agents/skills` discovery for the zero-shared-config default; keep user-global installation separately approval-bound.
+- Treat dsh's `hmr/reload` as a module-registration observation only. Do not derive activation readiness or imported-closure identity from it or from post-event disk bytes.
 - Keep structured feedback outside dsh's free-text `feedback/record` event because v0 needs validation, team aggregation, provenance, and secret rejection.
 - Store immutable per-record envelopes rather than a mutable database. Query scans the bounded local directory; a database index can be added only when measured scale requires it.
 - Treat improvements as staged state transitions. Evaluation evidence and application authority are separate records.
 - Treat optimizer providers as adapters over versioned JSON, not as owners of policy or persistence.
 - Keep task-class controller state separate from the candidate-scoped proposal lifecycle; controller output is evidence or recommendation, never authorization.
+- Keep runtime-generation identity separate from appraisal: JCS manifest bytes identify composition; evidence records assurance and per-session transition stability.
 - Pin capsule claims to source identity, digest, and refresh time.
 - Put deterministic schema, privacy, capability, sandbox-declaration, budget, provenance, and approval checks ahead of score-based evaluation.
 - Treat hard-stop scorecards as quarantine evidence, never as mutation instructions.
 - Attach future DSH enforcement to the narrow owning waterfall or capability operation instead of inserting a control-flow gateway around the agent loop.
 - Evaluate agent behavior from ordered Turn/Step/tool/approval events plus independently observed side effects; text output alone is insufficient.
 
-Current significant decisions: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md) preserves the local staged core while allowing only named operation-owned executors; [`decisions/0004-separate-run-to-run-supervisor.md`](decisions/0004-separate-run-to-run-supervisor.md) separates task-class controller observations from candidate proposal state.
+Current significant decisions: [`decisions/0003-purpose-specific-approved-executors.md`](decisions/0003-purpose-specific-approved-executors.md) preserves the local staged core while allowing only named operation-owned executors; [`decisions/0004-separate-run-to-run-supervisor.md`](decisions/0004-separate-run-to-run-supervisor.md) separates task-class controller observations from candidate proposal state; [`decisions/0005-separate-runtime-generation-identity-from-evidence.md`](decisions/0005-separate-runtime-generation-identity-from-evidence.md) separates canonical runtime identity from assurance and session-transition appraisal; [`decisions/0007-quarantine-hmr-candidate-admission.md`](decisions/0007-quarantine-hmr-candidate-admission.md) supersedes ADR 0006 and keeps HMR candidate application unavailable until runtime identity and readiness are authoritative.
 
 ## Level-one building blocks
 
@@ -80,6 +86,7 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 | Guardrail policy | Evaluate explicit tool/capability intent without execution | Immutable decision files | policy API and `policy check` CLI |
 | Evaluation harness | Run offline/adversarial/golden/policy fixtures and calculate scorecards | Immutable scorecard files | evaluation API and `eval run` CLI |
 | Controller observation | Validate one controller policy, reject mixed evidence, estimate configured proportions and uncertainty | Immutable controller-state files | internal control API and `control estimate` CLI |
+| HMR staging coordinator | Stage fixed plugin files and report source/staged digests; reject application | In-memory baseline metadata and inactive `.dal/hmr-candidate/` copies | `dal_candidate_prepare`, `dal_candidate_status`, quarantined `dal_candidate_apply` |
 
 ## Critical flows
 
@@ -108,6 +115,14 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 3. The model reads compact claims, then follows only the retrieval pointers needed for the task.
 4. Any source change requires explicit capsule review and digest update; there is no automatic refresh.
 
+### Quarantined plugin candidate staging
+
+1. A separately approved workbench profile may mount the coordinator outside its configured editable entry directory in a linked worktree.
+2. The coordinator copies the clean live files to inactive staging; the agent edits only those copies and can inspect the staged digest.
+3. `dal_candidate_apply` returns `CANDIDATE_ADMISSION_QUARANTINED` before approval verification or any live-file write.
+4. `dal-run-record` therefore receives no admitted candidate generation from this package, and every candidate-generation eligibility result remains false.
+5. Private evaluator Phase 3 observes actual DSH HMR/Fiber behavior before any replacement admission design is accepted.
+
 ### Guardrail and evaluation flow
 
 1. A producer creates a bounded action request containing semantic operation identity, input trust, target digest, sandbox declaration, and budget; raw arguments and source content are excluded.
@@ -127,9 +142,9 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 
 ### Run-to-run controller observation
 
-1. A human-authored controller policy fixes the logical task class, exact run task set, estimator identity, metric sources, targets, deadbands, and sample minima.
+1. A human-authored controller policy fixes the logical task class, exact run task set, runtime-generation digest profile/minimum assurance, estimator identity, metric sources, targets, deadbands, and sample minima.
 2. The estimator validates every run-store record, then selects the requested task set and batch.
-3. It normalizes and compares context and generation identities, excluding seeds from context while retaining them as observations; any mixed or unpinned evidence fails closed.
+3. It rejects unattested, unstable, or under-qualified sessions, loads each canonical repository-local evidence document and referenced manifest, recomputes the RFC 8785 digest, then normalizes and compares context and generation identities. Seeds remain observations; mixed, unpinned, unavailable, or mismatched evidence fails closed.
 4. It computes harness, business, or named-check proportions with explicit exclusions and 95% Wilson intervals.
 5. It derives estimate time from policy/run evidence, binds the state ID to the complete canonical snapshot, and publishes the snapshot exclusively. A ready or insufficient state changes no proposal, budget, harness, or runtime.
 6. An optional run-mode profile configuration supplies the batch and pinned observation context. Only a closed terminal record with no observed contradiction carries the batch ID; checkpoints and unpinned/default recording remain outside controller selection.
@@ -149,7 +164,9 @@ Current integration uses dsh behavior that already exists:
 
 - dsh loads project `AGENTS.md` through its agent-instructions plugin.
 - dsh discovers `<project>/.agents/skills/<name>/SKILL.md` without a shared profile edit.
+- dsh module HMR emits `hmr/reload` after replacement Fiber registration but before Fiber startup settles; a later startup failure is contained as `failed` and does not restore the old runtime.
 - dsh's workflow/session packages provide useful future event and cancellation vocabulary, but their observe-only events cannot guarantee a final structured write on hard process loss.
+- DAL's recorder can consume a launcher-owned `runtimeGeneration` service at `session/created`; current DSH does not yet produce the authoritative config/resolver/artifact evidence required for that service.
 
 ### Deployment model
 
@@ -159,7 +176,7 @@ Current integration uses dsh behavior that already exists:
 | --- | --- | --- | --- |
 | 1. Repo-scoped (current) | `dal init` scaffolds stores, skill, and instructions into each workspace | Loop present per initialized workspace | None |
 | 2. User-global install | `dal install user-global --approval <decision>` writes the skill under `~/.agents/skills/` and the fixed user-global `~/.dsh/AGENTS.md`; CLI on PATH | The workflow and skill are discovered in every workspace | An exact approved, unexpired `change_shared_harness_config` decision verified at the operation; differing existing content fails closed instead of overwriting |
-| 3. Cordis plugin (source shipped; deployment future) | Opt-in dsh plugin bundle with run/improvement modes and a disabled G2 row, loaded by profile composition | Mounted modes become part of that explicit dsh profile | Install/mount approval; G2 application additionally needs candidate approval plus the promotion gates |
+| 3. Cordis plugin (source shipped; deployment approval-gated) | Opt-in dsh plugin bundle with run, improvement, quarantined HMR-staging, and disabled G2 rows, loaded by profile composition | Mounted modes become part of that explicit dsh profile; the HMR row can stage fixed linked-worktree paths but cannot apply | Install/mount approval; G2 application separately needs exact candidate approval plus promotion gates |
 
 Verified discovery roots at the pinned checkout: `packages/skill/skill-filesystem/src/index.ts:241-260` (project `.dsh/skills` and `.agents/skills`, then user `~/.dsh/skills` and `~/.agents/skills`) and `packages/context/agent-instructions/src/config.ts:19` (fixed user-global `AGENTS.md` in the harness home). The instruction loader reads files only — no programmatic instruction registry exists in the inspected version, so a plugin cannot register "rules" into the instruction baseline; plugin-side `agent.inject()`/`agent.steer()` is advisory and separate. The global `AGENTS.md` file is therefore the automated seam, written only by the approval-verified install command.
 
@@ -171,13 +188,13 @@ The intended operation is a batch, human-gated loop, not continuous autonomous s
 
 - **Run phase.** Agents operate normally in a workspace that contains the team's code or workflow files, project `.agents/skills`, and optional project `.dsh/` plugins/tools. The shipped mode bundle keeps run recording enabled and improvement tools disabled, but neither mode runs unless separately mounted into a profile. Without that deployment, each task ends with the agent writing its structured feedback and, for failure evidence, a run record; the optional run-record plugin provides privacy-safe lifecycle capture after approved mounting.
 - **Team sharing via VCS.** The evidence stores `.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, and `.dal/control-states` are tracked in version control so everyone working in the workspace logs into the same history. Records are immutable per ID, so parallel writers only collide on duplicated IDs (a designed failure). Check, demo, and test artifacts under `.dal/` remain ignored.
-- **Reconcile phase.** One human — a team lead or maintainer — runs `dal feedback summary` and `dal cluster run` over the accumulated records, reviews the clusters, drives proposals through the staged lifecycle (including the falsifiable prediction), evaluates in the sandbox path, and applies by committing the skill/tool/harness change to VCS. v0 applies nothing itself; the human commit is the application, and the proposal's `applied -> measured` transition records it.
+- **Reconcile phase.** One human — a team lead or maintainer — runs `dal feedback summary` and `dal cluster run` over the accumulated records, reviews the clusters, drives proposals through the staged lifecycle (including the falsifiable prediction), and evaluates through deterministic or isolated evaluator paths. HMR staging is authoring state only; only a later human-controlled deployment can promote a skill/tool/harness change, and the proposal's `applied -> measured` transition records it.
 
 This split keeps agents cheap and uninterrupted during the day and concentrates evaluation, governance, and application authority in a single human-reviewed batch.
 
 **Two improvement lanes.** Evaluator, oracle, and simulator semantics are measurement infrastructure, not agent behavior. Changes to them are *benchmark maintenance*: they bump the benchmark version, rebaseline every generation, and never count as agent improvement. Changes to prompts, skills, tool descriptions, routing, and harness plugins are *agent evolution*: they must land on the frozen benchmark and be measured against the previous generation. The tau-style e2e experiment enforces this split: its G0/G1 comparison requires the same model and frozen benchmark-context digest while candidate and generation digests differ; same-generation provider comparisons require the candidate digest to remain fixed. The source-only G2 guard is a separate disabled harness-code candidate, not part of either G0/G1 measurement.
 
-A future Cordis integration remains an opt-in plugin set rather than one privileged gateway. It must use `inject`, `ctx.effect()` or `ctx.on()`, preserve model-visible/logged invariants, prove disposal, and remain independently removable. Installing or mounting it requires human approval.
+The Cordis integration remains an opt-in plugin set rather than one privileged gateway. Shipped rows use `inject`, services, and `ctx.on()`, preserve model-visible/logged invariants, and remain independently removable. Broader policy/output/budget integrations remain future work. Installing or mounting any row requires human approval.
 
 Cordis is not plain dependency injection; it is a dynamic capability graph. `Context` answers which capabilities exist now, `Service` names what a module provides, `Plugin` owns the resources and their lifecycle, and `Inject` decides whether dependent capabilities deactivate when a dependency disappears. The engineering object has changed from "agent has tools" to "the runtime exposes a changing capability graph; a session binds to a scoped projection of that graph; plugins own capability lifecycles; dependencies determine activation." DAL's guardrail and capture plugins must be designed as graph members, not as a control-flow gateway.
 
@@ -187,7 +204,7 @@ Profiles are user-global (`$DSH_HOME/profiles/<name>`; project-level `.dsh` prof
 
 ### Optional dsh guardrail plugin set
 
-This topology is partially source-implemented. The run recorder and deterministic workbench modes ship as package source, and the unknown-effect retry row ships as a disabled, unit-tested candidate. None has been installed, mounted, applied, or exercised in a dsh generation; the remaining policy, output-filtering, budget, approval, and export rows are design-only.
+This topology is partially source-implemented. The run recorder, deterministic workbench tools, and fixed-path HMR staging coordinator ship as package source; the unknown-effect retry row remains a disabled, unit-tested candidate. None has been installed or mounted into a shared profile, and no repository candidate has been applied. Source inspection and pinned local DSH probes show that current module HMR cannot support the former admission claim, so application fails closed. Trusted HMR observability/readiness plus the remaining policy, output-filtering, budget, approval, and export rows are design-only.
 
 | Responsibility | Verified DSH extension point | Required behavior and limit |
 | --- | --- | --- |
@@ -198,6 +215,7 @@ This topology is partially source-implemented. The run recorder and deterministi
 | Repeated-failure and aggregate budget state | `session/event` plus `agent/pre-step` or `tools/pre-execute` | Reconstruct bounded per-agent state from durable events. Observers cannot veto committed events; enforce the next operation through a decision waterfall or cooperative cancellation. Advisory steering/injection remains logged and cannot replace a hard stop. |
 | Unknown-effect retry guard (disabled G2 candidate) | `tools/pre-execute` plus `tools/result` | Claim same-key effect calls before dispatch, retain the per-agent lock on `unknown`, and release only after a terminal `get_effect_status` result. Source/tests are not deployment authority; mount and application each require exact approval. |
 | Permission escalation | `approval/request` waterfall | Supply one terminal, one-shot answerer and retain paired audit facts. A DSH grant does not satisfy DAL sensitive-action approval unless an adapter separately verifies exact action, scope, target digest, decision, and expiry. Headless absence fails closed. |
+| Runtime-generation binding | `session/created` plus a launcher-owned generation service and Loader/HMR transition counter | Bind before the first event, return no binding during mutation, and never decrement the transition counter on failure/rollback. Current DAL consumes and tests the structural contract; DSH production remains upstream work. |
 | Trajectory capture and export | Canonical session log, `session/event`, and explicit session flush | Pin DSH commit/profile/config, sequence range, event-format identity, and flush receipt. Treat Turn/Step/tool/approval events as recorded trajectory, not proof that external side effects are replayable. |
 
 The event-to-evaluation path first flushes the session, then projects the selected event range into a privacy-safe trajectory and joins independent workspace/process side-effect receipts. The local deterministic evaluator remains the first authority. A future pinned Promptfoo custom provider may consume that snapshot for CI assertions; optional PyRIT attacks and Langfuse/Phoenix projections remain separate adapters. No adapter can mutate policy, approvals, the canonical log, or scorecards.

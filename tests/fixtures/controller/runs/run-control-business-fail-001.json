@@ -31,6 +31,14 @@
     ],
     "model_patch_sha256": null
   },
+  "runtime_generation": {
+    "session_id_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "manifest_sha256": "9da7af8cc4672fd3fcf19c1d958b3b205cb8a6175c064c7fc5b2bf77e86a8d2c",
+    "digest_profile": "rfc8785-jcs-sha256-v1",
+    "evidence_uri": "repo://tests/fixtures/runtime-generation/evidence-business-fail.json",
+    "assurance": "verified",
+    "stable_for_session": true
+  },
   "artifacts": [],
   "metrics": { "duration_ms": 12000, "tool_calls": 4 },
   "evidence": [],

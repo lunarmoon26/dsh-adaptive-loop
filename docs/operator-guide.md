@@ -4,7 +4,7 @@ Status: Current for v0
 
 ## Safety boundary
 
-`dal` reads JSON and local files, writes validated evidence under explicit local stores, and runs deterministic validators by default. A policy `allowed` result is evidence only. Purpose-specific executors exist for confined verification, fixed user-global installation, the governed proposer, and the isolated benchmark e2e path; each independently rechecks its confinement or exact approval at the operation. There is no generic shell/network/shared-config executor, model SDK, optimizer runtime, plugin installer or mounter, or candidate applier.
+`dal` reads JSON and local files, writes validated evidence under explicit local stores, and runs deterministic validators by default. A policy `allowed` result is evidence only. Purpose-specific executors exist for confined verification, fixed user-global installation, the governed proposer, and the isolated benchmark e2e path; each independently rechecks its confinement or exact approval at the operation. There is no generic shell/network/shared-config executor, model SDK, optimizer runtime, plugin installer/mounter, or candidate applier. The HMR coordinator can stage fixed files in an isolated linked worktree but cannot publish them.
 
 ## Install and verify
 
@@ -62,7 +62,34 @@ pnpm run dal approval verify <decision.json> \
   --candidate-sha256 <digest>
 ```
 
-v0 still denies candidate application after a valid decision because no candidate applier exists. Plugin installation/mounting and candidate application remain unavailable. Shared configuration and external transfer occur only through the fixed user-global installer or purpose-specific proposer/e2e paths after their exact approvals verify.
+Plugin installation/mounting remains unavailable through dal. Shared configuration and external transfer occur only through the fixed user-global installer or purpose-specific proposer/e2e paths after their exact approvals verify. Candidate application is unavailable; the HMR staging helper below rejects it independently of any approval.
+
+## Quarantined HMR candidate staging
+
+Mounting `@lunarmoon26/dal-hmr-candidate` is itself an `install_or_mount_plugin` operation and needs a separate exact decision. Mounting is unnecessary for ordinary operation; if used to inspect staging behavior, configure it only in an isolated workbench profile that points at a linked git worktree, never a primary checkout or shared profile:
+
+```yaml
+- id: dal-hmr-candidate
+  name: '@lunarmoon26/dal-hmr-candidate'
+  config:
+    workspaceRoot: /absolute/path/to/linked-worktree
+    entry: plugins/example/src/index.ts
+    files:
+      - plugins/example/src/index.ts
+      - plugins/example/src/config.ts
+    dshVersion: 0.1.1-rc.2
+    profile: isolated-workbench
+```
+
+The profile values fix every staging path before the agent runs. Keep the coordinator package outside `files`; every listed file must already exist and may not traverse a symlink. Legacy approval and timeout fields remain configuration-compatible but are ignored while application is quarantined.
+
+1. Call `dal_candidate_prepare` with one candidate ID. It copies the live files to `.dal/hmr-candidate/`; it does not touch the loaded plugin.
+2. Edit only the staged copies, then call `dal_candidate_status` to inspect the digest.
+3. Do not use this package for runtime evaluation. `dal_candidate_apply` returns `CANDIDATE_ADMISSION_QUARANTINED` before approval verification or any live-file write.
+4. No final run record can report `context.candidate_generation.evaluation_eligible: true` from this package.
+5. Evaluate through the deterministic or private isolated evaluator paths. Promotion remains a separate human review and deployment action.
+
+The coordinator stages plugin source and imported configuration modules but makes no runtime claim. Profile YAML, skills, and `AGENTS.md` remain proposal surfaces with their existing human application path.
 
 ## Offline evaluation and scorecards
 
@@ -80,7 +107,7 @@ Use `--store` only for isolated test evidence. Policy quarantine lookup reads `d
 
 - A hard stop caused by a post-change regression selects `rollback`; other hard stops select `quarantine`.
 - A policy check whose target SHA-256 matches a hard-stop scorecard in the configured evaluation store is denied. An unreadable or invalid quarantine evidence store fails closed.
-- v0 never changes the target. Rollback means a human restores the last reviewed version through the owning repository/dsh procedure and records evidence.
+- The scorecard path never changes its target. Every rollback remains a human repository/dsh procedure with recorded evidence until a durable active/previous generation seam exists.
 - A hard-stopped digest remains permanently unusable in v0. Release requires a corrected artifact with a new digest, a clean uncontaminated scorecard, human review, and—where relevant—a separate sensitive-action approval.
 - Never delete or rewrite the triggering scorecard or guardrail decision to manufacture a release.
 
@@ -107,7 +134,7 @@ pnpm run dal run ingest tests/fixtures/runs/run-fixture-test-failure-1.json --st
 pnpm run dal cluster run --store .dal/runs --output .dal/clusters --format json
 ```
 
-Run records carry separate harness and business outcomes, structured harness-failure facts (`category`, `code`, `fingerprint_extra`), deterministic business checks, the pinned evaluation context (task set, environment snapshot, tool versions, model, prompt/harness digests, grader version, seeds, context policy digest, inference parameters), artifact digests, usage metrics, evidence references, and privacy metadata. `dal cluster run` groups harness failures by canonical failure fingerprint and completed business failures by failed check IDs into separate immutable categories; completed passing or unknown business outcomes are skipped. It runs no model or classifier. Cluster identity binds the fingerprint to the run batch (`batch_id`), so re-clustering after a new batch does not collide; `--batch <id>` clusters a single batch:
+Run records carry separate harness and business outcomes, structured harness-failure facts (`category`, `code`, `fingerprint_extra`), deterministic business checks, the pinned evaluation context (task set, environment snapshot, tool versions, model, prompt/harness digests, grader version, seeds, context policy digest, inference parameters), optional runtime-generation evidence linkage, artifact digests, usage metrics, evidence references, and privacy metadata. `dal cluster run` groups harness failures by canonical failure fingerprint and completed business failures by failed check IDs into separate immutable categories; completed passing or unknown business outcomes are skipped. It runs no model or classifier. Cluster identity binds the fingerprint to the run batch (`batch_id`), so re-clustering after a new batch does not collide; `--batch <id>` clusters a single batch:
 
 ```sh
 pnpm run dal cluster run --store .dal/runs --output .dal/clusters --batch e2e-20260831 --format json
@@ -139,9 +166,11 @@ config:
       - { surface: harness_code, uri: repo://plugins/example/src/index.ts, sha256: <64-lowercase-hex> }
 ```
 
-Replace every digest placeholder with the reviewed artifact digest. Configured prompt, model/provider, normalized inference names (`reasoning_effort`, `temperature`, `max_tokens`), and every used canonical tool identity must match all observed events; returning to the configured value after a mismatch does not restore eligibility. Per-session seeds come from request configuration. Invalid or privacy-unsafe configuration fails plugin startup; privacy-unsafe completed metadata is rejected before persistence. A runtime mismatch, incomplete session, unsupported terminal reason, or flush checkpoint remains unbatched and unpinned rather than claiming the configured generation. Missing or unsupported reasons are recorded as aborted. Only a final record after a recognized `turn/end` joins the batch. The recorder still supplies no business verdict or deterministic checks.
+Replace every digest placeholder with the reviewed artifact digest. Configured prompt, model/provider, normalized inference names (`reasoning_effort`, `temperature`, `max_tokens`), and every used canonical tool identity must match all observed events; returning to the configured value after a mismatch does not restore eligibility. Per-session seeds come from request configuration. Invalid or privacy-unsafe configuration fails plugin startup; privacy-unsafe completed metadata is rejected before persistence. A runtime mismatch, incomplete session, unsupported terminal reason, or flush checkpoint remains unbatched rather than claiming the configured generation; independently bound launcher pins are retained. Missing or unsupported reasons are recorded as aborted. Only a final record after a recognized `turn/end` joins the batch. The recorder still supplies no business verdict or deterministic checks.
 
 After the complete batch is present in the run store, estimate its observation state with a reviewed controller policy whose `task_set` matches the recorder configuration:
+
+New estimates require policy version 1.1.0 and stable, policy-qualified launcher-owned runtime evidence. Configuration alone is not attestation. Bound launcher harness/model-patch/harness-pin identities must match the configured pins; conflicts or transitions leave the record unbatched. Current DSH does not yet supply the authoritative producer, and HMR admission remains quarantined.
 
 ```sh
 pnpm run dal control estimate \
@@ -151,9 +180,9 @@ pnpm run dal control estimate \
   --store .dal/demo-control
 ```
 
-The policy fixes one logical task class, exact run `task_set`, estimator version, and explicit harness/business/check denominators. The command rejects mixed contexts, mixed generations, missing harness digests, duplicate identities, and ambiguous metric sources. It records successes, failures, excluded runs, sample count, mean, and a two-sided 95% Wilson interval. `insufficient_evidence` is a valid non-authorizing state; it is not permission to invoke a proposer or spend more budget.
+The policy fixes one logical task class, exact run `task_set`, runtime-generation digest profile and minimum assurance, estimator version, and explicit harness/business/check denominators. The command requires every selected run to retain its legacy harness digest and carry stable, policy-qualified runtime evidence at a canonical `repo://` URI. It validates that evidence, loads its referenced manifest, recomputes the RFC 8785 digest, and rejects mixed contexts/generations, missing or unstable bindings, assurance downgrades, unavailable/mismatched evidence, duplicate identities, and ambiguous metric sources. It records successes, failures, excluded runs, sample count, mean, and a two-sided 95% Wilson interval. `insufficient_evidence` is a valid non-authorizing state; it is not permission to invoke a proposer or spend more budget.
 
-The estimate time derives from policy/run evidence and the state ID binds the complete canonical snapshot, so repeating the same command is idempotent. The command performs no model, network, branch-selection, sandbox, proposal-transition, candidate-application, promotion, or rollback operation. See [`control-governed-evolution.md`](control-governed-evolution.md) for the exact claim boundary.
+The estimate time derives from policy/run evidence and the state ID binds the complete canonical snapshot, so repeating the same command is idempotent. The command performs no model, network, branch-selection, sandbox, proposal-transition, candidate-application, promotion, or rollback operation. Current DSH does not produce verified manifests automatically; unattested recorder output is intentionally ineligible. See [`runtime-generation-attestation.md`](runtime-generation-attestation.md) and [`control-governed-evolution.md`](control-governed-evolution.md) for the exact claim boundary.
 
 ## End-of-day reconcile
 
@@ -168,7 +197,7 @@ pnpm run dal cluster run --store .dal/runs --output .dal/clusters --format json
 1. Review the summary and cluster records. Cluster digests are the proposer input; raw traces never enter a model context.
 2. Drive one proposal per bounded change through the staged lifecycle, naming the editable surface and a falsifiable prediction from `proposed` onward. Human stages require human actors.
 3. Evaluate through the sandbox path; a hard stop quarantines the candidate.
-4. Apply by committing the skill/tool/harness change to VCS yourself — v0 never applies changes — then record `applied -> measured` with measurement evidence.
+4. Promote only after an independent evaluation and human-controlled deployment; HMR staging is authoring state, not admission or promotion. Then record `applied -> measured` with measurement evidence.
 5. Commit the resulting `.dal/` evidence alongside the change so the team's next reconcile sees both.
 
 Never delete evidence to unblock a proposal: corrections are new records with `supersedes`, and quarantined digests require a new artifact digest. A reset rebaselines the whole workspace; it never unblocks a specific proposal.

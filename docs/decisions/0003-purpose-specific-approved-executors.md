@@ -1,6 +1,6 @@
 # 0003: Permit only purpose-specific approved executors
 
-Status: Accepted
+Status: Accepted; candidate-applier boundary revised by [`0007-quarantine-hmr-candidate-admission.md`](0007-quarantine-hmr-candidate-admission.md), which supersedes ADR 0006
 Date: 2026-08-31
 Related: [`../spec.md`](../spec.md), [`../architecture.md`](../architecture.md), [`../governance.md`](../governance.md)
 

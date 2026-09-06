@@ -1,0 +1,232 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-runtime-generation-attestation-completed-20260902",
+  "ingested_at": "2026-09-02T23:46:30.372Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-runtime-generation-attestation-completed-20260902.json",
+    "sha256": "f5668ab678dcaf642c44079077e1a693cc7d05ef3108ca55e329d98a082f74f4"
+  },
+  "feedback_sha256": "93dc5fb4eaa2b21d15bf68855790eb41b9d43515578aba6bdeb724872b05df92",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-02T23:46:30.372Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-runtime-generation-attestation-completed-20260902",
+    "change_id": "chg-runtime-generation-attestation-20260902",
+    "created_at": "2026-09-02T23:45:30.000Z",
+    "supersedes": "fb-runtime-generation-attestation-20260902",
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": "0.1.1-rc.2",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "8a58e50f98783c05cc63bf627153ae38ca27214c",
+        "branch": "feat/runtime-generation-attestation",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/4"
+    },
+    "goal": "Implement deterministic runtime-generation attestation, fail-closed controller enrollment, focused evidence, and an approval-gated upstream tracking issue.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-runtime-contracts",
+        "statement": "Closed manifest and evidence contracts provide deterministic I-JSON and RFC 8785 identity with separate assurance appraisal.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused-tests",
+          "ev-contract"
+        ]
+      },
+      {
+        "id": "ac-recorder-binding",
+        "statement": "The recorder binds only at session creation and keeps checkpoints, malformed sources, replacements, and transition-spanning sessions ineligible.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused-tests",
+          "ev-contract"
+        ]
+      },
+      {
+        "id": "ac-controller-enrollment",
+        "statement": "Controller enrollment verifies checked repository evidence and manifests, rejects duplicate sessions and invalid assurance, and preserves historical 1.0 snapshots without implicit attestation.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused-tests",
+          "ev-full-gate"
+        ]
+      },
+      {
+        "id": "ac-repository-gate",
+        "statement": "The focused proof and repository-wide verification gate pass.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused-tests",
+          "ev-full-gate"
+        ]
+      },
+      {
+        "id": "ac-upstream-issue",
+        "statement": "The exact upstream tracking issue is published only after verification of a matching unexpired send_data_externally approval.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval",
+          "ev-issue"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Runtime-generation contracts, recorder binding, controller verification, compatibility handling, focused evidence, full verification, and approval-gated upstream issue publication completed.",
+      "exception": null
+    },
+    "what_worked": [
+      "Runtime identity and appraisal remain separate and fail closed.",
+      "Checked descriptors remove the evidence check-and-reopen race and reject unsupported safe-open platforms.",
+      "Historical controller 1.0 snapshots remain valid while new estimates require an explicit 1.1 runtime policy.",
+      "The exact outbound issue payload was digest-bound and approval-verified immediately before publication."
+    ],
+    "what_failed": [
+      "Pinned DSH still lacks the authoritative producer and awaited teardown seam; the published issue tracks this external boundary."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Run focused runtime-generation, recorder, controller, and provenance regressions.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run typecheck, build, complete tests, capsule validation, policy verification, and deterministic evaluations.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-full-gate"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "dal-approval-verify",
+        "purpose": "Verify the exact external-transfer decision at the GitHub publication boundary.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "github-issue-create",
+        "purpose": "Publish the unchanged approved public technical tracking issue.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-issue"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-dsh-producer-gap",
+        "category": "harness",
+        "summary": "Current DSH lacks the authoritative producer and awaited final teardown seam required for end-to-end attestation availability.",
+        "impact": "high",
+        "recoverable": true,
+        "suggested_action": "Resolve the acceptance checklist in the published upstream tracking issue before claiming DSH runtime integration proof.",
+        "evidence": [
+          "ev-contract",
+          "ev-issue"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-focused-tests",
+        "kind": "test",
+        "uri": "command://vitest-runtime-generation-focused",
+        "summary": "The focused suite passed 27 tests; five opt-in integration tests were skipped.",
+        "sha256": null,
+        "observed_at": "2026-09-02T23:45:30.000Z"
+      },
+      {
+        "id": "ev-full-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check-runtime-generation",
+        "summary": "The full gate passed typecheck, build, 206 tests with six opt-in skips, capsule validation, policy checking, and both deterministic evaluations.",
+        "sha256": null,
+        "observed_at": "2026-09-02T23:45:30.000Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/runtime-generation-attestation.md",
+        "summary": "The focused contract records the implemented boundary, compatibility rule, safety checks, and pinned upstream limitations.",
+        "sha256": "5b3f9137ba109c49c2eb6c163ae01aa8959dae82df717e93f2a46295127ea196",
+        "observed_at": "2026-09-02T23:45:30.000Z"
+      },
+      {
+        "id": "ev-approval",
+        "kind": "file",
+        "uri": "repo://.dal/outbox/dec-runtime-generation-upstream-issue-20260902.json",
+        "summary": "The exact approved external-transfer decision passed local verification immediately before publication.",
+        "sha256": null,
+        "observed_at": "2026-09-02T23:45:30.000Z"
+      },
+      {
+        "id": "ev-issue",
+        "kind": "url",
+        "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/4",
+        "summary": "The approved public issue tracks the authoritative DSH producer and awaited teardown requirements.",
+        "sha256": null,
+        "observed_at": "2026-09-02T23:45:30.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "workspace-user",
+      "reviewed_at": "2026-09-02T23:44:32.000Z",
+      "notes": [
+        "The workspace user approved the exact digest-bound GitHub issue scope.",
+        "The approval authorizes only this public issue publication."
+      ],
+      "approval_refs": [
+        "dec-runtime-generation-upstream-issue-20260902"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "runtime-generation",
+        "approval-verified"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

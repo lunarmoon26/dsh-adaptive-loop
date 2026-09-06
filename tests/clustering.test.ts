@@ -99,6 +99,18 @@ describe("deterministic self-improvement loop", () => {
     await expect(validateRunRecord(businessFailureWithoutFailedCheck)).rejects.toMatchObject({ code: "SCHEMA_VALIDATION_FAILED" });
   });
 
+  it("rejects an evaluation-eligible run that spans HMR generations", async () => {
+    const run = await readFixture<RunRecord>("runs", "run-fixture-succeeded.json");
+    run.context.candidate_generation!.end_hmr_sequence = 8;
+    await expect(validateRunRecord(run)).rejects.toMatchObject({ code: "RUN_RECORD_INVALID" });
+  });
+
+  it("rejects evaluation eligibility on a checkpoint record", async () => {
+    const run = await readFixture<RunRecord>("runs", "run-fixture-succeeded.json");
+    run.record_stage = "checkpoint";
+    await expect(validateRunRecord(run)).rejects.toMatchObject({ code: "RUN_RECORD_INVALID" });
+  });
+
   it("clusters a completed business failure separately from a harness failure", async () => {
     const store = await tempStore("dal-runs-");
     const output = await tempStore("dal-clusters-");

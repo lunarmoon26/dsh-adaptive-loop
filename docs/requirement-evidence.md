@@ -1,5 +1,20 @@
 # Requirement Evidence
 
+## Integrated Recorder and Staging Gate (2026-09-06)
+
+Change: `chg-dal-recorder-staging-integration-20260906`.
+Acceptance: preserve the approved recorder/controller and staging increments together with main's runtime attestation and HMR quarantine; synchronize reviewed source pins; pass focused regressions and the full repository gate; exclude raw transcripts, generated artifacts, and unrelated evaluator feedback from publication.
+
+The normal merge integrates main through `b0e664a` without weakening controller qualification. The direct bridge test now supplies synthetic launcher-owned, session-bound evidence and a 1.1.0 policy. Missing evidence fails estimation; conflicting or transition-spanning bindings remain unbatched, with launcher pins preserved. Production recording still cannot trust the quarantined in-process HMR candidate state.
+
+- Focused gate: 7 files passed, 79 tests passed, 1 opt-in test skipped.
+- Full `pnpm run check`: typecheck and build passed; 34 files passed, 240 tests passed, 7 opt-in tests skipped; all 3 capsules validated; allowed-read policy passed; core and workflow benchmark scorecards passed without hard stops.
+- Merge verification caught the legacy bridge fixture and the capsule test's pre-refresh fixed clock. The fixture now exercises attestation instead of bypassing it, and the fixed clock matches the reviewed refresh date; drift and expiry rejection remain tested.
+- Capsules `dal-v0-contract` and `dsh-adapter-boundary` version 1.7.0 retain all merged semantic claims, update the reviewed spec/architecture/roadmap digests, and retain existing freshness deadlines and unaffected source identities.
+- No model request, host profile change, installation, live HMR probe, image rebuild, or candidate activation was performed. The private evaluator repository was not changed.
+
+Integration feedback: `.dal/store/fb-dal-recorder-staging-integration-20260906.json`. Earlier receipts below remain immutable historical evidence, not proof for this merged tree.
+
 ## DAL-021 staging integrity increment (2026-09-05)
 
 ### Closure after approved capsule refresh
@@ -55,6 +70,12 @@ Status: Run-mode controller observation path, complete repository gate, and task
 Changes: `chg-control-supervisor-foundation-20260902`, `chg-run-controller-observation-path-20260902`
 Evidence date: 2026-09-02
 
+## Attestation and HMR Evidence
+
+Status: HMR admission claim corrected and candidate application quarantined
+Changes: `chg-control-supervisor-foundation-20260902`, `chg-runtime-generation-attestation-20260902`, `chg-hmr-adaptive-plugin-loop-20260904`, `chg-hmr-runtime-generation-stack-20260904`, `chg-hmr-readiness-admission-20260905`
+Evidence date: 2026-09-05
+
 This matrix maps canonical requirements to executable or inspectable evidence. ‚ÄúPass‚Äù means the named evidence was observed in the current workspace; it does not imply model-backed benchmark quality or candidate promotion.
 
 ## Requirements
@@ -72,11 +93,13 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | DAL-009 guardrails and evaluation | Guardrail/evaluation schemas, `src/guardrail.ts`, `src/evaluation.ts` | `tests/guardrail.test.ts`, `tests/evaluation.test.ts`, `v0-suite.json` | Pass |
 | DAL-010 self-improvement loop core | Run/cluster schemas, `src/runs.ts`, `src/clustering.ts`, proposal rules | Clustering, workflow, and run fixtures | Pass |
 | DAL-018 evidence reset and rebaseline | Reset schema, `src/reset.ts`, `.dal/resets/` receipts | `tests/reset.test.ts` | Pass |
-| DAL-019 run and improvement plugin modes | `plugins/dal-modes/`, `plugins/dal-run-record/`, `plugins/dal-improve-tools/` | `tests/plugin-modes.test.ts`, including terminal enrollment and privacy assertions | Pass |
+| DAL-019 run and improvement plugin modes | `plugins/dal-modes/`, `plugins/dal-run-record/`, `plugins/dal-improve-tools/`, `plugins/dal-hmr-candidate/` | Plugin-mode and HMR-candidate tests, including terminal enrollment and privacy assertions | Pass |
 | DAL-020 container-hosted harness execution | `src/docker.ts`, `deploy/docker/`, Docker policy seams | `tests/docker.test.ts`; historical approved image build and live probes | Static pass; current image not refreshed |
 | DAL-021 SkillOpt-shaped optimizer adapter | `src/optimizer-adapter.ts`, optimizer schemas | `tests/optimizer-adapter.test.ts` | Pass |
 | DAL-022 benchmark measurement integrity | Workflow task/receipt/run schemas; grader/service/e2e driver; disabled G2 source | Grader, service, topology, receipt, summary, branch, clustering, and G2 tests | Pass |
 | DAL-023 run-to-run controller observation | Controller policy/state schemas; `src/control/`; run-mode terminal bridge; CLI and evidence-store integration | `tests/controller.test.ts`, `tests/plugin-modes.test.ts`, init/reset/CLI tests | Pass |
+| DAL-024 runtime generation attestation | Runtime manifest/evidence schemas; `src/runtime-generation.ts`; recorder binding; controller evidence gate | `tests/runtime-generation.test.ts`, controller/plugin/provenance tests | Pass; combined full gate passed 219 tests with 7 opt-in skips |
+| DAL-025 quarantined HMR candidate staging | `plugins/dal-hmr-candidate/`, generation-aware `dal-run-record`, run-record schema/semantics | `tests/hmr-candidate.test.ts`, opt-in DSH readiness probe, `tests/plugin-modes.test.ts` | Pass; application/live publication removed, generation state runtime-private and always non-admitted, drift-safe rejection covered |
 
 ## DAL-022 acceptance closure
 
@@ -114,16 +137,42 @@ This matrix maps canonical requirements to executable or inspectable evidence. ‚
 | Summed token usage is represented by the run-record schema and persisted by the recorder | Run schema and recorder projection assertion | Pass |
 | Controller-state evidence remains VCS-visible in initialized and repository workspaces | Init scaffold test and repository `.gitignore` consistency test | Pass |
 
+## DAL-024 acceptance closure
+
+| Criterion | Evidence | Result |
+| --- | --- | --- |
+| Closed runtime manifest has deterministic RFC 8785 JCS identity and complete artifact references | Manifest schema/validator, digest fixture, malformed-I-JSON and closure tests | Pass |
+| Appraisal is separate and distinguishes declared, observed, and verified assurance | Evidence schema/validator and required-claim tests | Pass |
+| Session binding occurs only at creation and transition attempts remain visible after rollback | Recorder source contract, explicit checkpoint stage, monotonic sequence check, checkpoint/transition tests | Pass (synthetic service); production final-write availability is not proved because DSH disposal is not awaited |
+| Existing harness identity remains independent | Run schema/type and recorder/controller assertions | Pass |
+| Existing controller 1.0 policy/state snapshots remain valid without implicit attestation | Version-conditional schemas and legacy migration tests | Pass |
+| Controller loads evidence and manifest through checked descriptors and fails closed on missing, unstable, downgraded, mixed, duplicate-session, unavailable, replayed, symlink-traversing, or forged identity | Controller estimator/store and focused negative tests | Pass |
+| DSH emits authoritative effective config, resolver receipts, artifacts, and transition evidence | Upstream launcher/Loader integration | Not implemented; no runtime-proof claim |
+
+## DAL-025 acceptance closure
+
+| Criterion | Evidence | Result |
+| --- | --- | --- |
+| Candidate paths are fixed at startup inside a real linked worktree and may not traverse links or reserved metadata | Coordinator path/worktree validation tests | Pass |
+| Inactive staging stays separate from loaded source | Prepare/status assertions and source-no-write approval test | Pass |
+| Candidate application cannot proceed, including with a staged digest or approval | `CANDIDATE_ADMISSION_QUARANTINED` unit test; unchanged live-file assertion | Pass |
+| `hmr/reload` proves replacement Fiber readiness | Exact DSH source trace plus opt-in failed-start probe | Fail upstream; admission quarantined |
+| Event-time disk digest identifies the imported multi-file closure | Exact DSH source trace plus opt-in hybrid-closure probe | Fail upstream; admission quarantined |
+| Evaluation uses an authenticated ready candidate generation | Authoritative DSH producer and evaluator Phase 3 probe | Not implemented; no candidate-eligibility claim |
+| No DSH core patch, live candidate write, or automated promotion occurs | Code-owned quarantine; disabled bundle row; operator contract | Pass |
+
 ## Observed commands
 
 ```text
 CI=true pnpm run typecheck
 CI=true pnpm exec vitest run tests/plugin-modes.test.ts tests/init.test.ts
 CI=true pnpm exec vitest run tests/controller.test.ts tests/init.test.ts tests/reset.test.ts tests/cli.test.ts
+CI=true pnpm exec vitest run tests/runtime-generation.test.ts tests/controller.test.ts tests/plugin-modes.test.ts tests/e2e-provenance.test.ts
 CI=true pnpm exec vitest run tests/e2e-summary.test.ts tests/e2e-topology.test.ts tests/execution-receipt.test.ts tests/branch.test.ts
 pnpm dal capsule check capsules/dal-v0-contract.json
 pnpm dal capsule check capsules/dsh-adapter-boundary.json
 CI=true pnpm run check
+DAL_DSH_HMR_CHECKOUT=<pinned-local-checkout> pnpm exec vitest run tests/hmr-candidate.test.ts tests/plugin-modes.test.ts tests/clustering.test.ts
 pnpm dal approval verify .dal/outbox/dec-dal-workflow-tools-image-20260901.json --action install_or_mount_plugin --scope <exact-isolated-image-scope>
 docker build -f deploy/docker/Dockerfile -t dsh-adaptive-loop/dsh:0.1.1-rc.2 -t dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2 .
 CI=true DAL_E2E_TOPOLOGY_PROBE=1 pnpm exec vitest run tests/e2e-topology.test.ts
@@ -131,7 +180,25 @@ pnpm dal verify run --runner docker --action benchmarks/tau-style-workflow/dal/f
 pnpm dal verify run --runner docker --action benchmarks/tau-style-workflow/dal/fixtures/verifier-grader.json --command <out-of-workspace-denial-command>
 ```
 
-Observed current source-gate result: typecheck and build passed; 32 test files passed with 197 tests and 6 opt-in skips; all capsules validated; policy, core evaluation, and benchmark scorecards passed with no hard stop. The focused run-mode bridge proof passed 18 tests across recorder and initialization coverage.
+Historical pre-attestation recorder source-gate result: typecheck and build passed; 32 test files passed with 197 tests and 6 opt-in skips; all capsules validated; policy, core evaluation, and benchmark scorecards passed with no hard stop. The focused run-mode bridge proof passed 18 tests across recorder and initialization coverage. New controller estimates additionally require DAL-024 attestation.
+
+Historical HMR source-gate result: typecheck and build passed; 33 test files passed with 199 tests and 7 opt-in skips; all capsules validated; policy, core evaluation, and benchmark scorecards passed with no hard stop. That result did not await replacement Fibers or test multi-file imported-closure identity and is not current admission evidence.
+
+Historical HMR-loop focused result: 23 tests passed with 5 unrelated skips across the coordinator, run recorder, bundle, schema, and clustering suites; typecheck passed. The opt-in real composition case loaded `@deepseek-ai/cordis-plugin-hmr` 1.0.17, Loader 1.0.3, and Timer 1.1.4 from local DSH identity `b6589bc9f3896ce742c1d53c03c32e04b542e735`, observed one reload and a later baseline reload. It did not prove readiness at the event or the runtime's imported closure. The executed built-artifact SHA-256 digests were HMR `822672a70baa81b95bd437275bfdcf6235702f960e03f8c4418588255bc2a880`, Loader `68722da3bd09e32e23165a83de3728b3cb9fef118153912028af980dfaabc7d2`, and Timer `aab5832ebcefccd223b16ff3e8f09ca611841f53352c8439ea3acf7cc11ad002`; no profile or DSH source was changed.
+
+Required HMR-loop task feedback validated and ingested at `.dal/store/fb-hmr-adaptive-plugin-loop-20260904.json`; feedback digest `875e22dbbcc4778a227c726d95f49f3aeb8c6a20a5f745b7add65498b0182e3c`.
+
+Historical combined-stack post-review result: the runtime-generation/HMR integration suites passed 55 tests with 1 opt-in skip; the real pinned Loader/HMR composition run passed all 38 selected tests; and the complete repository gate passed typecheck, build, 34 test files with 219 tests and 7 opt-in skips, all capsules, policy, core evaluation, and benchmark evaluation with no hard stop. Those checks exercised the superseded admission design. They did not prove replacement-Fiber readiness or imported multi-file closure identity and are not current admission evidence.
+
+Required combined-stack task feedback validated and ingested at `.dal/store/fb-hmr-runtime-generation-stack-20260904.json`; feedback digest `74fbd036c9899a76ddd914279666d193dd9b72dc21827ead525b2beabfa2feb3`.
+
+The final security-review record superseded that preliminary combined-stack record at `.dal/store/fb-hmr-runtime-generation-stack-review-20260904.json`; feedback digest `77d13779e852bceb02180ba5dd770aa3c0b6f4319305f31dcbdf74cce6c5590b`.
+
+After PR #5's content-equivalent squash merge, the three HMR-only commits were rebased onto merged `main`. The pre- and post-rebase feature trees matched, two-dot and three-dot comparisons agreed on the same 37-file HMR surface, and the complete repository gate again passed 219 tests with 7 opt-in skips. The merged-base feedback superseded the pre-main-rebase record at `.dal/store/fb-hmr-main-rebase-20260904.json`; feedback digest `3f80228f79419ed70bc06844661036e4fafdab58f3e360ed3d86fe4f2e97f80e`.
+
+Current quarantine correction result: three focused suites passed 27 tests with 6 opt-in skips; the opt-in real-DSH coordinator suite passed all 6 tests, including failed-start and hybrid-closure probes; and the complete repository gate passed typecheck, build, 34 test files with 214 tests and 7 opt-in skips, all capsules, policy, core evaluation, and benchmark evaluation with no hard stop. Final focused review reported no findings. The correction removes live publication and approval execution, makes generation state runtime-private and non-overridable, and prevents the production recorder from trusting mutable in-process candidate state.
+
+Required correction feedback validated and ingested at `.dal/store/fb-hmr-readiness-admission-20260905.json`; feedback digest `630b637e5f6f01a68b108493e2019a75e99f6f42a3ed675b124a76f3ee8ea49e`.
 
 The pre-reset feedback records named in earlier revisions were intentionally removed by the approved rebaseline; their provenance remains in git history and `.dal/resets/reset-23690aca-134b-415f-8e4a-562ed65bdd6c.json`. Current feedback is stored at `.dal/store/fb-run-controller-observation-path-20260902.json` with digest `9125c3ed2fa15dc339e08ecb839ba409905fb1653936c1a4a4003c3926180c84`.
 
@@ -154,7 +221,8 @@ Resolved parent manifest: `node:24-slim@sha256:ba849c60be29959425b8734d57b8b4b7d
 ## Explicit non-evidence
 
 - No model-backed benchmark batch or provider request was run.
-- No G2 plugin was installed, mounted, or applied, and no optimization candidate was applied.
 - The benchmark image was not rebuilt for the current source tree.
+- No G2 plugin or DAL workbench plugin was installed or mounted into a DSH profile, and no repository/production optimization candidate was applied. Candidate writes occurred only in disposable test worktrees.
+- Generic run ingestion validates `candidate_generation` consistency but does not independently authenticate an HMR admission receipt or grant application/promotion authority.
 - Candidate provider egress remains not destination-allowlisted; topology proof is not credential-egress confinement.
 - The latest-image probes do not establish model compliance or a general OS-sandbox guarantee beyond the exercised Linux container.

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/runtime-generation-manifest.v1.schema.json",
+  "title": "Recursive Development Loop runtime generation manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "digest_profile",
+    "launcher",
+    "configuration",
+    "loader_tree",
+    "resolver_receipts",
+    "artifacts"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://recursive-dev-loop.dev/schemas/runtime-generation-manifest.v1.schema.json"
+    },
+    "schema_version": { "const": "1.0.0" },
+    "digest_profile": { "const": "rfc8785-jcs-sha256-v1" },
+    "launcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "uri", "sha256"],
+      "properties": {
+        "name": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "version": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+        },
+        "uri": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+        },
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_profile", "sha256"],
+      "properties": {
+        "projection_profile": {
+          "const": "effective-config-jcs-sha256-secret-values-omitted-v1"
+        },
+        "sha256": {
+          "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "loader_tree": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "ordinal",
+          "path",
+          "id",
+          "specifier",
+          "resolved_uri",
+          "artifact_sha256",
+          "config_sha256",
+          "enabled"
+        ],
+        "properties": {
+          "ordinal": { "type": "integer", "minimum": 0, "maximum": 1023 },
+          "path": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "id": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "specifier": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "resolved_uri": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          },
+          "artifact_sha256": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+          },
+          "config_sha256": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+          },
+          "enabled": { "type": "boolean" }
+        }
+      }
+    },
+    "resolver_receipts": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ordinal", "specifier", "parent_uri", "resolved_uri", "artifact_sha256"],
+        "properties": {
+          "ordinal": { "type": "integer", "minimum": 0, "maximum": 4095 },
+          "specifier": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/short_text"
+          },
+          "parent_uri": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          },
+          "resolved_uri": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          },
+          "artifact_sha256": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "uri", "sha256"],
+        "properties": {
+          "kind": {
+            "enum": ["launcher", "plugin", "module", "patch", "prompt", "skill", "policy", "other"]
+          },
+          "uri": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
+          },
+          "sha256": {
+            "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
+          }
+        }
+      }
+    }
+  }
+}

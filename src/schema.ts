@@ -42,6 +42,8 @@ export const SCHEMA_IDS = {
   proposalDraft: "https://recursive-dev-loop.dev/schemas/proposal-draft.v1.schema.json",
   resetReceipt: "https://recursive-dev-loop.dev/schemas/reset-receipt.v1.schema.json",
   runRecord: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
+  runtimeGenerationEvidence: "https://recursive-dev-loop.dev/schemas/runtime-generation-evidence.v1.schema.json",
+  runtimeGenerationManifest: "https://recursive-dev-loop.dev/schemas/runtime-generation-manifest.v1.schema.json",
   sealCommitment: "https://recursive-dev-loop.dev/schemas/seal-commitment.v1.schema.json",
   sealReveal: "https://recursive-dev-loop.dev/schemas/seal-reveal.v1.schema.json",
   storedFeedback: "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",

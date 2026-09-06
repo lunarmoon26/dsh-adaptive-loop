@@ -7,6 +7,7 @@ export * from "./guardrail.js";
 export * from "./improvement.js";
 export * from "./optimizer.js";
 export * from "./privacy.js";
+export * from "./runtime-generation.js";
 export * from "./schema.js";
 export * from "./store.js";
 export * from "./types.js";

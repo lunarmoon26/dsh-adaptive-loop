@@ -41,6 +41,37 @@ export async function validateRunRecord(value: unknown, rawText?: string): Promi
   ) {
     issues.push("/checks must contain at least one failed deterministic check when /business_outcome.status is failed");
   }
+  const generation = run.context.candidate_generation;
+  if (generation !== undefined) {
+    if (
+      generation.start_hmr_sequence !== null
+      && generation.end_hmr_sequence !== null
+      && generation.end_hmr_sequence < generation.start_hmr_sequence
+    ) {
+      issues.push("/context/candidate_generation/end_hmr_sequence must not precede start_hmr_sequence");
+    }
+    if (generation.candidate_id !== null && generation.candidate_sha256 === null) {
+      issues.push("/context/candidate_generation/candidate_sha256 is required when candidate_id is present");
+    }
+    if (generation.evaluation_eligible && run.record_stage !== "final") {
+      issues.push("/context/candidate_generation/evaluation_eligible requires /record_stage to be final");
+    }
+    if (
+      generation.evaluation_eligible
+      && (
+        generation.candidate_id === null
+        || generation.candidate_sha256 === null
+        || generation.start_hmr_sequence === null
+        || generation.end_hmr_sequence === null
+        || generation.git_tree === null
+        || generation.dsh_version === null
+        || generation.profile === null
+        || generation.start_hmr_sequence !== generation.end_hmr_sequence
+      )
+    ) {
+      issues.push("/context/candidate_generation/evaluation_eligible requires one stable admitted candidate generation");
+    }
+  }
   if (issues.length > 0) {
     throw new DalError("RUN_RECORD_INVALID", "Run record violates semantic rules", issues);
   }

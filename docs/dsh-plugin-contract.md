@@ -35,15 +35,49 @@ plus its bundled Cordis packages). Full citations live in `docs/research-evidenc
 ## Sessions and recording
 
 - The session is an append-only event log (`ctx.sessions`); persistence
-  plugins subscribe to `session/event` (fire-and-forget) and drain on
-  `session/flush` and `session/disposed`. Observer failures are contained and
-  never fail an append.
+  plugins subscribe to `session/event` (fire-and-forget), drain durably on
+  awaited `session/flush`, and may attempt a final drain on observe-only
+  `session/disposed`. Disposal listener promises are contained but not awaited,
+  so they cannot prove final persistence before process teardown.
+- Runtime- and candidate-generation binding is synchronous at
+  `session/created`, before the first event. The optional launcher-owned
+  `runtimeGeneration` service returns a precomputed binding plus a monotonic
+  transition sequence; the optional quarantined `dalCandidate` service reports
+  diagnostic source/HMR state with `admitted: false`. The production recorder
+  does not consume that mutable in-process service for eligibility, infer
+  identity from later events, or late-bind either source; candidate checkpoints
+  are evaluation-ineligible.
 - Event vocabulary includes `turn/start|end`, `step/start|end`,
   `assistant/message` (+`usage`), `tool/call` (name + raw arguments),
   `tool/result` (error name/code), `request/header` (config incl. provider/
   model + system text), `request/context` (route metadata).
 - Model-visible means logged: the durable event log is the canonical history;
   projections must record digests/counts, never raw arguments or results.
+- Current DSH does not expose enough authoritative resolver/config/mutation
+  state for DAL to produce verified runtime manifests. The required launcher
+  and Loader producer contract is documented in
+  `docs/runtime-generation-attestation.md`; until it exists, recorder output
+  remains unattested and controller-ineligible.
+
+## HMR observation and candidate quarantine
+
+- `hmr/reload` carries `Map<oldPlugin, { filename, runtime? }>` but current module
+  HMR emits it after replacement Fiber registration, before those Fibers settle.
+  A startup failure can therefore follow the event and leave the new Fiber
+  `failed` without restoring the prior runtime.
+- Separate atomic renames are not a transaction over a multi-file module closure.
+  A reload can import a hybrid generation even when a later event-time disk read
+  sees the complete candidate bytes.
+- `dal_candidate_prepare` and `dal_candidate_status` retain fixed inactive
+  staging. `dal_candidate_apply` always fails with
+  `CANDIDATE_ADMISSION_QUARANTINED` before approval verification or live writes.
+- No current HMR event creates evaluation admission. Runtime identity requires an
+  authoritative imported-artifact closure and awaited readiness receipt.
+- Promotion remains a separate human review and deployment action.
+- `candidate_generation` is a recorder observation. Standalone run ingestion
+  checks shape and consistency but neither authenticates HMR admission nor grants
+  application or promotion authority; current DAL produces no admitted candidate
+  generation through HMR.
 
 ## What a proposal may and may not touch
 

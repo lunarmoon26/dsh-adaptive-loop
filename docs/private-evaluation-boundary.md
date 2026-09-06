@@ -20,7 +20,7 @@ become an authority inside DAL.
 
 ## Current integration state
 
-The sibling private project implements runner-neutral protocol v1 schemas and a
+At the decision date, the sibling private project supplied runner-neutral protocol v1 schemas and a
 local synthetic compiler/validation fixture. DAL has no package dependency,
 command invocation, data import, model call, profile mutation, plugin mount, or
 external transfer for that protocol.

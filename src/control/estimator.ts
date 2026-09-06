@@ -23,6 +23,13 @@ export function buildControllerState(
   batchId: string,
   observations: readonly ControllerRunObservation[],
 ): ControllerState {
+  const runtimePolicy = policy.runtime_generation;
+  if (runtimePolicy === undefined) {
+    throw new DalError(
+      "CONTROL_RUNTIME_GENERATION_POLICY_REQUIRED",
+      "Controller policy must select a runtime generation digest profile and minimum assurance",
+    );
+  }
   if (observations.length === 0) {
     throw new DalError("CONTROL_BATCH_EMPTY", `No run records match task set ${policy.task_set} and batch ${batchId}`);
   }
@@ -45,7 +52,8 @@ export function buildControllerState(
 
   const sorted = [...observations].sort((left, right) => compareText(left.run.run_id, right.run.run_id));
   assertUniqueRunIds(sorted);
-  const generation = sharedGeneration(sorted);
+  assertUniqueRuntimeSessions(sorted);
+  const generation = sharedGeneration(sorted, runtimePolicy);
   const measurementContext = sharedMeasurementContext(sorted);
   const runs = sorted.map(({ run, sha256: digest }) => ({ run_id: run.run_id, sha256: digest }));
   const inputSetSha256 = sha256(canonicalJson(runs));
@@ -60,7 +68,7 @@ export function buildControllerState(
   const contextSha256 = sha256(canonicalJson(measurementContext));
   const state: ControllerState = {
     $schema: "https://recursive-dev-loop.dev/schemas/controller-state.v1.schema.json",
-    schema_version: "1.0.0",
+    schema_version: "1.1.0",
     state_id: "",
     estimated_at: lastFinishedAt,
     task_class: policy.task_class,
@@ -167,8 +175,11 @@ function metricObservation(
   return check.pass ? "success" : "failure";
 }
 
-function sharedGeneration(observations: readonly ControllerRunObservation[]): GenerationState {
-  const states = observations.map(({ run }) => generationOf(run));
+function sharedGeneration(
+  observations: readonly ControllerRunObservation[],
+  policy: NonNullable<ControllerPolicy["runtime_generation"]>,
+): GenerationState {
+  const states = observations.map(({ run }) => generationOf(run, policy));
   const expected = canonicalJson(states[0]);
   if (states.some((state) => canonicalJson(state) !== expected)) {
     throw new DalError("CONTROL_GENERATION_MISMATCH", "Selected runs do not share one harness generation");
@@ -176,7 +187,7 @@ function sharedGeneration(observations: readonly ControllerRunObservation[]): Ge
   return states[0]!;
 }
 
-function generationOf(run: RunRecord): GenerationState {
+function generationOf(run: RunRecord, policy: NonNullable<ControllerPolicy["runtime_generation"]>): GenerationState {
   if (run.context.harness_sha256 === null) {
     throw new DalError("CONTROL_GENERATION_UNPINNED", `Run ${run.run_id} has no harness digest`);
   }
@@ -192,12 +203,47 @@ function generationOf(run: RunRecord): GenerationState {
     "CONTROL_GENERATION_INVALID",
     `Run ${run.run_id} contains duplicate harness pin identities`,
   );
+  const runtimeGeneration = run.runtime_generation;
+  if (runtimeGeneration === undefined) {
+    throw new DalError(
+      "CONTROL_RUNTIME_GENERATION_UNATTESTED",
+      `Run ${run.run_id} has no runtime generation attestation`,
+    );
+  }
+  if (!runtimeGeneration.stable_for_session) {
+    throw new DalError(
+      "CONTROL_RUNTIME_GENERATION_UNSTABLE",
+      `Run ${run.run_id} crossed a runtime generation transition`,
+    );
+  }
+  if (runtimeGeneration.digest_profile !== policy.digest_profile) {
+    throw new DalError(
+      "CONTROL_RUNTIME_GENERATION_PROFILE_MISMATCH",
+      `Run ${run.run_id} uses a runtime generation digest profile not accepted by the controller policy`,
+    );
+  }
+  if (assuranceRank(runtimeGeneration.assurance) < assuranceRank(policy.minimum_assurance)) {
+    throw new DalError(
+      "CONTROL_RUNTIME_GENERATION_ASSURANCE_INSUFFICIENT",
+      `Run ${run.run_id} does not meet the controller policy runtime generation assurance`,
+    );
+  }
   return {
     prompt_sha256: run.context.prompt_sha256,
     harness_sha256: run.context.harness_sha256,
     model_patch_sha256: modelPatchSha256,
     harness_pins: harnessPins,
+    runtime_generation: {
+      manifest_sha256: runtimeGeneration.manifest_sha256,
+      digest_profile: runtimeGeneration.digest_profile,
+    },
   };
+}
+
+function assuranceRank(assurance: "declared" | "observed" | "verified"): number {
+  if (assurance === "verified") return 2;
+  if (assurance === "observed") return 1;
+  return 0;
 }
 
 function sharedMeasurementContext(observations: readonly ControllerRunObservation[]): MeasurementContext {
@@ -242,6 +288,16 @@ function assertUniqueRunIds(observations: readonly ControllerRunObservation[]): 
     observations.map(({ run }) => run.run_id),
     "CONTROL_RUN_DUPLICATE",
     "Selected controller observations contain duplicate run identities",
+  );
+}
+
+function assertUniqueRuntimeSessions(observations: readonly ControllerRunObservation[]): void {
+  assertUnique(
+    observations.flatMap(({ run }) => run.runtime_generation === undefined
+      ? []
+      : [run.runtime_generation.session_id_sha256]),
+    "CONTROL_RUNTIME_GENERATION_SESSION_DUPLICATE",
+    "Selected controller observations reuse one runtime generation session binding",
   );
 }
 
