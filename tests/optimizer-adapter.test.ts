@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, realpath, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runCli } from "../src/cli.js";
 import { sha256 } from "../src/json.js";
@@ -207,10 +207,13 @@ describe("optimizer adapter (prepare/evaluate-only)", () => {
     const store = join(root, "runs");
     await failedRunStore(store);
     const noop = { stdout: (): void => undefined, stderr: (): void => undefined };
+    const preparedOutput: string[] = [];
     expect(
-      await runCli(["optimize", "prepare", "--skill", skillPath, "--store", store], noop),
+      await runCli(["optimize", "prepare", "--skill", skillPath, "--store", store], {
+        ...noop, stdout: (text) => { preparedOutput.push(text); },
+      }),
     ).toBe(0);
-    const exchangePath = ".dal/check/optimizer-exchange.json";
+    const { exchange_path: exchangePath } = JSON.parse(preparedOutput.join("")) as { exchange_path: string };
     const exchange = JSON.parse(await readFile(join(repoRoot, exchangePath), "utf8")) as OptimizerExchange;
     const candidatePath = join(root, "candidate.json");
     await writeFile(
@@ -219,13 +222,173 @@ describe("optimizer adapter (prepare/evaluate-only)", () => {
     );
     expect(
       await runCli(
-        ["optimize", "evaluate", "--exchange", exchangePath, "--candidate", candidatePath, "--output", ".dal/check/adapter-verdict.json"],
+        ["optimize", "evaluate", "--exchange", exchangePath, "--candidate", candidatePath, "--output", join(root, "adapter-verdict.json")],
         noop,
       ),
     ).toBe(0);
-    const verdict = JSON.parse(await readFile(join(repoRoot, ".dal", "check", "adapter-verdict.json"), "utf8")) as {
+    const verdict = JSON.parse(await readFile(join(root, "adapter-verdict.json"), "utf8")) as {
       verdict: string;
     };
     expect(verdict.verdict).toBe("valid");
+  });
+
+  describe("confined candidate staging", () => {
+    let root: string;
+    let exchange: OptimizerExchange;
+    let exchangePath: string;
+    let candidatePath: string;
+    let candidateOut: string;
+    let basePath: string;
+    const baseText = `${validEdit.before}\n`;
+
+    beforeEach(async () => {
+      root = await realpath(await workspace());
+      vi.spyOn(process, "cwd").mockReturnValue(root);
+      basePath = join(root, "SKILL.md");
+      await writeFile(basePath, baseText);
+      await mkdir(join(root, "runs"));
+      exchange = (await prepareOptimizerExchange({ skillPath: basePath, store: "runs" })).exchange;
+      exchangePath = join(root, "exchange.json");
+      candidatePath = join(root, "candidate.json");
+      candidateOut = join(root, ".dal", "candidates", "review.md");
+      await writeFile(exchangePath, JSON.stringify(exchange));
+      await writeFile(candidatePath, JSON.stringify(candidateFor(exchange, [validEdit])));
+    });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it.each([false, true])("preserves an existing verdict and stages nothing (rejected candidate: %s)", async (rejected) => {
+      if (rejected) {
+        await writeFile(candidatePath, JSON.stringify(candidateFor(exchange, [validEdit], { exchange_id: "opt-other" })));
+      }
+      const verdictPath = join(root, "existing-verdict.json");
+      const original = Buffer.from("{\"verdict\":\"previous evaluation\"}\n");
+      await writeFile(verdictPath, original);
+      const stdout: string[] = [];
+      const stderr: string[] = [];
+      const code = await runCli([
+        "optimize", "evaluate", "--exchange", exchangePath, "--candidate", candidatePath,
+        "--output", verdictPath, "--candidate-out", candidateOut,
+      ], { stdout: (text) => { stdout.push(text); }, stderr: (text) => { stderr.push(text); } });
+      expect(code).not.toBe(0);
+      expect(stderr.join(" ")).toContain("OPTIMIZE_OUTPUT_CONFLICT");
+      expect(stdout).toEqual([]);
+      expect(await readFile(verdictPath)).toEqual(original);
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(lstat(join(root, ".dal", "candidates"))).rejects.toMatchObject({ code: "ENOENT" });
+      expect(await readFile(basePath, "utf8")).toBe(baseText);
+    });
+
+    async function evaluateCli(output = candidateOut): Promise<{ code: number; errors: string[] }> {
+      const errors: string[] = [];
+      const code = await runCli([
+        "optimize", "evaluate", "--exchange", exchangePath, "--candidate", candidatePath,
+        "--output", join(root, `verdict-${randomUUID()}.json`), "--candidate-out", output,
+      ], { stdout: () => undefined, stderr: (text) => { errors.push(text); } });
+      return { code, errors };
+    }
+
+    it("stages raw Markdown with the validated digest and preserves existing destinations", async () => {
+      const evaluated = await evaluateOptimizerCandidate({ exchangePath, candidatePath });
+      expect((await evaluateCli()).code).toBe(0);
+      const raw = await readFile(candidateOut);
+      expect(raw.toString("utf8")).toBe(baseText.replace(validEdit.before, validEdit.after));
+      expect(raw.toString("utf8")).toBe(evaluated.candidateText);
+      expect(sha256(raw)).toBe(evaluated.verdict.candidate_sha256);
+      expect((await lstat(candidateOut)).mode & 0o777).toBe(0o600);
+      await writeFile(candidateOut, "existing review\n");
+      const retry = await evaluateCli();
+      expect(retry.code).not.toBe(0);
+      expect(retry.errors.join(" ")).toContain("OPTIMIZE_STAGING_CONFLICT");
+      expect(await readFile(candidateOut, "utf8")).toBe("existing review\n");
+      expect(await readFile(basePath, "utf8")).toBe(baseText);
+    });
+
+    it.each([
+      { target_uri: "repo://other.md" },
+      { base_sha256: "a".repeat(64) },
+      { exchange_id: "opt-other" },
+      { edits: [{ anchor: "same", before: validEdit.before, after: validEdit.before }] },
+      { edits: [{ anchor: "missing", before: "missing text", after: "replacement" }] },
+    ] satisfies Partial<OptimizerCandidate>[])("rejects without returning or writing candidate text: %j", async (overrides) => {
+      await writeFile(candidatePath, JSON.stringify(candidateFor(exchange, [validEdit], overrides)));
+      const evaluated = await evaluateOptimizerCandidate({ exchangePath, candidatePath });
+      expect(evaluated.verdict.verdict).toBe("invalid");
+      expect(evaluated.candidateText).toBeNull();
+      expect((await evaluateCli()).code).not.toBe(0);
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+      expect(await readFile(basePath, "utf8")).toBe(baseText);
+    });
+
+    it.each(["SKILL.md", "outside.md", ".dal/candidates/nested/review.md", ".dal/candidates/../../outside.md"])(
+      "rejects live, outside, or nested destinations: %s", async (output) => {
+        const result = await evaluateCli(output);
+        expect(result.code).not.toBe(0);
+        expect(result.errors.join(" ")).toContain("OPTIMIZE_STAGING_PATH_DENIED");
+        expect(await readFile(basePath, "utf8")).toBe(baseText);
+        await expect(lstat(join(root, "outside.md"))).rejects.toMatchObject({ code: "ENOENT" });
+      },
+    );
+
+    it("rejects invalid surfaces without output", async () => {
+      await writeFile(candidatePath, JSON.stringify({ ...candidateFor(exchange, [validEdit]), surface: "prompt" }));
+      expect((await evaluateCli()).code).not.toBe(0);
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+    });
+
+    it("rejects symlinked staging roots", async () => {
+      const outside = join(root, "outside");
+      await mkdir(outside);
+      await symlink(outside, join(root, ".dal", "candidates"));
+      expect((await evaluateCli()).errors.join(" ")).toContain("OPTIMIZE_STAGING_PATH_DENIED");
+      await expect(lstat(join(outside, "review.md"))).rejects.toMatchObject({ code: "ENOENT" });
+    });
+
+    it("rejects a symlinked .dal ancestor", async () => {
+      const alternate = join(root, "alternate");
+      await mkdir(alternate);
+      await writeFile(join(alternate, "SKILL.md"), baseText);
+      await symlink(join(root, ".dal"), join(alternate, ".dal"));
+      vi.mocked(process.cwd).mockReturnValue(alternate);
+      const result = await evaluateCli(".dal/candidates/review.md");
+      expect(result.errors.join(" ")).toContain("OPTIMIZE_STAGING_PATH_DENIED");
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+    });
+
+    it.each([false, true])("preserves destination symlinks (dangling: %s)", async (dangling) => {
+      await mkdir(join(root, ".dal", "candidates"));
+      const target = dangling ? join(root, "absent.md") : basePath;
+      await symlink(target, candidateOut);
+      expect((await evaluateCli()).errors.join(" ")).toContain("OPTIMIZE_STAGING_CONFLICT");
+      expect((await lstat(candidateOut)).isSymbolicLink()).toBe(true);
+      expect(await readFile(basePath, "utf8")).toBe(baseText);
+      if (dangling) await expect(lstat(target)).rejects.toMatchObject({ code: "ENOENT" });
+    });
+
+    it("rejects on-disk drift before reconstructing even when the anchors still resolve", async () => {
+      await writeFile(basePath, `${baseText}changed on disk\n`);
+      const evaluated = await evaluateOptimizerCandidate({ exchangePath, candidatePath });
+      expect(evaluated.verdict.verdict).toBe("invalid");
+      expect(evaluated.verdict.checks).toContainEqual(expect.objectContaining({ id: "base-content-digest", pass: false }));
+      expect(evaluated.verdict.checks.some((entry) => entry.id === "anchors")).toBe(false);
+      expect(evaluated.verdict.candidate_sha256).toBeNull();
+      expect(evaluated.candidateText).toBeNull();
+      expect((await evaluateCli()).code).not.toBe(0);
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+    });
+
+    it("hashes actual bytes rather than lossy UTF-8 decoding", async () => {
+      const original = Buffer.concat([Buffer.from(baseText), Buffer.from([0xff])]);
+      await writeFile(basePath, original);
+      exchange = (await prepareOptimizerExchange({ skillPath: basePath, store: "runs" })).exchange;
+      expect(exchange.target.base_sha256).toBe(sha256(original));
+      await writeFile(exchangePath, JSON.stringify(exchange));
+      await writeFile(candidatePath, JSON.stringify(candidateFor(exchange, [validEdit])));
+      const drifted = Buffer.concat([Buffer.from(baseText), Buffer.from([0xfe])]);
+      expect(drifted.toString("utf8")).toBe(original.toString("utf8"));
+      await writeFile(basePath, drifted);
+      expect((await evaluateCli()).code).not.toBe(0);
+      await expect(lstat(candidateOut)).rejects.toMatchObject({ code: "ENOENT" });
+    });
   });
 });

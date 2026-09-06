@@ -67,7 +67,7 @@ pnpm run check
 
 `plugins/` 目录发布一个 dsh bundle（`@lunarmoon26/dal-modes`），内含两种可分离的模式：
 
-- **Run 模式**（`@lunarmoon26/dal-run-record`）——默认开启：把会话事件投影为 `.dal/runs` 下隐私安全的运行记录（只有计数、摘要、结果与失败码；绝不包含提示词文本、消息内容、工具参数或结果）。
+- **Run 模式**（`@lunarmoon26/dal-run-record`）——默认开启：把会话事件投影为 `.dal/runs` 下隐私安全的运行记录（只有计数、token 用量、摘要、结果与失败码；绝不包含提示词文本、消息内容、工具参数或结果）。可选的显式 `controllerObservation` profile 配置只会把已关闭的最终记录加入一个钉住的 controller 批次；发布的 bundle 默认不设置它。
 - **Improvement 模式**（`@lunarmoon26/dal-improve-tools`）——默认关闭：基于确定性 dal CLI 的工作台工具（聚类、准备载荷、摘要、分支评估、重置状态）。不暴露任何受审批门控的操作——`propose run` 与 `reset execute` 仅限 CLI。
 - **G2 候选项**（`@lunarmoon26/dal-unknown-effect-guard`）——默认关闭：对结果未知的工作流副作用实施按智能体隔离的重试锁。当前只有源码与单元测试，既未安装，也未应用为新一代配置。
 

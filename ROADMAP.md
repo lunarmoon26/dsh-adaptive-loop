@@ -4,6 +4,20 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ## Next decision points
 
+### Accepted evolution direction (2026-09-05)
+
+Accepted architecture, not a claim of end-to-end implementation:
+
+- The loop is Run -> diagnose -> propose -> validate -> independent paired heldout evaluate -> separately approved activate/rollback. Task definitions, evaluator, and policy remain immutable to the proposer; evaluation evidence never grants activation authority.
+- Clustering is optional diagnosis, not the objective or a prerequisite to proposing. K-means and silhouette scores are optional diagnostic tools only, with unknown and multilabel failures retained rather than forced into one cluster.
+- Measure stable outcome dimensions separately: execution health, business success, deterministic checks, safety/regressions, cost, and complexity. Use pinned model x harness ablations, including no-change and removal baselines, before attributing improvement.
+- Separate evidence validity (authenticity, completeness, receipt binding, deduplication) from comparison compatibility (task, evaluator, policy, model, harness, environment, seeds, and budget pins). Valid evidence need not be comparable evidence.
+- Priority 1: proposer confinement and safe candidate staging. The first bounded increment, `chg-dal-evolution-staging-integrity-20260905`, covers only exclusive raw-Markdown staging under `.dal/candidates/` and verification of on-disk base bytes before reconstruction; see [the focused contract](docs/optimizer-staging.md). Full proposer process confinement remains future work.
+- Priority 2, future: bind candidate and branch identity to independent execution/evaluation receipts and deduplicate evidence before selection or comparison.
+- Priority 3, future: populate real trace projections with explicit agent, tool, attempt, and candidate attribution without exposing raw traces or evaluator secrets.
+- Priority 4, future: execute one real cross-repository vertical slice with the independently owned evaluator, paired heldout baseline/candidate evidence, and a separately governed activation/rollback seam before adding complex controllers. Evaluator implementation is owned outside this DAL increment.
+- PI/MPC governors, deeper search, clustering experiments, and automated deployment/rollback remain future work after that slice; existing observation-only controller work is not closed-loop improvement proof.
+
 ### Benchmark measurement integrity (external review follow-ups, post-demo)
 
 - **Split harness outcome from business outcome — shipped 2026-08-31.** Completed dsh attempts record `outcome: succeeded` independently of `business_outcome.status`; validation and deterministic clustering keep harness failures and business failures in separate categories, and optimizer episodes retain both labels.
@@ -15,7 +29,7 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ### Control-governed harness evolution
 
-- **Run-to-run observation foundation — shipped 2026-09-02.** `controller-policy.v1`, `controller-state.v1`, and `dal control estimate` derive deterministic, immutable Wilson-interval estimates from one compatible task batch and pinned harness generation. Mixed context/generation evidence fails closed; insufficient evidence is explicit and non-authorizing. The supervisor state is separate from proposal lifecycle and performs no proposer, model, budget, application, promotion, or rollback action.
+- **Run-to-run observation foundation — shipped 2026-09-02.** `controller-policy.v1`, `controller-state.v1`, and `dal control estimate` derive deterministic, immutable Wilson-interval estimates from one compatible task batch and pinned harness generation. The optional run-mode `controllerObservation` configuration makes closed terminal session records directly eligible for harness-outcome estimation while checkpoints, incomplete sessions, context contradictions, and default unconfigured records remain unbatched. Mixed context/generation evidence fails closed; insufficient evidence is explicit and non-authorizing. Business/check outcome joining remains future evaluator work. The supervisor state is separate from proposal lifecycle and performs no proposer, model, budget, application, promotion, or rollback action.
 - Add a PI adaptation governor only after the observation contract is stable: deadband, minimum samples, consecutive-batch hysteresis, leaky integral state, minimum generation dwell time, context-change reset/decay, saturation anti-windup, and recommendations bounded by the human-owned maximum policy budget.
 - Persist typed edit-response observations binding before-state, candidate/proposal, editable surface, mutation type, target failure dimension, cost/complexity features, predicted deltas, actual paired deltas, and complete model/task context. Start with grouped empirical estimates; compare Bayesian regression only after sufficient data exists.
 - Keep branch expansion exploratory (UCB) and promotion evidence conservative (LCB). Use the MPC name only after the selector has an explicit response model, constrained objective, uncertainty-aware predictions, and observe-predict-optimize-act-replan behavior.

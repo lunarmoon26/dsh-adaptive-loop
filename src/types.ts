@@ -734,7 +734,15 @@ export interface RunRecord {
     model_patch_sha256?: string | null;
   };
   artifacts: Array<{ uri: string; sha256: string; description: string }>;
-  metrics: { duration_ms: number; tool_calls: number };
+  metrics: {
+    duration_ms: number;
+    tool_calls: number;
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_tokens?: number;
+    cache_write_tokens?: number;
+    reasoning_tokens?: number;
+  };
   evidence: string[];
   trace?: Array<{
     seq: number;

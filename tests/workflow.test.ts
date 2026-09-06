@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { verifyApproval } from "../src/approval.js";
 import { runEvaluationSuite } from "../src/evaluation.js";
 import { transitionProposal, validateProposal } from "../src/improvement.js";
-import { sha256, writeJsonAtomic } from "../src/json.js";
+import { sha256, publishJsonExclusive } from "../src/json.js";
 import { DisabledOptimizerAdapter } from "../src/optimizer.js";
 import { repositoryPathUri } from "../src/repository.js";
 import type { ApprovalDecision, EvaluationSuite, ImprovementProposal } from "../src/types.js";
@@ -129,7 +129,7 @@ describe("human-governed improvement workflow", () => {
     const identifier = randomUUID();
     const candidateUri = `repo://.dal/candidates/${identifier}.json`;
     const candidatePath = resolve(import.meta.dirname, "..", ".dal", "candidates", `${identifier}.json`);
-    await writeJsonAtomic(candidatePath, {
+    await publishJsonExclusive(candidatePath, {
       proposal_id: proposal.proposal_id,
       change: "Synthetic bounded candidate for scorecard binding proof.",
     });
@@ -154,7 +154,7 @@ describe("human-governed improvement workflow", () => {
       testCase.fixture.local_path = resolve(dirname(sourceSuitePath), testCase.fixture.local_path);
     }
     const suitePath = resolve(import.meta.dirname, "..", ".dal", "test-suites", `proposal-${identifier}.json`);
-    await writeJsonAtomic(suitePath, suite);
+    await publishJsonExclusive(suitePath, suite);
     const scorecardStore = resolve(import.meta.dirname, "..", ".dal", "test-scorecards");
     const run = await runEvaluationSuite(suitePath, scorecardStore);
     const scorecardUri = repositoryPathUri(run.path, "Proposal scorecard");

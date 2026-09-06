@@ -1,0 +1,63 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-evolution-staging-integrity-20260905",
+  "change_id": "chg-dal-evolution-staging-integrity-20260905",
+  "created_at": "2026-09-05T18:10:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-staging" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Implement only confined optimizer candidate staging and actual base-byte verification while recording the accepted future evolution direction and preserving unrelated work.",
+  "acceptance_criteria": [
+    { "id": "ac-direction", "statement": "Record the accepted full direction and future priorities before implementation.", "result": "passed", "evidence": ["ev-contract"] },
+    { "id": "ac-binding", "statement": "Require exchange target and base binding and verify on-disk bytes before reconstruction; rejected candidates produce no candidate output.", "result": "passed", "evidence": ["ev-focused"] },
+    { "id": "ac-staging", "statement": "Stage raw Markdown exclusively in the confined root, preserving existing files and rejecting symlink or outside destinations; remove the general overwrite writer.", "result": "passed", "evidence": ["ev-focused", "ev-contract"] },
+    { "id": "ac-full-check", "statement": "Pass the repository check after focused verification.", "result": "failed", "evidence": ["ev-check", "ev-capsule"] },
+    { "id": "ac-scope", "statement": "Preserve unrelated recorder/controller work and evaluator ownership without model requests, external transfer, installation, activation, commits, or pushes.", "result": "passed", "evidence": ["ev-scope"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "Bounded implementation and 31 focused tests pass; full check requires human review of the roadmap capsule source pin changed by this task.",
+    "exception": {
+      "kind": "blocked",
+      "reason": "The roadmap addition invalidates the existing capsule source digest. Repository guidance requires human review before refresh; the dirty capsule was preserved.",
+      "owner": "project-maintainer",
+      "next_action": "Review the roadmap delta, refresh the roadmap pin in the adapter-boundary capsule, and rerun the repository check."
+    }
+  },
+  "what_worked": [
+    "Rejected candidates cannot reach the raw-Markdown staging operation.",
+    "Actual-byte drift tests distinguish inputs with identical lossy UTF-8 decoding.",
+    "Existing source and feedback changes were preserved; only DAL staging changes and their evidence are reported."
+  ],
+  "what_failed": [
+    "The first focused run exposed four test-fixture failures involving physical temporary paths and an alternate workspace base; corrected before the passing runs.",
+    "The full check stopped at roadmap capsule integrity after typecheck and build passed."
+  ],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "vitest", "purpose": "Verify optimizer staging and workflow writer callers.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-focused"] },
+    { "sequence": 2, "kind": "tool", "name": "pnpm-check", "purpose": "Run repository verification after focused tests.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-check"] },
+    { "sequence": 3, "kind": "tool", "name": "dal-capsule-check", "purpose": "Identify the full-check integrity blocker without refreshing pins.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-capsule"] }
+  ],
+  "failures_and_inefficiencies": [
+    { "id": "fi-capsule-review", "category": "verification", "summary": "The accepted roadmap addition requires a human-reviewed capsule refresh before full closure.", "impact": "medium", "recoverable": true, "suggested_action": "Review and refresh only the affected roadmap pin, then rerun the full check.", "evidence": ["ev-capsule"] }
+  ],
+  "evidence": [
+    { "id": "ev-contract", "kind": "file", "uri": "repo://docs/optimizer-staging.md", "summary": "Focused staging contract and acceptance criteria; accepted direction is recorded separately in ROADMAP.md.", "sha256": null, "observed_at": "2026-09-05T18:10:00.000Z" },
+    { "id": "ev-focused", "kind": "test", "uri": "repo://tests/optimizer-adapter.test.ts", "summary": "22 optimizer tests and 9 workflow tests passed, including raw output, rejection, overwrite prevention, symlink confinement, and byte-drift coverage.", "sha256": null, "observed_at": "2026-09-05T18:10:00.000Z" },
+    { "id": "ev-check", "kind": "test", "uri": "command://pnpm-run-check", "summary": "Typecheck and build passed; tests reported 213 passed, 6 skipped, and 1 capsule failure. Later chained verification stages did not run.", "sha256": null, "observed_at": "2026-09-05T18:10:00.000Z" },
+    { "id": "ev-capsule", "kind": "file", "uri": "repo://capsules/dsh-adapter-boundary.json", "summary": "Capsule validation fails closed because its roadmap source digest no longer matches the accepted roadmap addition; capsule contents remain untouched by this task.", "sha256": null, "observed_at": "2026-09-05T18:10:00.000Z" },
+    { "id": "ev-scope", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Scoped changes are ROADMAP.md, docs/optimizer-staging.md, docs/requirement-evidence.md, src/cli.ts, src/json.ts, src/optimizer-adapter.ts, tests/optimizer-adapter.test.ts, tests/workflow.test.ts, and this task's feedback pair. Diff whitespace check passed. No evaluator or recorder/controller implementation was changed.", "sha256": null, "observed_at": "2026-09-05T18:10:00.000Z" }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "pending", "reviewer": null, "reviewed_at": null,
+    "notes": ["Roadmap capsule refresh and implementation review remain pending. Full proposer confinement, candidate/branch receipt binding and deduplication, trace attribution, and independent paired heldout evaluation remain future work. Staging is not an OS boundary against concurrent same-user directory replacement."],
+    "approval_refs": []
+  },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

@@ -1,7 +1,7 @@
 # Control-Governed Harness Evolution
 
 Status: Controller observation foundation implemented; governor, response model, predictive selection, canary, and rollback control proposed
-Change: `chg-control-supervisor-foundation-20260902`
+Changes: `chg-control-supervisor-foundation-20260902`, `chg-run-controller-observation-path-20260902`
 Semantic owner: this document
 Exact persisted syntax: [`../schemas/controller-policy.v1.schema.json`](../schemas/controller-policy.v1.schema.json) and [`../schemas/controller-state.v1.schema.json`](../schemas/controller-state.v1.schema.json)
 
@@ -68,6 +68,14 @@ The command:
 Measurement context binds task set, environment snapshot, tool versions, model identity, grader version, context-policy digest, and inference parameters. Generation identity binds prompt, harness, model-patch, and harness-pin digests. Seeds remain observations rather than context so different declared rollouts can contribute to one compatible batch.
 
 The command performs no model call, network request, proposal transition, branch selection, sandbox execution, budget mutation, candidate application, or profile change.
+
+## Run-mode terminal bridge
+
+The optional `dal-run-record` `controllerObservation` profile configuration enrolls terminal session records into one controller batch without changing the default recorder posture. The configuration explicitly fixes `taskSet`, `batchId`, stable tool versions, model identity, prompt/harness/model-patch/context-policy digests, grader version, inference parameters, and harness pins. Per-session seeds and the runtime environment snapshot come from observed request/process state.
+
+Only a final record following a closed `turn/end` with a recognized reason (`completed`, `error`, `max-tokens`, `blocked`, `aborted`, or `interrupted`) is eligible for the configured batch. Missing or unsupported reasons are conservatively recorded as aborted and remain unbatched. Flush checkpoints, incomplete disposal, and records whose prompt, model, inference parameters, or used tool identities ever contradict the configured pins keep a null batch ID, even if a later event returns to the configured value. Unconfigured recording remains schema-valid evidence but is not controller input. Configuration and completed metadata are rejected before persistence if they contain likely secrets or personal data. The bridge records summed token usage but still has no independent business grader: `business_outcome` and checks remain absent and therefore excluded by those controller metrics.
+
+The profile configuration is declared measurement provenance, not execution authority. It does not mount itself, call a model, grade business behavior, invoke the controller, or authorize adaptation.
 
 ## Research protocol
 

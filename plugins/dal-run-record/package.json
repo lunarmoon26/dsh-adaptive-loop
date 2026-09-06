@@ -1,6 +1,6 @@
 {
   "name": "@lunarmoon26/dal-run-record",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -8,7 +8,7 @@
     "lib"
   ],
   "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
-  "description": "DSH Adaptive Loop run mode: projects dsh session events into privacy-safe run records under the workspace .dal/runs store. Recording only; no improvement code in the hot path.",
+  "description": "DSH Adaptive Loop run mode: projects dsh session events into privacy-safe run records and optionally enrolls closed terminal records into a pinned controller batch. Recording only; no improvement code in the hot path.",
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"

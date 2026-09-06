@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
+import { link, mkdir, open, readFile, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { isNodeError, DalError } from "./errors.js";
@@ -63,25 +63,6 @@ function normalizeJson(value: unknown): unknown {
     return normalized;
   }
   throw new DalError("INVALID_JSON_VALUE", `Unsupported JSON value type: ${typeof value}`);
-}
-
-export async function writeJsonAtomic(filePath: string, value: unknown): Promise<void> {
-  await mkdir(dirname(filePath), { recursive: true, mode: 0o700 });
-  const temporary = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
-  const handle = await open(temporary, "wx", 0o600);
-  try {
-    await handle.writeFile(prettyJson(value), "utf8");
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-
-  try {
-    await rename(temporary, filePath);
-  } catch (error) {
-    await unlink(temporary).catch(() => undefined);
-    throw error;
-  }
 }
 
 export async function publishJsonExclusive(filePath: string, value: unknown): Promise<boolean> {

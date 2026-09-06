@@ -1,0 +1,63 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-evolution-staging-integrity-review-20260905",
+  "change_id": "chg-dal-evolution-staging-integrity-20260905",
+  "created_at": "2026-09-05T17:17:49.000Z",
+  "supersedes": "fb-dal-evolution-staging-integrity-20260905",
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-staging" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Close the reviewed verdict-publication flaw in the bounded staging increment without changing capsules, unrelated work, or prior immutable feedback.",
+  "acceptance_criteria": [
+    { "id": "ac-increment", "statement": "Retain the accepted roadmap direction, confined exclusive raw-Markdown staging, rejection behavior, and on-disk base-byte verification.", "result": "passed", "evidence": ["ev-contract", "ev-focused"] },
+    { "id": "ac-output-conflict", "statement": "An existing verdict fails closed, preserves its exact bytes, emits no evaluation result, and stages no candidate, for both valid and rejected candidates.", "result": "passed", "evidence": ["ev-focused"] },
+    { "id": "ac-full-check", "statement": "Pass the full repository verification gate after focused tests.", "result": "failed", "evidence": ["ev-check", "ev-capsule"] },
+    { "id": "ac-scope", "statement": "Preserve dirty capsules, unrelated recorder/controller and evaluator work, and prior immutable feedback without commits, external transfer, or activation.", "result": "passed", "evidence": ["ev-scope"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "The review fix and all 33 focused tests pass. Full closure remains blocked only by the expected roadmap capsule digest mismatch.",
+    "exception": {
+      "kind": "blocked",
+      "reason": "The existing adapter-boundary capsule pins the roadmap before the accepted direction was added; the user requested preservation of the dirty capsule.",
+      "owner": "project-maintainer",
+      "next_action": "Review and refresh the roadmap source pin separately, then rerun the full repository check."
+    }
+  },
+  "what_worked": [
+    "Exclusive verdict publication now precedes candidate staging on every evaluation return path.",
+    "The regression proves byte preservation and absence of candidate staging for valid and rejected candidates.",
+    "The original staging and byte-drift regressions still pass."
+  ],
+  "what_failed": [
+    "Review identified that the earlier CLI ignored a false exclusive-publication result and could stage a candidate before discovering an output conflict; this follow-up fixes that flaw.",
+    "The full check still fails closed on the known roadmap capsule source digest."
+  ],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "vitest", "purpose": "Rerun focused optimizer and workflow regressions including output conflicts.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-focused"] },
+    { "sequence": 2, "kind": "tool", "name": "pnpm-check", "purpose": "Verify the final repository state after the review fix.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-check"] },
+    { "sequence": 3, "kind": "tool", "name": "dal-capsule-check", "purpose": "Confirm the expected remaining blocker without changing capsule contents.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-capsule"] }
+  ],
+  "failures_and_inefficiencies": [
+    { "id": "fi-output-conflict", "category": "verification", "summary": "Initial staging coverage omitted existing verdict destinations; review exposed the ignored publication result.", "impact": "medium", "recoverable": true, "suggested_action": "Keep the valid and rejected output-conflict regressions as the publication-order gate.", "evidence": ["ev-focused"] },
+    { "id": "fi-capsule-review", "category": "verification", "summary": "A human-reviewed capsule refresh remains necessary for full closure.", "impact": "medium", "recoverable": true, "suggested_action": "Review the roadmap pin separately and rerun the full check.", "evidence": ["ev-capsule"] }
+  ],
+  "evidence": [
+    { "id": "ev-contract", "kind": "file", "uri": "repo://docs/optimizer-staging.md", "summary": "The focused contract now specifies output-conflict denial before staging and permits a new verdict to remain after a later staging failure. The accepted roadmap direction remains unchanged in this follow-up.", "sha256": null, "observed_at": "2026-09-05T17:17:49.000Z" },
+    { "id": "ev-focused", "kind": "test", "uri": "repo://tests/optimizer-adapter.test.ts", "summary": "24 optimizer and 9 workflow tests passed. New valid/rejected candidate cases assert output conflict, no stdout, unchanged verdict bytes, no staging directory, and an unchanged base.", "sha256": null, "observed_at": "2026-09-05T17:17:49.000Z" },
+    { "id": "ev-check", "kind": "test", "uri": "command://pnpm-run-check", "summary": "Typecheck/build passed; 215 tests passed, 6 skipped, and 1 expected capsule failure. Later chained verification stages did not run.", "sha256": null, "observed_at": "2026-09-05T17:17:49.000Z" },
+    { "id": "ev-capsule", "kind": "file", "uri": "repo://capsules/dsh-adapter-boundary.json", "summary": "Read-only validation confirms the roadmap digest mismatch at source index 2; capsule contents are unchanged by this follow-up.", "sha256": null, "observed_at": "2026-09-05T17:17:49.000Z" },
+    { "id": "ev-scope", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Follow-up changes only src/cli.ts, src/optimizer-adapter.ts, tests/optimizer-adapter.test.ts, docs/optimizer-staging.md, docs/requirement-evidence.md, and this new feedback pair. Prior receipts and unrelated work remain untouched; diff whitespace validation passed.", "sha256": null, "observed_at": "2026-09-05T17:17:49.000Z" }
+  ],
+  "uncertainty": [],
+  "human_review": {
+    "status": "pending", "reviewer": null, "reviewed_at": null,
+    "notes": ["Reviewer identified the output-conflict flaw; the user requested this narrow fix. Final acceptance and capsule refresh remain pending. Full proposer confinement, receipt binding/deduplication, trace attribution, independent paired heldout evaluation, and activation remain outside this increment."],
+    "approval_refs": []
+  },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

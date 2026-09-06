@@ -2,7 +2,7 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.3.0",
+  "capsule_version": "1.4.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, or controller-observation behavior",
   "checked_at": "2026-09-02",
@@ -13,7 +13,7 @@
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
       "revision": "dal-v0-2026-09-02",
-      "sha256": "fad804e160e67e51d9e63df2f07c889ac7fedb1f5482fc9c6fa31ba15a4993f1",
+      "sha256": "bbe743ab92fd4cd3a0f59f772f1503f6c1c55fc93bb0dc03af559dda4b48e6e9",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -81,7 +81,7 @@
     },
     {
       "id": "claim-controller-observation",
-      "text": "Controller estimation publishes deterministic observation-only state from one compatible task batch and pinned harness generation; insufficient evidence cannot invoke adaptation or grant authority.",
+      "text": "Controller estimation publishes deterministic observation-only state from one compatible task batch and pinned harness generation; an optional explicitly configured run-mode bridge enrolls only closed terminal records, and insufficient evidence cannot invoke adaptation or grant authority.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance"

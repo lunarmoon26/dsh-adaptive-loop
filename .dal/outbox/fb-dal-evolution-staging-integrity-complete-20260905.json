@@ -1,0 +1,36 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-evolution-staging-integrity-complete-20260905",
+  "change_id": "chg-dal-evolution-staging-integrity-20260905",
+  "created_at": "2026-09-05T17:29:22Z",
+  "supersedes": "fb-dal-evolution-staging-integrity-review-20260905",
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-staging" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Close the bounded staging increment after the human-approved roadmap capsule refresh and full local verification.",
+  "acceptance_criteria": [
+    { "id": "ac-reviewed-pin", "statement": "Refresh only the approved roadmap source identity and capsule version while preserving other source pins and freshness bounds.", "result": "passed", "evidence": ["ev-capsule"] },
+    { "id": "ac-full-gate", "statement": "Pass the complete repository gate including staging regressions, all capsules, policy and offline scorecards.", "result": "passed", "evidence": ["ev-check"] },
+    { "id": "ac-scope", "statement": "Preserve unrelated dirty work and prior immutable receipts; do not activate candidates or publish repository changes.", "result": "passed", "evidence": ["ev-closure"] }
+  ],
+  "outcome": { "status": "completed", "summary": "Approved capsule refresh resolves the remaining blocker. Full local verification passes for the bounded staging increment; the broader evolution roadmap remains future work.", "exception": null },
+  "what_worked": ["The roadmap capsule now validates without bypassing source-integrity checks.", "All 216 tests passed with six opt-in skips; typecheck, build, capsule checks, policy and both offline scorecards passed."],
+  "what_failed": [],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "dal-capsule-check", "purpose": "Validate the approved roadmap pin refresh.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-capsule"] },
+    { "sequence": 2, "kind": "tool", "name": "pnpm-check", "purpose": "Verify the final local repository state.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-check"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-capsule", "kind": "file", "uri": "repo://capsules/dsh-adapter-boundary.json", "summary": "Version 1.4.1 updates the roadmap revision and byte digest following explicit human approval. Other source identities and freshness bounds are unchanged.", "sha256": null, "observed_at": "2026-09-05T17:29:22Z" },
+    { "id": "ev-check", "kind": "test", "uri": "command://pnpm-run-check", "summary": "Typecheck and build passed. All 32 test files passed: 216 tests passed and six opt-in tests skipped. All three capsules, allowed-read policy, core offline scorecard and workflow benchmark scorecard passed.", "sha256": null, "observed_at": "2026-09-05T17:29:22Z" },
+    { "id": "ev-closure", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Local closure supersedes prior blocked reports without replacing immutable feedback. Diff whitespace checks passed. No model execution, installation, activation, commit or push was performed.", "sha256": null, "observed_at": "2026-09-05T17:29:22Z" }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-05T17:29:22Z", "notes": ["The user explicitly approved the roadmap changes and corresponding capsule pin refresh before this follow-up. The review timestamp records acknowledgment in this receipt, not the unavailable message timestamp. This is not sensitive-action approval for deployment or external transfer. Commit and publication remain separate."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}
