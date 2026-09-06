@@ -1,0 +1,201 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-proposer-receipt-boundary-20260906",
+  "ingested_at": "2026-09-06T16:58:32.690Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-proposer-receipt-boundary-20260906.json",
+    "sha256": "c2ed6eb135322244c57ffe7e9a4c97cca0be9c77a8c0609b71abe09217f27fa3"
+  },
+  "feedback_sha256": "5e4e62b6af024c39fd263738429e3c83d359adb353454a0da5fcd65924631558",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-06T16:58:32.690Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-proposer-receipt-boundary-20260906",
+    "change_id": "chg-dal-proposer-receipt-boundary-20260906",
+    "created_at": "2026-09-06T16:56:54Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-integrity"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Restrict proposer execution to an approved versioned text request and prevent unrelated or repeated execution evidence from influencing branch selection.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-request",
+        "statement": "Bind the complete fixed-route request before credential access or sending, without workspace tools or profile execution.",
+        "result": "passed",
+        "evidence": [
+          "ev-request",
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-replay",
+        "statement": "Replay actual candidate, task, state, receipt and verdict bindings and count each execution only once.",
+        "result": "passed",
+        "evidence": [
+          "ev-branch",
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-cli",
+        "statement": "Integrate explicit-model request preparation and candidate artifact recording through the CLI and workbench.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Pass the complete repository gate with reviewed capsule source identities.",
+        "result": "failed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "All 131 focused tests pass. Full verification passes typecheck/build and 326 tests, with seven skips and one expected capsule-integrity failure. Changed contracts require human-reviewed capsule refresh.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "The spec, architecture and roadmap source digests differ from their reviewed capsule pins.",
+        "owner": "project-maintainer",
+        "next_action": "Review the new request-approval and branch-proof contracts, authorize capsule refresh, then rerun the full local gate."
+      }
+    },
+    "what_worked": [
+      "The proposer no longer launches a workspace-enabled agent process.",
+      "Branch statistics revalidate their evidence rather than trusting stored provenance and score fields.",
+      "Negative controls cover request drift, transport limits, sensitive replies, candidate drift and duplicate execution credit."
+    ],
+    "what_failed": [
+      "Full closure is blocked by source-pin drift in two capsules.",
+      "The initial plugin integration lacked the newly required explicit model; the tool contract and regression were updated."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Verify proposer, transport, branch, receipt, CLI and workbench controls locally.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the full local verification chain.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "capsule-check",
+        "purpose": "Identify exact source-pin drift without bypassing review.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-capsule-review",
+        "category": "verification",
+        "summary": "Contract changes invalidate source-bound capsules until review.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Review the request boundary and branch proof migration before refreshing pins.",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-request",
+        "kind": "file",
+        "uri": "repo://docs/proposer-request.md",
+        "summary": "Versioned fixed-route DeepSeek request, explicit model, exact request approval, no tool/profile/subprocess access, bounded transfer and privacy-safe output.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:56:54Z"
+      },
+      {
+        "id": "ev-branch",
+        "kind": "file",
+        "uri": "repo://docs/branch-evidence.md",
+        "summary": "Versioned artifact/task/receipt evidence replay, deterministic execution identity, historical incomplete proof exclusion and conflicting reuse denial. Integrity is not independent attestation.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:56:54Z"
+      },
+      {
+        "id": "ev-focused",
+        "kind": "test",
+        "uri": "repo://tests/propose-transport.test.ts",
+        "summary": "Six focused suites passed 131 tests. Mocked transport only; no provider request, profile mount, installation or candidate activation was performed.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:56:54Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck/build passed. Tests: 326 passed, seven skipped, one failed capsule test. Later chained gates did not run. Capsule checks identify spec source 0 and adapter-boundary sources 0 and 2 as changed. Diff whitespace checks passed.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:56:54Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The user accepted implementation of the next boundary increment. Final contract/capsule review is pending. This task grants no model-call, activation, or publication authority."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

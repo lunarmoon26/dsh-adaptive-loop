@@ -40,6 +40,7 @@ export const SCHEMA_IDS = {
   policy: "https://recursive-dev-loop.dev/schemas/policy.v1.schema.json",
   proposal: "https://recursive-dev-loop.dev/schemas/improvement-proposal.v1.schema.json",
   proposalDraft: "https://recursive-dev-loop.dev/schemas/proposal-draft.v1.schema.json",
+  proposerRequest: "https://recursive-dev-loop.dev/schemas/proposer-request.v1.schema.json",
   resetReceipt: "https://recursive-dev-loop.dev/schemas/reset-receipt.v1.schema.json",
   runRecord: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
   runtimeGenerationEvidence: "https://recursive-dev-loop.dev/schemas/runtime-generation-evidence.v1.schema.json",

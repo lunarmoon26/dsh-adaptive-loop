@@ -1,0 +1,36 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-proposer-receipt-boundary-complete-20260906",
+  "change_id": "chg-dal-proposer-receipt-boundary-20260906",
+  "created_at": "2026-09-06T20:45:34Z",
+  "supersedes": "fb-dal-proposer-receipt-boundary-20260906",
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-integrity" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Close the proposer and branch-receipt boundary increment after the human-approved contract and capsule refresh.",
+  "acceptance_criteria": [
+    { "id": "ac-pins", "statement": "Refresh approved spec, architecture and roadmap source identities while preserving other pins and freshness bounds.", "result": "passed", "evidence": ["ev-pins"] },
+    { "id": "ac-gate", "statement": "Pass the full local repository gate including proposer, branch-proof and workbench regressions.", "result": "passed", "evidence": ["ev-gate"] },
+    { "id": "ac-scope", "statement": "Preserve prior immutable feedback and unrelated changes without model execution, candidate activation or publication.", "result": "passed", "evidence": ["ev-closure"] }
+  ],
+  "outcome": { "status": "completed", "summary": "The approved source-pin refresh resolves the remaining blocker. Full local verification passes; live provider behavior and independent execution attestation remain outside this increment.", "exception": null },
+  "what_worked": ["Both affected capsules validate at version 1.7.1 without bypassing integrity checks.", "Typecheck, build, 327 tests, all capsule checks, policy and both offline scorecards pass."],
+  "what_failed": [],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "dal-capsule-check", "purpose": "Verify the approved source identities.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-pins"] },
+    { "sequence": 2, "kind": "tool", "name": "pnpm-check", "purpose": "Run the complete local gate after the refresh.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-gate"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-pins", "kind": "file", "uri": "repo://capsules/dsh-adapter-boundary.json", "summary": "Adapter capsule 1.7.1 refreshes architecture and roadmap; contract capsule 1.7.1 refreshes spec. Unaffected pins, claims and freshness bounds are preserved. All three capsules validate.", "sha256": null, "observed_at": "2026-09-06T20:45:34Z" },
+    { "id": "ev-gate", "kind": "test", "uri": "command://pnpm-run-check", "summary": "Typecheck/build passed; all 35 test files passed with 327 passed tests and seven opt-in skips. All capsules, allowed-read policy, core evaluation and workflow benchmark scorecards passed without hard stops.", "sha256": null, "observed_at": "2026-09-06T20:45:34Z" },
+    { "id": "ev-closure", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Local completion supersedes the blocked receipt without replacing it. Diff whitespace checks pass. No model calls, installation, activation, commit or push occurred.", "sha256": null, "observed_at": "2026-09-06T20:45:34Z" }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-06T20:45:34Z", "notes": ["The user approved the new contracts and affected capsule refresh before this follow-up. The timestamp records acknowledgment in this receipt, not the unavailable message timestamp. This approval does not authorize model calls, deployment or publication."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

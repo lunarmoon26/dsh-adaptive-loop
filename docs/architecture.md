@@ -6,6 +6,14 @@ Last contract review: 2026-09-05; pinned upstream evidence remains in [`research
 
 ## Purpose and scope
 
+The proposer has a narrower authority surface than the running agent: it sends
+one versioned, approved, text-only HTTPS request rather than starting DSH with
+workspace/profile access. Branch selection replays candidate/task/state/verdict
+bindings and deduplicates execution evidence; it does not treat recorded scores
+as authority or claim independent runtime attestation. See
+[ADR 0008](decisions/0008-payload-only-proposer-and-replayed-branch-evidence.md),
+[proposer request](proposer-request.md), and [branch evidence](branch-evidence.md).
+
 `dal` is a local control plane around software-development tasks. It captures bounded task evidence, makes patterns queryable, and stages improvements for human decisions. Its zero-configuration dsh integration remains repository instructions plus a project-local skill. Optional Cordis packages add run recording and deterministic workbench tools. The HMR package now provides inactive staging only; application and admission are quarantined.
 
 ## Quality scenarios and constraints

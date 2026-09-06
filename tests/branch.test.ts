@@ -22,11 +22,12 @@ async function writeBoundReceipt(store: string, taskPath: string, statePath: str
     schema_version: "1.0.0",
     receipt_id: `rcp-branch-${index}`,
     created_at: "2026-08-30T00:10:00.000Z",
-    candidate_sha256: "a".repeat(64),
+    candidate_sha256: sha256(await readFile(join(store, "candidate.md"))),
     base_generation_id: "g0",
     candidate_generation_id: "g1",
     effective_composition_sha256: "b".repeat(64),
     task_handle: task.task_id,
+    task_sha256: sha256(await readFile(taskPath)),
     model: { provider: "deepseek-official", model: "deepseek-v4-flash" },
     model_patch_sha256: "c".repeat(64),
     dsh_session_id: `session-${index}`,
@@ -74,9 +75,30 @@ async function writeDraft(path: string, surface = "skills"): Promise<void> {
     provenance: { runner: "injected", clusters: [] },
   };
   await writeFile(path, `${JSON.stringify(draft, null, 2)}\n`, "utf8");
+  await writeFile(resolve(path, "..", "candidate.md"), "Candidate skill fixture\n");
 }
 
 describe("bounded search branches", () => {
+  it("keeps draft, artifact, and state identities separate and rejects rebinding", async () => {
+    const store = await mkdtemp(join(tmpdir(), "dal-branch-"));
+    const draftPath = join(store, "draft.json");
+    const candidatePath = join(store, "candidate.md");
+    await writeDraft(draftPath);
+    const options = { branchId: "brn-bound-artifact", parentBranchId: null, draftPath, candidatePath, store };
+    const result = await recordBranch(options);
+    expect(result.branch.draft_sha256).toBe(sha256(await readFile(draftPath)));
+    expect(result.branch.candidate_artifact_sha256).toBe(sha256(await readFile(candidatePath)));
+    expect(result.branch.candidate_artifact_sha256).not.toBe(result.branch.draft_sha256);
+    expect((await recordBranch(options)).status).toBe("idempotent");
+    await expect(recordBranch({ ...options, candidatePath: draftPath })).rejects.toMatchObject({ code: "BRANCH_CONFLICT" });
+    const taskPath = fixture("tasks", "task-001-refund.json");
+    const statePath = fixture("dal", "fixtures", "result-pass.json");
+    const receiptPath = await writeBoundReceipt(store, taskPath, statePath, 1);
+    const evaluated = await evaluateBranch({ branchId: options.branchId, taskPath, candidateStatePath: statePath, store, receiptPath });
+    expect(evaluated.evaluation.candidate_sha256).toBe(sha256(await readFile(statePath)));
+    expect(evaluated.evaluation.candidate_artifact_sha256).toBe(result.branch.candidate_artifact_sha256);
+  });
+
   it("records branches with parent linkage and validates the draft", async () => {
     const store = await mkdtemp(join(tmpdir(), "dal-branch-"));
     const draftPath = join(store, "draft.json");
@@ -94,7 +116,7 @@ describe("bounded search branches", () => {
     const store = await mkdtemp(join(tmpdir(), "dal-branch-"));
     const draftPath = join(store, "draft.json");
     await writeDraft(draftPath);
-    await recordBranch({ branchId: "brn-eval-001", parentBranchId: null, draftPath, store });
+    await recordBranch({ branchId: "brn-eval-001", parentBranchId: null, draftPath, candidatePath: join(store, "candidate.md"), store });
 
     const passing = await evaluateBranch({
       branchId: "brn-eval-001",
@@ -128,8 +150,8 @@ describe("bounded search branches", () => {
     const store = await mkdtemp(join(tmpdir(), "dal-branch-"));
     const draftPath = join(store, "draft.json");
     await writeDraft(draftPath);
-    await recordBranch({ branchId: "brn-aaa-001", parentBranchId: null, draftPath, store });
-    await recordBranch({ branchId: "brn-bbb-001", parentBranchId: null, draftPath, store });
+    await recordBranch({ branchId: "brn-aaa-001", parentBranchId: null, draftPath, candidatePath: join(store, "candidate.md"), store });
+    await recordBranch({ branchId: "brn-bbb-001", parentBranchId: null, draftPath, candidatePath: join(store, "candidate.md"), store });
 
     let selected = selectBranchUcb(await branchStats({ store }));
     expect(selected.selected).toBe("brn-aaa-001");

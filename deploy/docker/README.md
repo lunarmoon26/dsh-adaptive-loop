@@ -1,6 +1,6 @@
 # Container-hosted deepseek-harness (DAL-020)
 
-The docker runner executes the same fail-closed dal paths inside a pinned
+The verifier's Docker runner executes the same fail-closed dal paths inside a pinned
 container so the host's dsh installation, profiles, `~/.dsh/AGENTS.md`, and
 `~/.agents` stay untouched. The workspace is bind-mounted at `/workspace`;
 `--network none` is hardcoded by the runner; the in-container sandbox seam
@@ -73,18 +73,34 @@ Note: in-container commands must reference the image's own node_modules —
 host's platform build. Paths under the workspace are auto-translated to
 `/workspace/...`.
 
-## Headless propose in the container
+## Payload-only proposer (no Docker)
+
+The proposer does not run dsh or mount a workspace. It sends one fixed DeepSeek
+HTTPS chat-completions request after exact request-digest approval. Docker proposer
+execution and Docker policy flags are rejected with `PROPOSE_RUNNER_UNSUPPORTED`.
+Prepare locally with an explicit model; preparation makes no external call:
 
 ```sh
-pnpm dal propose run --runner docker \
-  --clusters .dal/clusters --approval <decision> --workspace <dir> --output <draft>
+pnpm dal propose prepare --clusters .dal/clusters \
+  --provider deepseek-official --model deepseek-v4-flash --output request.json
 ```
 
-Model credentials pass through only the `docker_env_names` listed in the
-policy (default `DEEPSEEK_API_KEY`). Provide them on the host either in the
-process environment or in a workspace-root `.env` file (copy
-[`.env.example`](../../.env.example) to `.env`; `.env` is gitignored) —
-never in VCS or the image. The host environment wins over `.env`.
+Review the versioned request and obtain an approved, unexpired
+`send_data_externally` decision whose scope is the printed `request_digest`, not
+`payload_digest`. Only after that separate authorization, run with the same inputs:
+
+```sh
+pnpm dal propose run --clusters .dal/clusters \
+  --provider deepseek-official --model deepseek-v4-flash \
+  --approval decision.json --output draft.json
+```
+
+Only `DEEPSEEK_API_KEY` in the sending process environment supplies credentials;
+the proposer never loads `.env`, profiles, tools, or workspace artifacts. The key
+is read at send time and never persisted. Legacy `--runner local` uses the same
+payload-only HTTPS transport, and legacy `--workspace` is ignored. Request details
+and limits are owned by [`docs/proposer-request.md`](../../docs/proposer-request.md).
+These commands are documentation, not authorization for a live model call.
 
 ## E2E batch driver (tau-style workflow)
 

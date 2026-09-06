@@ -166,8 +166,9 @@ export function apply(ctx: Context, config: Config): void {
     defineTool({
       name: "dal_proposal_prepare",
       description:
-        "Prepare the sanitized improvement payload from the cluster store: cluster fingerprints, member counts, and capped failure summaries — never raw traces or secrets. Prints the payload digest; a human later approves a send_data_externally decision bound to that exact digest before any model run. Local, no model, no network.",
+        "Prepare a versioned text-only DeepSeek request from sanitized clusters and an explicit model. Prints the full request digest for separate human send_data_externally approval. Preparation is local: no model or network call.",
       parameters: {
+        model: { type: "string", required: true, description: "Explicit DeepSeek model ID for the approved request." },
         clusters: {
           type: "string",
               description: "Optional cluster store directory; defaults to .dal/clusters.",
@@ -178,7 +179,7 @@ export function apply(ctx: Context, config: Config): void {
         },
         output: {
           type: "string",
-              description: "Optional payload file path; defaults to .dal/check/prepared-<id>.json.",
+              description: "Optional request file path; defaults to .dal/check/prepared-<id>.json.",
         },
       },
       output: {
@@ -187,19 +188,23 @@ export function apply(ctx: Context, config: Config): void {
           additionalProperties: false,
           properties: {
             payload_digest: { type: "string", required: true },
-            payload_path: { type: "string", required: true },
+            request_digest: { type: "string", required: true },
+            request_path: { type: "string", required: true },
           },
         },
         render: (_args, value) => [
-          { type: "text", text: `Prepared payload with digest ${value.payload_digest} at ${value.payload_path}.` },
+          { type: "text", text: `Prepared request with digest ${value.request_digest} at ${value.request_path}.` },
         ],
       },
       async execute(args) {
-        const { clusters, runs, output: requested } = args as { clusters?: string; runs?: string; output?: string };
+        const { clusters, runs, output: requested, model } = args as { clusters?: string; runs?: string; output?: string; model: string };
+        if (typeof model !== "string" || !model) throw new Error("An explicit DeepSeek model is required");
         const output = requested ?? `.dal/check/prepared-${randomUUID()}.json`;
         const result = await runCli(cliCommand, timeoutMs, undefined, [
           "propose",
           "prepare",
+          "--model",
+          model,
           "--clusters",
           clusters ?? DEFAULT_CLUSTERS,
           "--runs",
@@ -208,7 +213,7 @@ export function apply(ctx: Context, config: Config): void {
           output,
         ]);
         if (result.code !== 0) throw new Error(toolError(result.code, result.stderr));
-        return JSON.parse(result.stdout) as { payload_digest: string; payload_path: string };
+        return JSON.parse(result.stdout) as { payload_digest: string; request_digest: string; request_path: string };
       },
     }),
   );

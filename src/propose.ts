@@ -1,10 +1,9 @@
-import { spawnSync } from "node:child_process";
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { validateApprovalDecision, verifyApproval } from "./approval.js";
-import { assertDockerAvailable, containerPath, runDocker } from "./docker.js";
+import { prepareChatRequest, sendChatRequest, RESPONSE_LIMIT } from "./propose-transport.js";
 import { DalError } from "./errors.js";
 import { canonicalJson, prettyJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
@@ -22,7 +21,6 @@ export interface ProposePayload {
     member_count: number;
     representative_failure: string;
   }>;
-  harness_contract: { uri: string; sha256: string };
   output_contract: string;
 }
 
@@ -41,7 +39,7 @@ export interface ProposalDraft {
   statement: string;
   improvements: Array<{ metric: string; expected_delta: number }>;
   regressions: Array<{ summary: string; severity: "low" | "medium" | "high" }>;
-  provenance: { runner: "dsh-headless" | "dsh-headless-docker" | "injected"; clusters: Array<{ cluster_id: string; category: string; code: string; member_count: number }> };
+  provenance: { runner: "deepseek-https" | "injected"; request_sha256: string; clusters: Array<{ cluster_id: string; category: string; code: string; member_count: number }> };
 }
 
 export type ProposalRunner = (prompt: string) => Promise<string>;
@@ -49,9 +47,9 @@ export type ProposalRunner = (prompt: string) => Promise<string>;
 const SUMMARY_CAP = 512;
 const MAX_CLUSTERS = 24;
 
-const OUTPUT_CONTRACT = `You are proposing a change to a DeepSeek Harness workspace. Before proposing a harness_code or skills change, read the pinned dsh plugin contract at repo://docs/dsh-plugin-contract.md (digest provided in the payload's harness_contract field) so the proposal respects bundle patches, tool registration, and the editable-surface boundaries. Respond with exactly one JSON object and nothing else. Required keys:
+const OUTPUT_CONTRACT = `You are proposing a change from sanitized DeepSeek Harness failure summaries only. Do not read files or retrieve references. Respond with exactly one JSON object and nothing else. Required keys:
 surface (one of the editable surfaces listed), target_uri (a repo:// URI of the artifact you propose to change),
-base_sha256 (the current artifact digest), title (short), objective (one sentence),
+base_sha256 (an unverified proposed base digest; never claim it was read or verified), title (short), objective (one sentence),
 statement (one falsifiable prediction, e.g. "applying this change raises <metric> by at least <delta> on the held-out cases without regressing golden cases"),
 improvements (array of {metric, expected_delta} with metric from task_success_rate, test_pass_rate, policy_precision, policy_recall, blocked_dangerous_action_rate, human_override_rate, post_change_regression_rate),
 regressions (array of {summary, severity: low|medium|high}, may be empty).
@@ -104,16 +102,10 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
     });
   }
 
-  const contractText = await readFile(resolve(process.cwd(), "docs", "dsh-plugin-contract.md"), "utf8").catch(() => "");
-  const contractDigest = sha256(contractText);
   const payload: ProposePayload = {
     task: "propose_one_falsifiable_change",
     editable_surfaces: EDITABLE_SURFACES,
     clusters,
-    harness_contract: {
-      uri: "repo://docs/dsh-plugin-contract.md",
-      sha256: contractDigest,
-    },
     output_contract: OUTPUT_CONTRACT,
   };
   const json = prettyJson(payload);
@@ -137,13 +129,10 @@ function representativeFailure(run: RunRecord): string | null {
 }
 
 function extractJsonObject(text: string): unknown {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end <= start) {
-    throw new DalError("PROPOSE_REPLY_INVALID", "Proposer reply contains no JSON object");
-  }
   try {
-    return JSON.parse(text.slice(start, end + 1));
+    const value: unknown = JSON.parse(text);
+    if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error();
+    return value;
   } catch {
     throw new DalError("PROPOSE_REPLY_INVALID", "Proposer reply JSON does not parse");
   }
@@ -152,12 +141,17 @@ function extractJsonObject(text: string): unknown {
 export async function proposeDraft(options: {
   payload: ProposePayload;
   payloadDigest: string;
+  requestDigest: string;
   runner: ProposalRunner;
-  runnerKind: "dsh-headless" | "dsh-headless-docker" | "injected";
+  runnerKind: "deepseek-https" | "injected";
   model: { provider: string; model: string };
 }): Promise<ProposalDraft> {
   const reply = await options.runner(prettyJson(options.payload));
+  if (Buffer.byteLength(reply) > RESPONSE_LIMIT) throw new DalError("PROPOSE_RESPONSE_TOO_LARGE", "Proposer reply exceeds the byte limit");
   const parsed = extractJsonObject(reply);
+  // Scan the whole reply, including fields not projected into the persisted draft.
+  if (scanSecrets(parsed, reply).length) throw new DalError("SECRET_DETECTED", "Proposer reply contains sensitive material");
+  if (scanPii(parsed, reply).length) throw new DalError("PII_DETECTED", "Proposer reply contains sensitive material");
   const value = parsed as {
     surface?: unknown;
     target_uri?: unknown;
@@ -188,6 +182,7 @@ export async function proposeDraft(options: {
     regressions: (value.regressions ?? []) as ProposalDraft["regressions"],
     provenance: {
       runner: options.runnerKind,
+      request_sha256: options.requestDigest,
       clusters: options.payload.clusters.map((cluster) => ({
         cluster_id: cluster.cluster_id,
         category: cluster.category,
@@ -196,102 +191,41 @@ export async function proposeDraft(options: {
       })),
     },
   };
+  assertNoSecrets(scanSecrets(draft));
+  assertNoPii(scanPii(draft));
   await assertSchema(SCHEMA_IDS.proposalDraft, draft, "Proposal draft");
   return draft;
 }
 
-export function dshHeadlessRunner(options: { workspaceDir: string; modelPatch?: { provider: string; model: string }; timeoutMs?: number }): ProposalRunner {
-  return async (prompt) => {
-    const args = ["--profile", "headless"];
-    let patchPath: string | undefined;
-    if (options.modelPatch !== undefined) {
-      patchPath = resolve(options.workspaceDir, `.dal-propose-patch-${randomUUID()}.yml`);
-      await writeFile(
-        patchPath,
-        `- id: agent-default-model\n  config:\n    provider: ${options.modelPatch.provider}\n    model: ${options.modelPatch.model}\n`,
-        "utf8",
-      );
-      args.push("--patch", patchPath);
-    }
-    args.push(prompt);
-    const result = spawnSync("dsh", args, {
-      cwd: options.workspaceDir,
-      encoding: "utf8",
-      timeout: options.timeoutMs ?? 300000,
-      maxBuffer: 16 * 1024 * 1024,
-    });
-    if (patchPath !== undefined) {
-      await import("node:fs/promises").then(({ unlink }) => unlink(patchPath)).catch(() => undefined);
-    }
-    if (result.error !== undefined) {
-      throw new DalError("PROPOSE_RUNNER_FAILED", `dsh headless failed to start: ${result.error.message}`);
-    }
-    if (result.status !== 0) {
-      throw new DalError("PROPOSE_RUNNER_FAILED", `dsh headless exited ${result.status}: ${result.stderr.slice(-500)}`);
-    }
-    return result.stdout;
-  };
-}
-
-/**
- * Container-hosted headless runner: the same dsh headless invocation runs
- * inside the pinned container with the workspace mounted at /workspace.
- * Model credentials pass through only the policy-listed environment names.
- */
-export function dshHeadlessDockerRunner(options: {
-  workspaceDir: string;
-  modelPatch?: { provider: string; model: string };
-  docker: { image: string; runFlags: string[]; envNames: string[] };
-  timeoutMs?: number;
-}): ProposalRunner {
-  return async (prompt) => {
-    assertDockerAvailable();
-    const args = ["--profile", "headless"];
-    let patchPath: string | undefined;
-    if (options.modelPatch !== undefined) {
-      patchPath = resolve(options.workspaceDir, `.dal-propose-patch-${randomUUID()}.yml`);
-      await writeFile(
-        patchPath,
-        `- id: agent-default-model\n  config:\n    provider: ${options.modelPatch.provider}\n    model: ${options.modelPatch.model}\n`,
-        "utf8",
-      );
-      args.push("--patch", containerPath(patchPath, options.workspaceDir));
-    }
-    args.push(prompt);
-    const result = runDocker(
-      {
-        image: options.docker.image,
-        runFlags: options.docker.runFlags,
-        envNames: options.docker.envNames,
-        workspaceRoot: options.workspaceDir,
-        network: "default",
-      },
-      ["dsh", ...args],
-      (options.timeoutMs ?? 300000) + 60_000,
-    );
-    if (patchPath !== undefined) {
-      await import("node:fs/promises").then(({ unlink }) => unlink(patchPath)).catch(() => undefined);
-    }
-    if (result.status !== 0) {
-      throw new DalError("PROPOSE_RUNNER_FAILED", `dsh headless in container exited ${result.status}: ${result.stderr.slice(-500)}`);
-    }
-    return result.stdout;
-  };
+export async function prepareProposeRequest(options: {
+  clustersDir: string;
+  runsDir?: string;
+  model: { provider: string; model: string };
+}) {
+  const prepared = await prepareProposePayload(options);
+  const chat = prepareChatRequest(prepared.payload, options.model);
+  await assertSchema(SCHEMA_IDS.proposerRequest, chat.request, "Proposer request");
+  return { ...prepared, ...chat };
 }
 
 export async function runPropose(options: {
   clustersDir: string;
   runsDir?: string;
   approvalPath: string;
-  workspaceDir: string;
+  workspaceDir?: string;
   outputPath: string;
   model: { provider: string; model: string };
+  /** Internal offline test seam. Never expose through CLI or configuration. */
   runnerOverride?: ProposalRunner;
   runner?: "local" | "docker";
   docker?: { image: string; runFlags: string[]; envNames: string[] };
-}): Promise<{ status: "recorded" | "idempotent"; path: string; draft: ProposalDraft; payload_digest: string }> {
-  const prepared = await prepareProposePayload({
+}): Promise<{ status: "recorded" | "idempotent"; path: string; draft: ProposalDraft; payload_digest: string; request_digest: string }> {
+  if ((options.runner !== undefined && options.runner !== "local") || options.docker !== undefined) {
+    throw new DalError("PROPOSE_RUNNER_UNSUPPORTED", "Docker proposer execution is disabled; omit --runner docker and use payload-only DeepSeek HTTPS");
+  }
+  const prepared = await prepareProposeRequest({
     clustersDir: options.clustersDir,
+    model: options.model,
     ...(options.runsDir !== undefined ? { runsDir: options.runsDir } : {}),
   });
 
@@ -299,26 +233,17 @@ export async function runPropose(options: {
   assertNoSecrets(scanSecrets(document.value, document.raw.toString("utf8")));
   assertNoPii(scanPii(document.value, document.raw.toString("utf8")));
   const decision = await validateApprovalDecision(document.value);
-  await verifyApproval(decision, { action: "send_data_externally", scope: prepared.digest, at: new Date() });
+  await verifyApproval(decision, { action: "send_data_externally", scope: prepared.requestDigest, at: new Date() });
 
-  const dockerDefaults = { image: "dsh-adaptive-loop/dsh:0.1.1-rc.2", runFlags: [], envNames: [] };
-  const runner =
-    options.runnerOverride ??
-    (options.runner === "docker"
-      ? dshHeadlessDockerRunner({
-          workspaceDir: options.workspaceDir,
-          modelPatch: options.model,
-          docker: options.docker ?? dockerDefaults,
-        })
-      : dshHeadlessRunner({ workspaceDir: options.workspaceDir, modelPatch: options.model }));
-  const runnerKind =
-    options.runnerOverride !== undefined ? "injected" : options.runner === "docker" ? "dsh-headless-docker" : "dsh-headless";
+  const runner = options.runnerOverride ?? (() => sendChatRequest(prepared.request));
+  const runnerKind = options.runnerOverride !== undefined ? "injected" : "deepseek-https";
   const draft = await proposeDraft({
     payload: prepared.payload,
     payloadDigest: prepared.digest,
+    requestDigest: prepared.requestDigest,
     runner,
     runnerKind,
-    model: options.model,
+    model: { provider: prepared.request.provider, model: prepared.request.body.model },
   });
 
   const destination = resolve(process.cwd(), options.outputPath);
@@ -326,9 +251,9 @@ export async function runPropose(options: {
   if (!published) {
     const existing = await readJsonFile<ProposalDraft>(destination);
     if (sha256(canonicalJson(existing.value)) === sha256(canonicalJson(draft))) {
-      return { status: "idempotent", path: destination, draft: existing.value, payload_digest: prepared.digest };
+      return { status: "idempotent", path: destination, draft: existing.value, payload_digest: prepared.digest, request_digest: prepared.requestDigest };
     }
     throw new DalError("PROPOSE_OUTPUT_CONFLICT", `Draft output already exists with different content: ${destination}`);
   }
-  return { status: "recorded", path: destination, draft, payload_digest: prepared.digest };
+  return { status: "recorded", path: destination, draft, payload_digest: prepared.digest, request_digest: prepared.requestDigest };
 }

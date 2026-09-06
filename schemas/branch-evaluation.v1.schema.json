@@ -40,9 +40,11 @@
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/identifier"
     },
     "candidate_ref": {
+      "description": "Graded external state file, not the candidate artifact.",
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri"
     },
     "candidate_sha256": {
+      "description": "SHA-256 of the graded external state bytes, not the candidate artifact.",
       "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256"
     },
     "effect_log_ref": {
@@ -97,12 +99,23 @@
       "maxLength": 100
     },
     "receipt_sha256": {
+      "description": "For branch-receipt-v1 proofs, SHA-256 of the exact referenced receipt file bytes. Historical unversioned values retain their legacy meaning.",
       "type": [
         "string",
         "null"
       ],
       "maxLength": 64
     },
+    "proof_version": { "const": "branch-receipt-v1" },
+    "task_ref": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" },
+    "task_sha256": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" },
+    "receipt_ref": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" },
+    "draft_ref": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" },
+    "draft_sha256": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" },
+    "candidate_artifact_ref": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/uri" },
+    "candidate_artifact_sha256": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" },
+    "execution_sha256": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" },
+    "receipt_content_sha256": { "$ref": "https://recursive-dev-loop.dev/schemas/common.v1.schema.json#/$defs/sha256" },
     "provenance_valid": {
       "type": "boolean"
     }
