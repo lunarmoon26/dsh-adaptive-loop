@@ -20,7 +20,7 @@ import { readProposalFile, transitionProposal } from "./improvement.js";
 import { initWorkspace } from "./init.js";
 import { installUserGlobal } from "./install.js";
 import { evaluateOptimizerCandidate, prepareOptimizerExchange } from "./optimizer-adapter.js";
-import { publishJsonExclusive, readJsonFile, sha256, writeJsonAtomic } from "./json.js";
+import { publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
 import { prepareProposePayload, runPropose } from "./propose.js";
 import { resetExecute, resetStatus } from "./reset.js";
@@ -1019,7 +1019,9 @@ async function optimizePrepareCommand(argv: readonly string[], io: CliIo): Promi
     store: oneOption(parsed, "store") ?? ".dal/runs",
   });
   const exchangePath = resolve(process.cwd(), prepared.exchangePath);
-  await writeJsonAtomic(exchangePath, prepared.exchange);
+  if (!(await publishJsonExclusive(exchangePath, prepared.exchange))) {
+    throw new DalError("OPTIMIZE_EXCHANGE_CONFLICT", "Prepared exchange output already exists; it was not replaced");
+  }
   printJson(io, {
     status: "prepared",
     exchange_id: prepared.exchange.exchange_id,
@@ -1039,17 +1041,14 @@ async function optimizeEvaluateCommand(argv: readonly string[], io: CliIo): Prom
     0,
     "optimize evaluate --exchange <file> --candidate <file> --output <verdict-file> [--candidate-out <path>]",
   );
+  const candidateOut = oneOption(parsed, "candidate-out");
+  const output = resolve(process.cwd(), requiredOption(parsed, "output"));
   const result = await evaluateOptimizerCandidate({
     exchangePath: requiredOption(parsed, "exchange"),
     candidatePath: requiredOption(parsed, "candidate"),
+    verdictOut: output,
+    ...(candidateOut === undefined ? {} : { candidateOut }),
   });
-  const output = resolve(process.cwd(), requiredOption(parsed, "output"));
-  await publishJsonExclusive(output, result.verdict);
-  const candidateOut = oneOption(parsed, "candidate-out");
-  if (candidateOut !== undefined && result.candidateText !== null) {
-    const target = resolve(process.cwd(), candidateOut);
-    await writeJsonAtomic(target, result.candidateText);
-  }
   printJson(io, {
     status: result.verdict.verdict,
     verdict_id: result.verdict.verdict_id,

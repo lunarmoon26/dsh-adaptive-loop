@@ -69,7 +69,7 @@ Use `pnpm run dal --help` for exact options.
 
 The `plugins/` tree ships one dsh bundle (`@lunarmoon26/dal-modes`) with separable run and workbench rows:
 
-- **Run mode** (`@lunarmoon26/dal-run-record`) — on by default: projects session events into privacy-safe run records under `.dal/runs` (counts, digests, outcome and failure codes; never prompt text, message content, tool arguments, or results).
+- **Run mode** (`@lunarmoon26/dal-run-record`) — on by default: projects session events into privacy-safe run records under `.dal/runs` (counts, token usage, digests, outcome and failure codes; never prompt text, message content, tool arguments, or results). An optional explicit `controllerObservation` profile configuration enrolls only closed final records into one pinned controller batch; the shipped bundle leaves it unset.
 - **Improvement mode** (`@lunarmoon26/dal-improve-tools`) — off by default: workbench tools over the deterministic dal CLI (cluster, prepare payload, summarize, branch evaluate, reset status). Nothing approval-gated — `propose run` and `reset execute` stay CLI-only.
 - **HMR candidate staging** (`@lunarmoon26/dal-hmr-candidate`) — off by default and code-quarantined: stages fixed plugin/config-module files and reports digests, but rejects application before approval verification or any live-file write. It admits no runtime generation.
 - **G2 candidate** (`@lunarmoon26/dal-unknown-effect-guard`) — off by default: per-agent pre-execution lock for unknown workflow-effect retries. It is source/test evidence only, not an installed or applied generation.

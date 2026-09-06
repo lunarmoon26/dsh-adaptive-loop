@@ -144,7 +144,33 @@ Cluster output feeds a later human-reviewed proposal; the clustering command its
 
 ## Run-to-run controller observation
 
-After a complete batch is present in the run store, estimate its observation state with a reviewed controller policy:
+The shipped mode bundle records unbatched evidence by default. After separately approving the exact profile mount/configuration change, a reviewed profile can configure its `dal-run-record` row with explicit controller provenance:
+
+```yaml
+config:
+  storeRoot: .dal/runs
+  controllerObservation:
+    taskSet: tau-control
+    batchId: batch-control-001
+    toolVersions:
+      - { name: bash, version: "5.2.0" }
+    model: { id: deepseek-v4-flash, version: deepseek-official }
+    promptSha256: <64-lowercase-hex>
+    harnessSha256: <64-lowercase-hex>
+    modelPatchSha256: null
+    graderVersion: null
+    contextPolicySha256: <64-lowercase-hex>
+    inferenceParameters:
+      - { name: temperature, value: "0.2" }
+    harnessPins:
+      - { surface: harness_code, uri: repo://plugins/example/src/index.ts, sha256: <64-lowercase-hex> }
+```
+
+Replace every digest placeholder with the reviewed artifact digest. Configured prompt, model/provider, normalized inference names (`reasoning_effort`, `temperature`, `max_tokens`), and every used canonical tool identity must match all observed events; returning to the configured value after a mismatch does not restore eligibility. Per-session seeds come from request configuration. Invalid or privacy-unsafe configuration fails plugin startup; privacy-unsafe completed metadata is rejected before persistence. A runtime mismatch, incomplete session, unsupported terminal reason, or flush checkpoint remains unbatched rather than claiming the configured generation; independently bound launcher pins are retained. Missing or unsupported reasons are recorded as aborted. Only a final record after a recognized `turn/end` joins the batch. The recorder still supplies no business verdict or deterministic checks.
+
+After the complete batch is present in the run store, estimate its observation state with a reviewed controller policy whose `task_set` matches the recorder configuration:
+
+New estimates require policy version 1.1.0 and stable, policy-qualified launcher-owned runtime evidence. Configuration alone is not attestation. Bound launcher harness/model-patch/harness-pin identities must match the configured pins; conflicts or transitions leave the record unbatched. Current DSH does not yet supply the authoritative producer, and HMR admission remains quarantined.
 
 ```sh
 pnpm run dal control estimate \

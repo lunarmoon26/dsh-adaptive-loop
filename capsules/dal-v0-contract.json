@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.6.0",
+  "capsule_version": "1.7.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
-  "checked_at": "2026-09-05",
+  "checked_at": "2026-09-06",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
-      "sha256": "583f118a57fbd0f0cb382c41147dd8d6df653901f03731ccfd85ca9c866e0294",
+      "revision": "dal-v0-recorder-staging-integration-2026-09-06",
+      "sha256": "9016e0218d144b11ec6f2f1b169073d51da3a454fe055852871c0c55244ab5bc",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -90,7 +90,7 @@
     },
     {
       "id": "claim-controller-observation",
-      "text": "Controller estimation publishes deterministic observation-only state from one compatible task batch and requires stable, policy-qualified, repository-verified runtime generation evidence in addition to the legacy harness pin; insufficient evidence cannot invoke adaptation or grant authority.",
+      "text": "Controller estimation publishes deterministic observation-only state from one compatible task batch and requires stable, policy-qualified, repository-verified runtime generation evidence in addition to the legacy harness pin; the optional run-mode bridge enrolls only compatible closed terminal records without replacing attestation, and insufficient evidence cannot invoke adaptation or grant authority.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",

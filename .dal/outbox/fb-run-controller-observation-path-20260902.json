@@ -1,0 +1,194 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-run-controller-observation-path-20260902",
+  "change_id": "chg-run-controller-observation-path-20260902",
+  "created_at": "2026-09-02T21:08:36.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "api-coding-agent" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "8a58e50f98783c05cc63bf627153ae38ca27214c",
+      "branch": "feat/run-controller-observation-path",
+      "dirty": true
+    },
+    "task_ref": null
+  },
+  "goal": "Connect privacy-safe terminal run-mode records to controller estimation without manual fixture rewriting.",
+  "acceptance_criteria": [
+    {
+      "id": "ac-terminal-direct-estimate",
+      "statement": "Two compatible closed final session records feed one controller estimate directly.",
+      "result": "passed",
+      "evidence": ["ev-focused-bridge-test", "ev-full-gate"]
+    },
+    {
+      "id": "ac-noneligible-unbatched",
+      "statement": "Checkpoints, incomplete sessions, unsupported reasons, non-canonical tools, and context mismatches remain unbatched.",
+      "result": "passed",
+      "evidence": ["ev-focused-bridge-test"]
+    },
+    {
+      "id": "ac-private-schema-valid",
+      "statement": "Emitted records validate, persist token counts, reject unsafe metadata, and exclude raw session payloads.",
+      "result": "passed",
+      "evidence": ["ev-focused-bridge-test", "ev-run-schema"]
+    },
+    {
+      "id": "ac-no-new-authority",
+      "statement": "The bridge remains recording-only and performs no model, proposal, application, promotion, or rollback action.",
+      "result": "passed",
+      "evidence": ["ev-control-contract", "ev-diff-review"]
+    },
+    {
+      "id": "ac-repository-closure",
+      "statement": "Canonical documentation, capsule digests, evidence-store tracking, typecheck, build, tests, policy, and evaluations agree.",
+      "result": "passed",
+      "evidence": ["ev-full-gate", "ev-requirement-evidence"]
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "The run recorder now emits pinned, controller-eligible closed terminal records while failing closed for ineligible or unsafe observations.",
+    "exception": null
+  },
+  "what_worked": [
+    "The existing run-record and controller seams supported a direct integration without changing controller selection semantics.",
+    "Focused generated-record tests caught checkpoint duplication, context drift, unsupported terminal reasons, and privacy regressions.",
+    "The complete repository gate passed after capsule and evidence synchronization."
+  ],
+  "what_failed": [
+    "Early review iterations found disposal, terminal-reason, identifier, privacy, and provenance edge cases; each was corrected before the final gate."
+  ],
+  "calls": [
+    {
+      "sequence": 1,
+      "kind": "tool",
+      "name": "vitest",
+      "purpose": "Verify recorder projection, terminal eligibility, direct controller estimation, and initialization tracking.",
+      "outcome": "succeeded",
+      "duration_ms": 1420,
+      "evidence": ["ev-focused-bridge-test"]
+    },
+    {
+      "sequence": 2,
+      "kind": "tool",
+      "name": "typescript",
+      "purpose": "Typecheck the repository and standalone plugin packages.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-full-gate"]
+    },
+    {
+      "sequence": 3,
+      "kind": "plugin",
+      "name": "cavecrew-reviewer",
+      "purpose": "Audit the complete diff for correctness, privacy, provenance, and regression risks.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-diff-review"]
+    },
+    {
+      "sequence": 4,
+      "kind": "harness",
+      "name": "pnpm-check",
+      "purpose": "Run typecheck, build, all tests, capsule validation, policy evaluation, and benchmark evaluation.",
+      "outcome": "succeeded",
+      "duration_ms": null,
+      "evidence": ["ev-full-gate"]
+    }
+  ],
+  "failures_and_inefficiencies": [
+    {
+      "id": "fi-review-edge-cases",
+      "category": "verification",
+      "summary": "Several fail-closed edge cases required iterative review before the implementation was complete.",
+      "impact": "medium",
+      "recoverable": true,
+      "suggested_action": "Keep the focused generated-record regressions and automated diff review in future recorder changes.",
+      "evidence": ["ev-focused-bridge-test", "ev-diff-review"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev-focused-bridge-test",
+      "kind": "test",
+      "uri": "command://vitest-plugin-modes-init",
+      "summary": "Focused recorder and initialization suites passed 18 tests.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    },
+    {
+      "id": "ev-full-gate",
+      "kind": "command",
+      "uri": "command://pnpm-run-check",
+      "summary": "The complete gate passed with 32 test files, 197 passing tests, 6 opt-in skips, valid capsules, and passing policy and evaluation scorecards.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    },
+    {
+      "id": "ev-diff-review",
+      "kind": "file",
+      "uri": "repo://plugins/dal-run-record/src/index.ts",
+      "summary": "Final automated diff review reported no findings.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    },
+    {
+      "id": "ev-run-schema",
+      "kind": "file",
+      "uri": "repo://schemas/run-record.v1.schema.json",
+      "summary": "The persisted run contract represents optional aggregate token counters.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    },
+    {
+      "id": "ev-control-contract",
+      "kind": "file",
+      "uri": "repo://docs/control-governed-evolution.md",
+      "summary": "The canonical contract defines terminal enrollment and preserves the observation-only authority boundary.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    },
+    {
+      "id": "ev-requirement-evidence",
+      "kind": "file",
+      "uri": "repo://docs/requirement-evidence.md",
+      "summary": "Requirement evidence records the direct bridge, exclusions, privacy behavior, and current repository gate.",
+      "sha256": null,
+      "observed_at": "2026-09-02T21:08:36.000Z"
+    }
+  ],
+  "uncertainty": [
+    {
+      "id": "un-declared-runtime-pins",
+      "statement": "Harness, model-patch, and context-policy pins unavailable from session events remain human-configured provenance declarations.",
+      "level": "medium",
+      "resolution": "A future approved runtime integration can bind these values to a signed or immutable DSH generation manifest.",
+      "evidence": ["ev-control-contract"]
+    },
+    {
+      "id": "un-live-dsh-lifecycle",
+      "statement": "The bridge was exercised through generated Cordis/session events, not an installed DSH profile generation.",
+      "level": "medium",
+      "resolution": "Separately approve an exact plugin mount and run a real lifecycle probe before claiming mounted-runtime proof.",
+      "evidence": ["ev-focused-bridge-test"]
+    }
+  ],
+  "human_review": {
+    "status": "not_requested",
+    "reviewer": null,
+    "reviewed_at": null,
+    "notes": ["Automated review is recorded as verification, not human approval."],
+    "approval_refs": []
+  },
+  "privacy": {
+    "classification": "internal",
+    "retention": "local-only",
+    "tags": ["no-secrets", "no-pii", "no-transcripts", "safe-summaries-only"],
+    "contains_personal_data": false,
+    "redactions": []
+  }
+}

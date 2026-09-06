@@ -8,7 +8,7 @@
     "lib"
   ],
   "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
-  "description": "DSH Adaptive Loop run mode: projects dsh session events, runtime attestation, and stable HMR candidate eligibility into privacy-safe run records.",
+  "description": "DSH Adaptive Loop run mode: projects privacy-safe session observations and launcher-owned runtime attestation, with optional terminal controller batches. Recording only; HMR admission remains quarantined.",
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"

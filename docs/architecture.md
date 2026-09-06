@@ -147,6 +147,7 @@ Current significant decisions: [`decisions/0003-purpose-specific-approved-execut
 3. It rejects unattested, unstable, or under-qualified sessions, loads each canonical repository-local evidence document and referenced manifest, recomputes the RFC 8785 digest, then normalizes and compares context and generation identities. Seeds remain observations; mixed, unpinned, unavailable, or mismatched evidence fails closed.
 4. It computes harness, business, or named-check proportions with explicit exclusions and 95% Wilson intervals.
 5. It derives estimate time from policy/run evidence, binds the state ID to the complete canonical snapshot, and publishes the snapshot exclusively. A ready or insufficient state changes no proposal, budget, harness, or runtime.
+6. An optional run-mode profile configuration supplies the batch and pinned observation context. Only a closed terminal record with no observed contradiction carries the batch ID; checkpoints and unpinned/default recording remain outside controller selection.
 
 ## Data and privacy
 
@@ -186,7 +187,7 @@ The evidence store stays repository-local in every tier; a user-level store for 
 The intended operation is a batch, human-gated loop, not continuous autonomous self-improvement:
 
 - **Run phase.** Agents operate normally in a workspace that contains the team's code or workflow files, project `.agents/skills`, and optional project `.dsh/` plugins/tools. The shipped mode bundle keeps run recording enabled and improvement tools disabled, but neither mode runs unless separately mounted into a profile. Without that deployment, each task ends with the agent writing its structured feedback and, for failure evidence, a run record; the optional run-record plugin provides privacy-safe lifecycle capture after approved mounting.
-- **Team sharing via VCS.** The evidence stores `.dal/outbox`, `.dal/store`, `.dal/runs`, and `.dal/clusters` are tracked in version control so everyone working in the workspace logs into the same history. Records are immutable per ID, so parallel writers only collide on duplicated IDs (a designed failure). Check, demo, and test artifacts under `.dal/` remain ignored.
+- **Team sharing via VCS.** The evidence stores `.dal/outbox`, `.dal/store`, `.dal/runs`, `.dal/clusters`, and `.dal/control-states` are tracked in version control so everyone working in the workspace logs into the same history. Records are immutable per ID, so parallel writers only collide on duplicated IDs (a designed failure). Check, demo, and test artifacts under `.dal/` remain ignored.
 - **Reconcile phase.** One human — a team lead or maintainer — runs `dal feedback summary` and `dal cluster run` over the accumulated records, reviews the clusters, drives proposals through the staged lifecycle (including the falsifiable prediction), and evaluates through deterministic or isolated evaluator paths. HMR staging is authoring state only; only a later human-controlled deployment can promote a skill/tool/harness change, and the proposal's `applied -> measured` transition records it.
 
 This split keeps agents cheap and uninterrupted during the day and concentrates evaluation, governance, and application authority in a single human-reviewed batch.

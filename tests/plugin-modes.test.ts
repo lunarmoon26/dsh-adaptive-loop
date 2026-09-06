@@ -2,13 +2,14 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { access, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 
 import { Context } from "@deepseek-ai/cordis";
 import { describe, expect, it } from "vitest";
 
 import {
   apply as applyRunRecord,
+  type ControllerObservationConfig,
   RunSessionRecorder,
   type CandidateGenerationLike,
   type RuntimeGenerationSourceLike,
@@ -16,8 +17,10 @@ import {
 import { apply as applyImproveTools } from "../plugins/dal-improve-tools/src/index.js";
 import { SCHEMA_IDS, assertSchema } from "../src/schema.js";
 import { clusterRunRecords } from "../src/clustering.js";
-import { ingestRunRecord } from "../src/runs.js";
+import { estimateControllerState } from "../src/control/index.js";
+import { ingestRunRecord, validateRunRecord } from "../src/runs.js";
 import { sha256 } from "../src/json.js";
+import type { RuntimeGenerationEvidence } from "../src/types.js";
 
 function sha(text: string): string {
   return createHash("sha256").update(text).digest("hex");
@@ -43,6 +46,28 @@ async function recordsIn(root: string): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+function controllerObservation(systemText: string): ControllerObservationConfig {
+  return {
+    taskSet: "plugin-controller",
+    batchId: "batch-plugin-001",
+    toolVersions: [{ name: "bash", version: "5.2.0" }],
+    model: { id: "deepseek-v4-flash", version: "deepseek-official" },
+    promptSha256: sha(systemText),
+    harnessSha256: "1".repeat(64),
+    modelPatchSha256: null,
+    graderVersion: null,
+    contextPolicySha256: sha('{"policy":"stable"}\n'),
+    inferenceParameters: [{ name: "temperature", value: "0.2" }],
+    harnessPins: [
+      {
+        surface: "harness_code",
+        uri: "repo://plugins/dal-run-record/src/index.ts",
+        sha256: "2".repeat(64),
+      },
+    ],
+  };
 }
 
 function runtimeGenerationSource(): RuntimeGenerationSourceLike & { advance(): void } {
@@ -89,19 +114,27 @@ describe("run-mode recorder", () => {
     recorder.onEvent(session(sessionId, root), event("step/start", { turn: 1, step: 1 }, 1));
     recorder.onEvent(session(sessionId, root), event("request/header", { header: { config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.7 }, system: systemText } }, 2));
     recorder.onEvent(session(sessionId, root), event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 3));
-    recorder.onEvent(session(sessionId, root), event("tool/call", { turn: 1, step: 1, callId: "c1", name: "bash", arguments: '{"command":"rm -rf / secret"}' }, 4));
-    recorder.onEvent(session(sessionId, root), event("tool/result", { turn: 1, step: 1, message: { content: "secret output" }, error: { name: "ToolError", code: "TIMEOUT_EXCEEDED" } }, 5));
-    recorder.onEvent(session(sessionId, root), event("turn/end", { turn: 1, reason: { kind: "error", error: { code: "TIMEOUT_EXCEEDED" } } }, 6));
+    recorder.onEvent(session(sessionId, root), event("assistant/message", { content: "secret answer", usage: { inputTokens: 12, outputTokens: 5, cacheReadTokens: 3, cacheWriteTokens: 2, reasoningTokens: 4 } }, 4));
+    recorder.onEvent(session(sessionId, root), event("tool/call", { turn: 1, step: 1, callId: "c1", name: "bash", arguments: '{"command":"rm -rf / secret"}' }, 5));
+    recorder.onEvent(session(sessionId, root), event("tool/result", { turn: 1, step: 1, message: { content: "secret output" }, error: { name: "ToolError", code: "TIMEOUT_EXCEEDED" } }, 6));
+    recorder.onEvent(session(sessionId, root), event("turn/end", { turn: 1, reason: { kind: "error", error: { code: "TIMEOUT_EXCEEDED" } } }, 7));
     await recorder.dispose(session(sessionId, root));
 
     const files = await recordsIn(root);
-    expect(files).toEqual([`run-${sessionId}-s6.final.json`]);
+    expect(files).toEqual([`run-${sessionId}-s7.final.json`]);
     const record = JSON.parse(await readFile(join(root, ".dal", "runs", files[0]!), "utf8")) as Record<string, unknown>;
     await expect(assertSchema(SCHEMA_IDS.runRecord, record, "Run record")).resolves.toBeUndefined();
 
     expect(record.outcome).toBe("failed");
     expect(record.failure).toMatchObject({ category: "timeout", code: "timeout_exceeded" });
-    expect(record.metrics).toMatchObject({ tool_calls: 1 });
+    expect(record.metrics).toMatchObject({
+      tool_calls: 1,
+      input_tokens: 12,
+      output_tokens: 5,
+      cache_read_tokens: 3,
+      cache_write_tokens: 2,
+      reasoning_tokens: 4,
+    });
     expect(record.context).toMatchObject({
       prompt_sha256: sha(systemText),
       model: { id: "deepseek-v4-flash", version: "deepseek-official" },
@@ -112,8 +145,9 @@ describe("run-mode recorder", () => {
     ]);
     expect(record.evidence).toEqual([`dsh-session://${sessionId}`]);
     expect(record.business_outcome).toBeNull();
+    expect(record.batch_id).toBeNull();
     expect(record.trace).toEqual([
-      { seq: 4, turn: 1, step: 1, tool: "bash", outcome: "timeout", code: "TIMEOUT_EXCEEDED" },
+      { seq: 5, turn: 1, step: 1, tool: "bash", outcome: "timeout", code: "TIMEOUT_EXCEEDED" },
     ]);
 
     const serialized = JSON.stringify(record);
@@ -139,6 +173,215 @@ describe("run-mode recorder", () => {
     expect(checkpoint.outcome).toBe("succeeded");
     expect(final.outcome).toBe("blocked");
     expect(final.failure).toBeNull();
+  });
+
+  it("feeds closed terminal records directly into one controller batch", async () => {
+    const root = await workspace();
+    const systemText = "stable controller prompt";
+    const observation = controllerObservation(systemText);
+    const source = runtimeGenerationSource();
+    const checkRoot = resolve(import.meta.dirname, "..", ".dal", "check");
+    await mkdir(checkRoot, { recursive: true });
+    const evidenceRoot = await mkdtemp(join(checkRoot, "recorder-bridge-"));
+    const bindingSource: RuntimeGenerationSourceLike = {
+      transitionSequence: () => source.transitionSequence(),
+      bindSession: (active) => ({
+        ...source.bindSession(active)!,
+        harness_sha256: observation.harnessSha256,
+        model_patch_sha256: observation.modelPatchSha256,
+        harness_pins: observation.harnessPins,
+        evidence_uri: `repo://${relative(resolve(import.meta.dirname, ".."), join(evidenceRoot, `${active.id}.json`))}`,
+      }),
+    };
+    const recorder = new RunSessionRecorder({
+      storeRoot: ".dal/runs",
+      maxErrorFacts: 64,
+      controllerObservation: observation,
+    }, bindingSource);
+    await mkdir(join(root, "config"));
+    await writeFile(join(root, "config", "policy.v1.json"), '{"policy":"stable"}\n');
+
+    for (const [index, reason] of ["completed", "error"].entries()) {
+      const id = `controller-${index + 1}`;
+      const active = session(id, root);
+      const evidence = JSON.parse(await readFile(
+        resolve(import.meta.dirname, "fixtures", "runtime-generation", "evidence-verified.json"), "utf8",
+      )) as RuntimeGenerationEvidence;
+      evidence.session_binding.session_id_sha256 = sha(id);
+      await writeFile(join(evidenceRoot, `${id}.json`), JSON.stringify(evidence));
+      recorder.create(active);
+      recorder.onEvent(active, event("turn/start", { turn: 1 }, 0));
+      recorder.onEvent(
+        active,
+        event(
+          "request/header",
+          {
+            header: {
+              config: {
+                provider: "deepseek-official",
+                model: "deepseek-v4-flash",
+                temperature: 0.2,
+                seed: 101 + index,
+              },
+              system: systemText,
+            },
+          },
+          1,
+        ),
+      );
+      recorder.onEvent(active, event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 2));
+      recorder.onEvent(active, event("tool/call", { name: "bash" }, 3));
+      recorder.onEvent(active, event("tool/result", {}, 4));
+      recorder.onEvent(active, event("turn/end", { turn: 1, reason: { kind: reason } }, 5));
+      if (index === 0) await recorder.flush(active);
+      await recorder.dispose(active);
+    }
+
+    const files = (await recordsIn(root)).sort();
+    expect(files).toHaveLength(3);
+    const records = await Promise.all(
+      files.map(async (file) => {
+        const raw = await readFile(join(root, ".dal", "runs", file), "utf8");
+        return { file, record: await validateRunRecord(JSON.parse(raw), raw) };
+      }),
+    );
+    const checkpoint = records.find(({ file }) => !file.includes(".final."))!.record;
+    expect(checkpoint.batch_id).toBeNull();
+    expect(checkpoint.context.harness_sha256).toBe(observation.harnessSha256);
+    expect(checkpoint.runtime_generation?.stable_for_session).toBe(false);
+    const terminal = records.filter(({ file }) => file.includes(".final.")).map(({ record }) => record);
+    expect(terminal.map((record) => record.batch_id)).toEqual(["batch-plugin-001", "batch-plugin-001"]);
+    expect(terminal.map((record) => record.context.seeds)).toEqual([[101], [102]]);
+    expect(terminal.every((record) => record.context.harness_sha256 === "1".repeat(64))).toBe(true);
+    expect(terminal.every((record) => record.context.context_policy_sha256 === sha('{"policy":"stable"}\n'))).toBe(true);
+    expect(terminal.every((record) => record.runtime_generation?.stable_for_session)).toBe(true);
+    expect(terminal.every((record) => record.context.candidate_generation?.evaluation_eligible === false)).toBe(true);
+
+    const estimated = await estimateControllerState({
+      policyPath: resolve(import.meta.dirname, "fixtures", "controller", "run-mode-controller-policy.json"),
+      batchId: "batch-plugin-001",
+      runs: join(root, ".dal", "runs"),
+      store: join(root, ".dal", "control-states"),
+    });
+    expect(estimated.state.status).toBe("ready");
+    expect(estimated.state.observations).toMatchObject({ run_count: 2, seeds: [101, 102] });
+    expect(estimated.state.metrics).toEqual([
+      expect.objectContaining({ metric_id: "harness-success", successes: 1, failures: 1, sample_count: 2 }),
+    ]);
+  });
+
+  it.each(["missing", "conflicting", "transition"])("keeps %s runtime evidence from qualifying configured observations", async (mode) => {
+    const root = await workspace();
+    const systemText = "stable controller prompt";
+    const observation = controllerObservation(systemText);
+    const source = runtimeGenerationSource();
+    if (mode === "transition") {
+      const binding = source.bindSession(session("controller-runtime", root))!;
+      observation.harnessSha256 = binding.harness_sha256;
+      observation.harnessPins = binding.harness_pins;
+    }
+    const recorder = new RunSessionRecorder({ controllerObservation: observation }, mode === "missing" ? undefined : source);
+    const active = session("controller-runtime", root);
+    recorder.create(active);
+    recorder.onEvent(active, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(active, event("request/header", { header: {
+      config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.2 }, system: systemText,
+    } }, 1));
+    if (mode === "transition") source.advance();
+    recorder.onEvent(active, event("turn/end", { reason: { kind: "completed" } }, 2));
+    await recorder.dispose(active);
+    const raw = await readFile(join(root, ".dal", "runs", (await recordsIn(root))[0]!), "utf8");
+    const record = await validateRunRecord(JSON.parse(raw), raw);
+    expect(record.context.candidate_generation?.evaluation_eligible).toBe(false);
+    if (mode === "missing") {
+      expect(record.runtime_generation).toBeUndefined();
+      await expect(estimateControllerState({
+        policyPath: resolve(import.meta.dirname, "fixtures", "controller", "run-mode-controller-policy.json"),
+        batchId: observation.batchId,
+        runs: join(root, ".dal", "runs"),
+        store: join(root, ".dal", "control-states"),
+      })).rejects.toMatchObject({ code: "CONTROL_RUNTIME_GENERATION_UNATTESTED" });
+    } else {
+      expect(record.batch_id).toBeNull();
+      expect(record.context.harness_sha256).toBe("a".repeat(64));
+      expect(record.runtime_generation?.stable_for_session).toBe(mode !== "transition");
+    }
+  });
+
+  it("keeps incomplete, unsupported, and observed-context-contradicting final records out of a configured batch", async () => {
+    const root = await workspace();
+    const configuredPrompt = "configured prompt";
+    const recorder = new RunSessionRecorder({ controllerObservation: controllerObservation(configuredPrompt) });
+
+    const mismatched = session("controller-mismatch", root);
+    recorder.onEvent(mismatched, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(
+      mismatched,
+      event("request/header", { header: { config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.2 }, system: "" } }, 1),
+    );
+    recorder.onEvent(
+      mismatched,
+      event("request/header", { header: { config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.2 }, system: configuredPrompt } }, 2),
+    );
+    recorder.onEvent(mismatched, event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 3));
+    recorder.onEvent(mismatched, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 4));
+    await recorder.dispose(mismatched);
+
+    const incomplete = session("controller-incomplete", root);
+    recorder.onEvent(incomplete, event("turn/start", { turn: 1 }, 0));
+    await recorder.flush(incomplete);
+    await recorder.dispose(incomplete);
+
+    const nonCanonicalTool = session("controller-tool-mismatch", root);
+    recorder.onEvent(nonCanonicalTool, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(
+      nonCanonicalTool,
+      event("request/header", { header: { config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.2 }, system: configuredPrompt } }, 1),
+    );
+    recorder.onEvent(nonCanonicalTool, event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 2));
+    recorder.onEvent(nonCanonicalTool, event("tool/call", { name: "bash!" }, 3));
+    recorder.onEvent(nonCanonicalTool, event("tool/result", {}, 4));
+    recorder.onEvent(nonCanonicalTool, event("turn/end", { turn: 1, reason: { kind: "completed" } }, 5));
+    await recorder.dispose(nonCanonicalTool);
+
+    const unsupportedReason = session("controller-unsupported", root);
+    recorder.onEvent(unsupportedReason, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(
+      unsupportedReason,
+      event("request/header", { header: { config: { provider: "deepseek-official", model: "deepseek-v4-flash", temperature: 0.2 }, system: configuredPrompt } }, 1),
+    );
+    recorder.onEvent(unsupportedReason, event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 2));
+    recorder.onEvent(unsupportedReason, event("turn/end", { turn: 1, reason: { kind: "unsupported" } }, 3));
+    await recorder.dispose(unsupportedReason);
+
+    const files = (await recordsIn(root)).sort();
+    expect(files).toEqual([
+      "run-controller-incomplete-s0.final.json",
+      "run-controller-mismatch-s4.final.json",
+      "run-controller-tool-mismatch-s5.final.json",
+      "run-controller-unsupported-s3.final.json",
+    ]);
+    for (const file of files) {
+      const raw = await readFile(join(root, ".dal", "runs", file), "utf8");
+      const record = await validateRunRecord(JSON.parse(raw), raw);
+      expect(record.batch_id).toBeNull();
+      expect(record.context.harness_sha256).toBeNull();
+      if (file.includes("unsupported") || file.includes("incomplete")) expect(record.outcome).toBe("aborted");
+    }
+  });
+
+  it("rejects malformed controller observation pins before subscribing or recording", () => {
+    const observation = controllerObservation("prompt");
+    observation.harnessSha256 = "not-a-digest";
+    expect(() => new RunSessionRecorder({ controllerObservation: observation })).toThrow(
+      "controllerObservation.harnessSha256 must be a lowercase sha256 digest",
+    );
+
+    const sensitive = controllerObservation("prompt");
+    sensitive.inferenceParameters[0]!.value = `sk-proj-${"a".repeat(24)}`;
+    expect(() => new RunSessionRecorder({ controllerObservation: sensitive })).toThrow(
+      "controllerObservation contains likely secret or personal data; nothing was persisted",
+    );
   });
 
   it("skips sessions without a cwd and never throws on malformed events", async () => {

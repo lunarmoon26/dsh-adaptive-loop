@@ -1,0 +1,25 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/controller-policy.v1.schema.json",
+  "schema_version": "1.1.0",
+  "policy_id": "ctlpol-run-mode-bridge",
+  "created_at": "2026-09-02T00:00:00.000Z",
+  "task_class": "plugin-session",
+  "task_set": "plugin-controller",
+  "runtime_generation": {
+    "digest_profile": "rfc8785-jcs-sha256-v1",
+    "minimum_assurance": "verified"
+  },
+  "estimator": {
+    "id": "dal-wilson-score-v1",
+    "confidence_level": 0.95
+  },
+  "metrics": [
+    {
+      "metric_id": "harness-success",
+      "source": { "kind": "harness_outcome" },
+      "target": 0.9,
+      "deadband": 0.05,
+      "minimum_samples": 2
+    }
+  ]
+}

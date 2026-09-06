@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
-import { dirname, relative, resolve, sep } from "node:path";
+import { lstat, mkdir, readFile, readdir, realpath, writeFile } from "node:fs/promises";
+import { dirname, extname, relative, resolve, sep } from "node:path";
 
 import { DalError } from "./errors.js";
-import { prettyJson, readJsonFile, sha256 } from "./json.js";
+import { prettyJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
 import { assertSchema, SCHEMA_IDS } from "./schema.js";
 import type { OptimizerCandidate, OptimizerExchange, OptimizerTrainingSet, OptimizerVerdict, RunRecord } from "./types.js";
@@ -98,8 +98,7 @@ function episodeFrom(record: RunRecord): OptimizerTrainingSet["episodes"][number
 }
 
 export async function prepareOptimizerExchange(options: PrepareOptions): Promise<PreparedExchange> {
-  const skillText = await readFile(options.skillPath, "utf8");
-  const skillDigest = sha256(skillText);
+  const skillDigest = sha256(await readFile(options.skillPath));
   const records = await readRunRecords(resolve(process.cwd(), options.store));
   const ordered = [...records].sort((left, right) => {
     const rank = (record: RunRecord): number =>
@@ -162,7 +161,7 @@ export async function prepareOptimizerExchange(options: PrepareOptions): Promise
   return {
     exchange,
     trainingSet,
-    exchangePath: ".dal/check/optimizer-exchange.json",
+    exchangePath: `.dal/check/${exchangeId}.json`,
     trainingSetPath: relative(process.cwd(), trainingSetPath),
   };
 }
@@ -170,6 +169,8 @@ export async function prepareOptimizerExchange(options: PrepareOptions): Promise
 export interface EvaluateOptions {
   exchangePath: string;
   candidatePath: string;
+  candidateOut?: string;
+  verdictOut?: string;
 }
 
 export interface EvaluationResult {
@@ -245,16 +246,25 @@ export async function evaluateOptimizerCandidate(options: EvaluateOptions): Prom
   // base skill. The exchange target is repo://-relative; resolve from cwd.
   const baseRel = exchange.target.artifact_uri.replace(/^repo:\/\//, "");
   const basePath = resolve(process.cwd(), baseRel);
-  let baseText: string;
+  let baseBytes: Buffer;
   try {
-    baseText = await readFile(basePath, "utf8");
+    baseBytes = await readFile(basePath);
   } catch {
     checks.push(check("base-readable", false, `exchange target skill is not readable at ${baseRel}`));
     const verdict = await finalizeVerdict(candidate, exchange, checks, null);
-    return { verdict, candidateText: null };
+    return publishEvaluation({ verdict, candidateText: null }, options);
   }
 
-  let reconstruction = baseText;
+  checks.push(check(
+    "base-content-digest",
+    sha256(baseBytes) === exchange.target.base_sha256,
+    "on-disk base bytes must match the exchange target digest before reconstruction",
+  ));
+  if (checks.some((entry) => !entry.pass)) {
+    return publishEvaluation({ verdict: await finalizeVerdict(candidate, exchange, checks, null), candidateText: null }, options);
+  }
+
+  let reconstruction = baseBytes.toString("utf8");
   let lostAnchor: string | null = null;
   for (const edit of candidate.edits) {
     if (!reconstruction.includes(edit.before)) {
@@ -277,7 +287,44 @@ export async function evaluateOptimizerCandidate(options: EvaluateOptions): Prom
   );
 
   const verdict = await finalizeVerdict(candidate, exchange, checks, lostAnchor === null ? candidateDigest : null);
-  return { verdict, candidateText: lostAnchor === null ? reconstruction : null };
+  const candidateText = verdict.verdict === "valid" ? reconstruction : null;
+  return publishEvaluation({ verdict, candidateText }, options);
+}
+
+async function publishEvaluation(result: EvaluationResult, options: EvaluateOptions): Promise<EvaluationResult> {
+  const { candidateText } = result;
+  if (options.verdictOut !== undefined && !(await publishJsonExclusive(options.verdictOut, result.verdict))) {
+    throw new DalError("OPTIMIZE_OUTPUT_CONFLICT", "Verdict output already exists; no candidate was staged");
+  }
+  if (options.candidateOut !== undefined && candidateText !== null) {
+    // Only this validated reconstruction can reach the confined staging write.
+    const workspace = await realpath(process.cwd());
+    const stagingRoot = resolve(workspace, ".dal", "candidates");
+    const destination = resolve(workspace, options.candidateOut);
+    if (dirname(destination) !== stagingRoot || extname(destination) !== ".md") {
+      throw new DalError("OPTIMIZE_STAGING_PATH_DENIED", "Candidate output must be a direct .md file under .dal/candidates/");
+    }
+    for (const directory of [resolve(workspace, ".dal"), stagingRoot]) {
+      try {
+        await mkdir(directory, { mode: 0o700 });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      }
+      const stat = await lstat(directory);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        throw new DalError("OPTIMIZE_STAGING_PATH_DENIED", "Candidate staging directories must be real directories, not symlinks");
+      }
+    }
+    try {
+      await writeFile(destination, candidateText, { encoding: "utf8", flag: "wx", mode: 0o600 });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+        throw new DalError("OPTIMIZE_STAGING_CONFLICT", "Candidate output already exists; it was not replaced");
+      }
+      throw error;
+    }
+  }
+  return result;
 }
 
 async function finalizeVerdict(

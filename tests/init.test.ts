@@ -1,11 +1,11 @@
 import { access, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { runCli } from "../src/cli.js";
-import { initWorkspace } from "../src/init.js";
+import { EVIDENCE_DIRECTORIES, initWorkspace } from "../src/init.js";
 
 function captureIo(): { stdout: string[]; stderr: string[]; io: { stdout(text: string): void; stderr(text: string): void } } {
   const stdout: string[] = [];
@@ -35,6 +35,7 @@ describe("workspace initialization", () => {
     const gitignore = await readFile(join(root, ".gitignore"), "utf8");
     expect(gitignore).toContain("!.dal/outbox/");
     expect(gitignore).toContain("!.dal/control-states/");
+    expect(result.next_steps[0]).toContain(".dal/control-states");
   });
 
   it("never overwrites existing workspace files", async () => {
@@ -45,6 +46,13 @@ describe("workspace initialization", () => {
     expect(await readFile(join(root, "AGENTS.md"), "utf8")).toBe("existing custom instructions\n");
     expect(await readFile(join(root, ".gitignore"), "utf8")).toBe("node_modules/\n");
     expect(result.skipped).toEqual(expect.arrayContaining(["AGENTS.md", ".gitignore"]));
+  });
+
+  it("keeps every initialized evidence directory visible in the repository gitignore", async () => {
+    const gitignore = await readFile(resolve(import.meta.dirname, "..", ".gitignore"), "utf8");
+    for (const directory of EVIDENCE_DIRECTORIES) {
+      expect(gitignore).toContain(`!${directory}/`);
+    }
   });
 
   it("exposes the init command through the CLI", async () => {

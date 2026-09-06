@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { link, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
+import { link, mkdir, open, readFile, unlink } from "node:fs/promises";
 import { dirname } from "node:path";
 
 import { isNodeError, DalError } from "./errors.js";
@@ -214,25 +214,6 @@ function assertUnicodeScalarString(value: string, path: string): void {
     } else if (code >= 0xdc00 && code <= 0xdfff) {
       throw new DalError("INVALID_IJSON_VALUE", `I-JSON string contains an unpaired surrogate at ${path}`);
     }
-  }
-}
-
-export async function writeJsonAtomic(filePath: string, value: unknown): Promise<void> {
-  await mkdir(dirname(filePath), { recursive: true, mode: 0o700 });
-  const temporary = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
-  const handle = await open(temporary, "wx", 0o600);
-  try {
-    await handle.writeFile(prettyJson(value), "utf8");
-    await handle.sync();
-  } finally {
-    await handle.close();
-  }
-
-  try {
-    await rename(temporary, filePath);
-  } catch (error) {
-    await unlink(temporary).catch(() => undefined);
-    throw error;
   }
 }
 

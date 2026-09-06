@@ -1,0 +1,219 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-recorder-staging-integration-20260906",
+  "ingested_at": "2026-09-06T15:53:22.560Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-recorder-staging-integration-20260906.json",
+    "sha256": "a050928543e6beb2268327cefdafbfb9761bb65c278565c08576ce56b192fd06"
+  },
+  "feedback_sha256": "9143b2e2fd84a1ceaa5891d90235acd1d49f2c3a847d395d4e720c998e2a70d1",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-06T15:53:22.560Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-recorder-staging-integration-20260906",
+    "change_id": "chg-dal-recorder-staging-integration-20260906",
+    "created_at": "2026-09-06T16:52:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-integration"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "b897751",
+        "branch": "feat/run-controller-observation-path",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Integrate the approved recorder/controller and confined staging changes with main while preserving runtime attestation and HMR quarantine, and verify the tree for the separately requested PR publication.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-preserve",
+        "statement": "Preserve both approved increments and main attestation/quarantine through a normal merge without rebasing or resetting.",
+        "result": "passed",
+        "evidence": [
+          "ev-merge",
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-contract",
+        "statement": "Reconcile current contracts and reviewed capsule digests without dropping semantic claims or bypassing integrity checks.",
+        "result": "passed",
+        "evidence": [
+          "ev-contract",
+          "ev-check"
+        ]
+      },
+      {
+        "id": "ac-gates",
+        "statement": "Pass focused regressions followed by the full repository gate.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused",
+          "ev-check"
+        ]
+      },
+      {
+        "id": "ac-scope",
+        "statement": "Review the integrated diff and exclude raw transcripts, generated artifacts, and unrelated evaluator feedback; perform no activation or host configuration changes.",
+        "result": "passed",
+        "evidence": [
+          "ev-review"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The integrated source tree passes all local gates and is ready for the user-requested PR. Publication and remote merge status are reported separately; this receipt does not preclaim them.",
+      "exception": null
+    },
+    "what_worked": [
+      "Terminal observations retain launcher-owned pins and require qualified runtime evidence for controller estimation.",
+      "Confined exclusive staging, actual base-byte verification, and HMR quarantine remain intact.",
+      "Full verification passed 240 tests with seven opt-in skips, all capsules, policy, and both offline scorecards."
+    ],
+    "what_failed": [
+      "The first integration run exposed the bridge fixture's legacy controller policy; it now supplies synthetic session-bound launcher evidence and a current policy.",
+      "A negative test initially expected the wrong error identifier; it now asserts the existing unattested error.",
+      "The full gate initially rejected the reviewed capsule date against an older fixed test clock; the deterministic test date was advanced without weakening drift or expiry checks."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "git-merge",
+        "purpose": "Integrate main through a normal merge and reconcile conflicts while retaining both feature sets.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-merge"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Verify recorder, controller, staging, workflow, initialization, runtime, and quarantine regressions.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Verify the integrated repository and its source-bound contracts.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-check"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-merge-fixtures",
+        "category": "verification",
+        "summary": "Cross-branch policy and capsule-clock fixture drift required targeted integration corrections.",
+        "impact": "low",
+        "recoverable": true,
+        "suggested_action": "Retain the attested bridge and negative binding regressions when evolving either branch's contracts.",
+        "evidence": [
+          "ev-focused",
+          "ev-check"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-merge",
+        "kind": "commit",
+        "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/commit/b897751",
+        "summary": "Normal merge joins approved local commit 9e108be with main through b0e664a; no rebase, reset, or force operation.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:52:00.000Z"
+      },
+      {
+        "id": "ev-focused",
+        "kind": "test",
+        "uri": "repo://tests/plugin-modes.test.ts",
+        "summary": "Seven focused files passed: 79 tests passed and one opt-in test skipped. Missing, conflicting, and transition-spanning runtime evidence cannot qualify configured controller observations.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:52:00.000Z"
+      },
+      {
+        "id": "ev-check",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck and build passed; 34 files passed with 240 tests passed and seven skipped. Three capsules validated; policy allowed; core and workflow benchmark scorecards passed without hard stops.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:52:00.000Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/requirement-evidence.md",
+        "summary": "Merged evidence distinguishes historical results, current attestation requirements, HMR quarantine, and future evaluator integration. Capsule refresh retains semantic claims, unaffected pins, and freshness deadlines.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:52:00.000Z"
+      },
+      {
+        "id": "ev-review",
+        "kind": "command",
+        "uri": "command://git-diff-review",
+        "summary": "Reviewed integrated implementation, tests, schemas, docs, and selected safe feedback against main; no remaining blocking finding. Whitespace checks passed. Raw transcript, generated outputs, and four old evaluator feedback files remain excluded.",
+        "sha256": null,
+        "observed_at": "2026-09-06T16:52:00.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-runtime-proof",
+        "statement": "Synthetic launcher evidence and local tests do not prove a production DSH producer, final-disposal durability, live HMR readiness, model quality, or activation safety.",
+        "level": "medium",
+        "resolution": "Require the separately governed upstream producer and exact integration probes before making runtime claims.",
+        "evidence": [
+          "ev-contract"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-06T16:52:00.000Z",
+      "notes": [
+        "The user explicitly approved including the pre-existing recorder/controller work with staging, normal main integration, reviewed capsule refresh, commit, push, PR creation, and merge. This acknowledgment timestamp is not the unavailable original message timestamp. No model, host profile, installation, or candidate activation was authorized or performed."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "no-pii",
+        "safe-summaries-only"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
