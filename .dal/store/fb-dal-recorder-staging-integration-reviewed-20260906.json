@@ -1,0 +1,165 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-recorder-staging-integration-reviewed-20260906",
+  "ingested_at": "2026-09-06T15:54:36.643Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-recorder-staging-integration-reviewed-20260906.json",
+    "sha256": "e127924acf28285183749068de745124719a4e9afe596b7daa9d55deac77da92"
+  },
+  "feedback_sha256": "4773fd06927a2ca61a432d8b0d70c25d7f40d17521c09035c1141a531fef8873",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-06T15:54:36.643Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-recorder-staging-integration-reviewed-20260906",
+    "change_id": "chg-dal-recorder-staging-integration-20260906",
+    "created_at": "2026-09-06T15:53:37Z",
+    "supersedes": "fb-dal-recorder-staging-integration-20260906",
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-integration"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "b897751",
+        "branch": "feat/run-controller-observation-path",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Confirm the reviewed, verified integration tree for PR publication and correct the prior receipt's local-clock-to-UTC transcription without overwriting immutable evidence.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-integration",
+        "statement": "Preserve recorder/staging and main attestation/quarantine with reviewed docs and source pins, without resets or activation.",
+        "result": "passed",
+        "evidence": [
+          "ev-integration"
+        ]
+      },
+      {
+        "id": "ac-verification",
+        "statement": "Pass focused and full gates and review the intended publication scope excluding raw transcripts, generated outputs, and old evaluator feedback.",
+        "result": "passed",
+        "evidence": [
+          "ev-gates"
+        ]
+      },
+      {
+        "id": "ac-time",
+        "statement": "Use an observed UTC acknowledgment timestamp and preserve the original receipt unchanged.",
+        "result": "passed",
+        "evidence": [
+          "ev-time"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Integration and local verification are complete. The earlier receipt's timestamps were transcribed from local display time as UTC; this receipt corrects that metadata only. PR publication and merge remain separate subsequent operations.",
+      "exception": null
+    },
+    "what_worked": [
+      "The normal merge retains runtime attestation and HMR quarantine alongside confined staging and terminal observations.",
+      "All integrated gates passed and publication exclusions were reviewed."
+    ],
+    "what_failed": [
+      "The original receipt used local displayed time as UTC. A new superseding record preserves immutable history while recording the observed UTC acknowledgment."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Verify the integrated source tree.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gates"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "date-utc",
+        "purpose": "Confirm the actual UTC acknowledgment time.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-time"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-integration",
+        "kind": "file",
+        "uri": "repo://docs/requirement-evidence.md",
+        "summary": "Normal merge b897751 joins local 9e108be and main b0e664a. Launcher pins remain authoritative; unattested evidence cannot estimate; HMR admission remains quarantined. All capsule claims and freshness deadlines are preserved.",
+        "sha256": null,
+        "observed_at": "2026-09-06T15:53:37Z"
+      },
+      {
+        "id": "ev-gates",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Focused: 79 passed and one skipped across seven files. Full gate: typecheck/build passed, 240 passed and seven skipped across 34 files, three valid capsules, allowed policy, and two passing offline scorecards without hard stops. Diff review found no remaining blocker; excluded files remain local.",
+        "sha256": null,
+        "observed_at": "2026-09-06T15:53:37Z"
+      },
+      {
+        "id": "ev-time",
+        "kind": "command",
+        "uri": "command://date-utc",
+        "summary": "UTC acknowledgment confirmed for this corrected receipt; original immutable record is retained and superseded. Event-level timing is not inferred from the acknowledgment timestamp.",
+        "sha256": null,
+        "observed_at": "2026-09-06T15:53:37Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-runtime",
+        "statement": "No live DSH, model, image rebuild, installation, profile change, or candidate activation was exercised.",
+        "level": "medium",
+        "resolution": "Require separately approved exact integration evidence before runtime or deployment claims.",
+        "evidence": [
+          "ev-integration"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-06T15:53:37Z",
+      "notes": [
+        "User approved the combined scope, capsule refresh, commit, push, PR, and merge. This is the observed acknowledgment time, not the unavailable user-message timestamp. No sensitive runtime operation is authorized by this feedback."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "no-pii",
+        "safe-summaries-only"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

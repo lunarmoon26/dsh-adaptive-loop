@@ -13,7 +13,7 @@ The normal merge integrates main through `b0e664a` without weakening controller 
 - Capsules `dal-v0-contract` and `dsh-adapter-boundary` version 1.7.0 retain all merged semantic claims, update the reviewed spec/architecture/roadmap digests, and retain existing freshness deadlines and unaffected source identities.
 - No model request, host profile change, installation, live HMR probe, image rebuild, or candidate activation was performed. The private evaluator repository was not changed.
 
-Integration feedback: `.dal/store/fb-dal-recorder-staging-integration-20260906.json`. Earlier receipts below remain immutable historical evidence, not proof for this merged tree.
+Integration feedback: `.dal/store/fb-dal-recorder-staging-integration-reviewed-20260906.json`. It supersedes the preliminary integration receipt to correct a local-clock-to-UTC transcription; verification results are unchanged. Earlier receipts below remain immutable historical evidence, not proof for this merged tree.
 
 ## DAL-021 staging integrity increment (2026-09-05)
 
