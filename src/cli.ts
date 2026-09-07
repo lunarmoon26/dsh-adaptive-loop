@@ -22,7 +22,7 @@ import { installUserGlobal } from "./install.js";
 import { evaluateOptimizerCandidate, prepareOptimizerExchange } from "./optimizer-adapter.js";
 import { publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
-import { prepareProposePayload, runPropose } from "./propose.js";
+import { prepareProposeRequest, runPropose } from "./propose.js";
 import { resetExecute, resetStatus } from "./reset.js";
 import {
   assertNoSymlinkTraversal,
@@ -744,34 +744,39 @@ async function admitStatusCommand(argv: readonly string[], io: CliIo): Promise<v
 
 async function proposePrepareCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["clusters", "runs", "output"]);
-  exactlyPositionals(parsed, 0, "propose prepare --clusters <dir> [--runs <dir>] --output <payload-file>");
-  const options: Parameters<typeof prepareProposePayload>[0] = { clustersDir: requiredOption(parsed, "clusters") };
+  assertOptions(parsed, ["clusters", "runs", "output", "provider", "model"]);
+  exactlyPositionals(parsed, 0, "propose prepare --clusters <dir> --model <model> [--runs <dir>] --output <request-file>");
+  const options: Parameters<typeof prepareProposeRequest>[0] = {
+    clustersDir: requiredOption(parsed, "clusters"),
+    model: { provider: oneOption(parsed, "provider") ?? "deepseek-official", model: requiredOption(parsed, "model") },
+  };
   const runs = oneOption(parsed, "runs");
   if (runs !== undefined) {
     options.runsDir = runs;
   }
-  const prepared = await prepareProposePayload(options);
-  await publishJsonExclusive(resolve(process.cwd(), requiredOption(parsed, "output")), prepared.payload);
+  const prepared = await prepareProposeRequest(options);
+  if (!(await publishJsonExclusive(resolve(process.cwd(), requiredOption(parsed, "output")), prepared.request))) {
+    throw new DalError("PROPOSE_OUTPUT_CONFLICT", "Prepared request output already exists; it was not replaced");
+  }
   printJson(io, {
     status: "prepared",
     payload_digest: prepared.digest,
-    payload_path: displayPath(resolve(process.cwd(), requiredOption(parsed, "output"))),
+    request_digest: prepared.requestDigest,
+    request_path: displayPath(resolve(process.cwd(), requiredOption(parsed, "output"))),
   });
 }
 
 async function proposeRunCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
   assertOptions(parsed, ["clusters", "runs", "approval", "workspace", "output", "provider", "model", "runner"]);
-  exactlyPositionals(parsed, 0, "propose run --clusters <dir> [--runs <dir>] --approval <decision> --workspace <dir> --output <draft-file> [--provider <p>] [--model <m>] [--runner local|docker]");
+  exactlyPositionals(parsed, 0, "propose run --clusters <dir> --model <model> [--runs <dir>] --approval <decision> --output <draft-file> [--provider <p>]");
   const options: Parameters<typeof runPropose>[0] = {
     clustersDir: requiredOption(parsed, "clusters"),
     approvalPath: requiredOption(parsed, "approval"),
-    workspaceDir: requiredOption(parsed, "workspace"),
     outputPath: requiredOption(parsed, "output"),
     model: {
       provider: oneOption(parsed, "provider") ?? "deepseek-official",
-      model: oneOption(parsed, "model") ?? "deepseek-v4-flash",
+      model: requiredOption(parsed, "model"),
     },
   };
   const runs = oneOption(parsed, "runs");
@@ -780,13 +785,7 @@ async function proposeRunCommand(argv: readonly string[], io: CliIo): Promise<vo
   }
   const runner = runnerValue(oneOption(parsed, "runner"));
   if (runner === "docker") {
-    const policy = await loadPolicy();
-    options.runner = "docker";
-    options.docker = {
-      image: policy.docker_image ?? "dsh-adaptive-loop/dsh:0.1.1-rc.2",
-      runFlags: policy.docker_run_flags ?? [],
-      envNames: policy.docker_env_names ?? [],
-    };
+    throw new DalError("PROPOSE_RUNNER_UNSUPPORTED", "Docker proposer execution is disabled; prepare a payload-only request instead");
   }
   const result = await runPropose(options);
   printJson(io, {
@@ -794,19 +793,22 @@ async function proposeRunCommand(argv: readonly string[], io: CliIo): Promise<vo
     draft_id: result.draft.draft_id,
     surface: result.draft.surface,
     payload_digest: result.payload_digest,
+    request_digest: result.request_digest,
     draft_path: displayPath(result.path),
   });
 }
 
 async function branchRecordCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["branch", "parent", "draft", "store"]);
-  exactlyPositionals(parsed, 0, "branch record --branch <id> --draft <draft-file> [--parent <branch-id>]");
+  assertOptions(parsed, ["branch", "parent", "draft", "store", "candidate"]);
+  exactlyPositionals(parsed, 0, "branch record --branch <id> --draft <draft-file> [--candidate <artifact-file>] [--parent <branch-id>]");
   const options: Parameters<typeof recordBranch>[0] = {
     branchId: requiredOption(parsed, "branch"),
     parentBranchId: oneOption(parsed, "parent") ?? null,
     draftPath: requiredOption(parsed, "draft"),
   };
+  const candidate = oneOption(parsed, "candidate");
+  if (candidate !== undefined) options.candidatePath = candidate;
   const store = oneOption(parsed, "store");
   if (store !== undefined) {
     options.store = store;
@@ -1205,7 +1207,53 @@ function printJson(io: CliIo, value: unknown): void {
   io.stdout(`${JSON.stringify(value, null, 2)}\n`);
 }
 
-const HELP = `DSH Adaptive Loop (dal)\n\nUsage:\n  dal feedback validate <file>\n  dal feedback ingest <file> [--store <directory>]\n  dal feedback query [--feedback <id>] [--change <id>] [--outcome <status>]\n                     [--privacy-tag <tag>] [--from <date>] [--to <date>]\n                     [--store <directory>] [--format text|json]\n  dal feedback summary [query filters] [--format text|json]\n  dal capsule check <path-or-directory>\n  dal approval verify <decision-file> --action <action> --scope <scope>\n                      [--candidate-sha256 <digest>] [--at <date-time>]\n  dal policy check <action-file> [--approval <decision-file>] [--store <directory>]\n  dal eval run <suite-file> [--store <directory>]\n  dal run ingest <file> [--store <directory>]\n  dal cluster run [--store <directory>] [--output <directory>] [--format text|json]\n  dal init [--dir <directory>] [--skill <name>]\n  dal install user-global --approval <decision-file>\n  dal reset status [--workspace <directory>]\n  dal reset execute [--workspace <directory>] --reason <text> [--actor <id>] --acknowledge remove-all-evidence\n  dal optimize prepare --skill <path> [--store <directory>]\n  dal optimize evaluate --exchange <file> --candidate <file> --output <verdict-file> [--candidate-out <path>]\n  dal seal init --cases <dir> --output <dir> [--holdout <count>]\n  dal seal verify --sealed <dir> --cases <dir>\n  dal seal reveal --sealed <dir> --candidate <id>\n  dal saga begin --intent <id> --action <effect> --payload <file-or-uri>\n  dal saga complete --intent <id> --outcome completed|failed --receipt <file-or-uri>\n  dal saga status --intent <id>\n  dal saga list [--store <directory>]\n  dal admit issue --admission <id> --candidate <file-or-uri>\n  dal admit complete --admission <id> --result <result-file>\n  dal admit status --admission <id>\n  dal propose prepare --clusters <dir> [--runs <dir>] --output <payload-file>\n  dal propose run --clusters <dir> --approval <decision> --workspace <dir> --output <draft-file>\n                     [--provider <p>] [--model <m>] [--runner local|docker]\n  dal branch record --branch <id> --draft <file> [--parent <branch-id>]\n  dal branch evaluate --branch <id> --task <task-file> --state <state-file>\n  dal branch stats [--store <directory>]\n  dal branch select [--store <directory>] [--c <exploration>]\n  dal verify run --action <action-file> --command <command-line> [--workspace <dir>] [--runner local|docker]\n  dal improvement transition <proposal-file> --to <stage>\n                             --actor-kind <kind> --actor-id <id>\n                             --evidence <uri> --notes <text> --output <new-file>\n                             [--decision <file>] [--at <date-time>]\n\nNo command runs an optimizer, invokes an LLM, executes a requested action, sends data, installs a plugin, or changes dsh configuration.\n`;
+const HELP = `DSH Adaptive Loop (dal)
+
+Usage:
+  dal feedback validate <file>
+  dal feedback ingest <file> [--store <directory>]
+  dal feedback query [--feedback <id>] [--change <id>] [--outcome <status>]
+                     [--privacy-tag <tag>] [--from <date>] [--to <date>]
+                     [--store <directory>] [--format text|json]
+  dal feedback summary [query filters] [--format text|json]
+  dal capsule check <path-or-directory>
+  dal approval verify <decision-file> --action <action> --scope <scope>
+                      [--candidate-sha256 <digest>] [--at <date-time>]
+  dal policy check <action-file> [--approval <decision-file>] [--store <directory>]
+  dal eval run <suite-file> [--store <directory>]
+  dal run ingest <file> [--store <directory>]
+  dal cluster run [--store <directory>] [--output <directory>] [--format text|json]
+  dal init [--dir <directory>] [--skill <name>]
+  dal install user-global --approval <decision-file>
+  dal reset status [--workspace <directory>]
+  dal reset execute [--workspace <directory>] --reason <text> [--actor <id>] --acknowledge remove-all-evidence
+  dal optimize prepare --skill <path> [--store <directory>]
+  dal optimize evaluate --exchange <file> --candidate <file> --output <verdict-file> [--candidate-out <path>]
+  dal seal init --cases <dir> --output <dir> [--holdout <count>]
+  dal seal verify --sealed <dir> --cases <dir>
+  dal seal reveal --sealed <dir> --candidate <id>
+  dal saga begin --intent <id> --action <effect> --payload <file-or-uri>
+  dal saga complete --intent <id> --outcome completed|failed --receipt <file-or-uri>
+  dal saga status --intent <id>
+  dal saga list [--store <directory>]
+  dal admit issue --admission <id> --candidate <file-or-uri>
+  dal admit complete --admission <id> --result <result-file>
+  dal admit status --admission <id>
+  dal propose prepare --clusters <dir> [--runs <dir>] --model <m> --output <request-file> [--provider <p>]
+  dal propose run --clusters <dir> [--runs <dir>] --approval <decision> --model <m> --output <draft-file>
+                     [--provider <p>]
+  dal branch record --branch <id> --draft <file> [--candidate <file>] [--parent <branch-id>]
+  dal branch evaluate --branch <id> --task <task-file> --state <state-file>
+  dal branch stats [--store <directory>]
+  dal branch select [--store <directory>] [--c <exploration>]
+  dal verify run --action <action-file> --command <command-line> [--workspace <dir>] [--runner local|docker]
+  dal improvement transition <proposal-file> --to <stage>
+                             --actor-kind <kind> --actor-id <id>
+                             --evidence <uri> --notes <text> --output <new-file>
+                             [--decision <file>] [--at <date-time>]
+
+No command runs an optimizer. Approval-gated propose run sends a payload-only request to DeepSeek; prepare makes no model call. Confined verify run executes a requested action. Other sensitive operations retain their exact approval gates.
+`;
 
 export function matchesEntryPoint(
   invokedPath: string | undefined,

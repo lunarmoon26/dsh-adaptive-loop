@@ -942,6 +942,7 @@ export interface ExecutionReceipt {
   candidate_generation_id: string | null;
   effective_composition_sha256: string;
   task_handle: string;
+  task_sha256?: string;
   model: { provider: string; model: string };
   model_patch_sha256: string | null;
   dsh_session_id: string | null;

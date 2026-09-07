@@ -1,5 +1,39 @@
 # Requirement Evidence
 
+## Proposer request and branch receipt boundary (2026-09-06)
+
+Change: `chg-dal-proposer-receipt-boundary-20260906`.
+Status: completed locally after the human-approved contract/capsule refresh.
+Capsules `dal-v0-contract` and `dsh-adapter-boundary` version 1.7.1 bind the
+reviewed source bytes; unaffected source pins and freshness bounds are preserved.
+
+| Requirement | Owner / implementation | Observed verification |
+| --- | --- | --- |
+| Bind full outbound request before credential access and send | `docs/proposer-request.md`, strict `proposer-request.v1` schema, `src/propose.ts`, `src/propose-transport.ts` | Fixed route/model/body/version and approval drift tests pass; old payload approvals rejected |
+| No DSH workspace/profile/tool/subprocess authority | Fixed text-only HTTPS transport; Docker rejected; no `.env` loading | Mocked transport, no-credential-before-approval, bounded timeout/body, redirect/tool-call and sensitive-output tests pass |
+| Bind the actual branch artifact and full task revision | `docs/branch-evidence.md`, branch/receipt schemas and `src/branch.ts` | Wrong candidate, null verdict, missing task/base binding and same-ID task drift controls pass |
+| Revalidate evidence before counting, with no repeated execution credit | Versioned proof replay and stable session/task identity | Artifact/state/receipt/score drift, concurrent retry, conflicting reuse and legacy exclusion controls pass |
+| Preserve workbench preparation without a model call | CLI and `dal_proposal_prepare` require an explicit model and report request digest/path | Plugin integration and missing-model control pass |
+
+`pnpm exec vitest run tests/propose.test.ts tests/propose-transport.test.ts tests/branch.test.ts tests/execution-receipt.test.ts tests/cli.test.ts tests/plugin-modes.test.ts`:
+131 passed in the focused implementation run. After approved capsule refresh,
+full `pnpm run check` passes typecheck/build, 327 tests (seven opt-in skips),
+all three capsules, allowed-read policy, and both offline scorecards without
+hard stops. The earlier source-pin failure remains recorded in the blocked
+receipt below rather than being rewritten. Diff whitespace checks passed.
+
+New request/draft/receipt fields are additive where historical records exist;
+legacy records remain readable but incomplete branch proofs cannot earn visits.
+Old proposer approval digests require new preparation and approval. The new
+transport has no live-provider proof, and local receipt integrity is not
+independent runtime attestation or a completed cross-repository benchmark.
+
+Completion feedback: `.dal/store/fb-dal-proposer-receipt-boundary-complete-20260906.json`.
+It supersedes `.dal/store/fb-dal-proposer-receipt-boundary-20260906.json` without
+modifying the prior immutable record.
+No model call, profile mutation, plugin installation, activation, commit or push
+is part of this increment.
+
 ## Integrated Recorder and Staging Gate (2026-09-06)
 
 Change: `chg-dal-recorder-staging-integration-20260906`.

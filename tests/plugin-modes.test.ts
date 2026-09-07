@@ -636,13 +636,21 @@ describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => 
     expect(clustered.cluster_count).toBe(1);
     expect(clustered.clustered_runs).toBe(1);
 
+    await expect(definitions.find((definition) => definition.name === "dal_proposal_prepare")!.execute({
+      clusters, runs, output: join(root, "missing-model.json"),
+    })).rejects.toThrow('missing required property "model"');
+
     const prepared = (await definitions.find((definition) => definition.name === "dal_proposal_prepare")!.execute({
       clusters,
       runs,
+      model: "deepseek-v4-flash",
       output: join(root, "payload.json"),
-    })) as { payload_digest: string; payload_path: string };
+    })) as { payload_digest: string; request_digest: string; request_path: string };
     expect(prepared.payload_digest).toMatch(/^[0-9a-f]{64}$/);
-    const payload = JSON.parse(await readFile(join(root, "payload.json"), "utf8")) as { clusters: unknown[] };
+    expect(prepared.request_digest).toMatch(/^[0-9a-f]{64}$/);
+    const request = JSON.parse(await readFile(join(root, "payload.json"), "utf8"));
+    expect(request.endpoint).toBe("https://api.deepseek.com/chat/completions");
+    const payload = JSON.parse(request.body.messages[1].content) as { clusters: unknown[] };
     expect(Array.isArray(payload.clusters)).toBe(true);
   });
 
