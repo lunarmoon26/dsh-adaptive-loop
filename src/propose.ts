@@ -1,9 +1,10 @@
-import { readdir } from "node:fs/promises";
+import { lstat, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { validateApprovalDecision, verifyApproval } from "./approval.js";
-import { prepareChatRequest, sendChatRequest, RESPONSE_LIMIT } from "./propose-transport.js";
+import { prepareChatRequest, sendChatRequest, requestModel, RESPONSE_LIMIT, type ProposalBudget } from "./propose-transport.js";
+import { reserveProposalBudget } from "./proposal-budget.js";
 import { DalError } from "./errors.js";
 import { canonicalJson, prettyJson, publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
@@ -39,7 +40,7 @@ export interface ProposalDraft {
   statement: string;
   improvements: Array<{ metric: string; expected_delta: number }>;
   regressions: Array<{ summary: string; severity: "low" | "medium" | "high" }>;
-  provenance: { runner: "deepseek-https" | "injected"; request_sha256: string; clusters: Array<{ cluster_id: string; category: string; code: string; member_count: number }> };
+  provenance: { runner: "deepseek-https" | "openai-https" | "anthropic-https" | "injected"; request_sha256: string; clusters: Array<{ cluster_id: string; category: string; code: string; member_count: number }> };
 }
 
 export type ProposalRunner = (prompt: string) => Promise<string>;
@@ -71,12 +72,14 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
     throw new DalError("PROPOSE_NO_CLUSTERS", "No cluster records to propose from");
   }
   const runSummaries = new Map<string, string>();
+  const runModes = new Map<string, "eligible" | "rehearsal" | "unavailable">();
   if (options.runsDir !== undefined) {
     const runsDir = resolve(process.cwd(), options.runsDir);
     for (const name of (await readdir(runsDir).catch(() => [])).filter((name) => name.endsWith(".json"))) {
       try {
         const document = await readJsonFile<unknown>(resolve(runsDir, name));
         const run = document.value as RunRecord;
+        runModes.set(run.run_id, await proposalEvidenceMode(run));
         const summary = representativeFailure(run);
         if (summary !== null) {
           runSummaries.set(run.run_id, summary);
@@ -92,6 +95,13 @@ export async function prepareProposePayload(options: { clustersDir: string; runs
     const document = await readJsonFile<ClusterRecord>(resolve(clustersDir, name));
     await assertSchema(SCHEMA_IDS.clusterRecord, document.value, "Cluster record");
     const record = document.value;
+    for (const member of record.members) {
+      const mode = runModes.get(member.run_id);
+      if (mode === "rehearsal") throw new DalError("PROPOSE_REHEARSAL_EVIDENCE", "Rehearsal evidence cannot feed proposal generation");
+      if (mode === "unavailable" || (member.run_id.startsWith("run-e2e-") && mode === undefined)) {
+        throw new DalError("PROPOSE_EVIDENCE_UNAVAILABLE", "E2E proposal inputs require readable, mode-qualified run evidence via --runs");
+      }
+    }
     const representative = runSummaries.get(record.representative.run_id) ?? "No summary recorded for the representative run.";
     clusters.push({
       cluster_id: record.cluster_id,
@@ -128,6 +138,21 @@ function representativeFailure(run: RunRecord): string | null {
   return (details.length === 0 ? "Business outcome failed deterministic checks." : details.join("; ")).slice(0, SUMMARY_CAP);
 }
 
+async function proposalEvidenceMode(run: RunRecord): Promise<"eligible" | "rehearsal" | "unavailable"> {
+  if (!Array.isArray(run.evidence)) return "unavailable";
+  if (run.evidence.some(uri => uri === "dal-e2e-mode://rehearsal" || /^repo:\/\/\.dal\/check\/e2e-gateways\/run-[a-z0-9._-]+\/rehearsal\.json$/.test(uri))) return "rehearsal";
+  const receipts = run.evidence.filter(uri => /^repo:\/\/\.dal\/check\/e2e-gateways\/run-[a-z0-9._-]+\/receipt\.json$/.test(uri));
+  for (const uri of receipts) {
+    try {
+      const receipt = await readJsonFile<{ mode?: unknown; run_id?: unknown }>(resolve(process.cwd(), uri.slice("repo://".length)));
+      if (receipt.value.run_id !== run.run_id) return "unavailable";
+      if (receipt.value.mode === "rehearsal") return "rehearsal";
+      if (receipt.value.mode !== "live") return "unavailable";
+    } catch { return "unavailable"; }
+  }
+  return "eligible";
+}
+
 function extractJsonObject(text: string): unknown {
   try {
     const value: unknown = JSON.parse(text);
@@ -143,7 +168,7 @@ export async function proposeDraft(options: {
   payloadDigest: string;
   requestDigest: string;
   runner: ProposalRunner;
-  runnerKind: "deepseek-https" | "injected";
+  runnerKind: ProposalDraft["provenance"]["runner"];
   model: { provider: string; model: string };
 }): Promise<ProposalDraft> {
   const reply = await options.runner(prettyJson(options.payload));
@@ -201,10 +226,11 @@ export async function prepareProposeRequest(options: {
   clustersDir: string;
   runsDir?: string;
   model: { provider: string; model: string };
+  budget: ProposalBudget;
 }) {
   const prepared = await prepareProposePayload(options);
-  const chat = prepareChatRequest(prepared.payload, options.model);
-  await assertSchema(SCHEMA_IDS.proposerRequest, chat.request, "Proposer request");
+  const chat = prepareChatRequest(prepared.payload, options.model, options.budget);
+  await assertSchema(SCHEMA_IDS.proposerRequestV2, chat.request, "Proposer request");
   return { ...prepared, ...chat };
 }
 
@@ -215,17 +241,21 @@ export async function runPropose(options: {
   workspaceDir?: string;
   outputPath: string;
   model: { provider: string; model: string };
+  budget: ProposalBudget;
+  /** Evaluator-owned store; CLI always uses .dal/proposal-budgets. */
+  budgetStore?: string;
   /** Internal offline test seam. Never expose through CLI or configuration. */
   runnerOverride?: ProposalRunner;
   runner?: "local" | "docker";
   docker?: { image: string; runFlags: string[]; envNames: string[] };
-}): Promise<{ status: "recorded" | "idempotent"; path: string; draft: ProposalDraft; payload_digest: string; request_digest: string }> {
+}): Promise<{ status: "recorded" | "idempotent"; path: string; draft: ProposalDraft; payload_digest: string; request_digest: string; budget_reservation: { reserved_microusd: number; remaining_microusd: number } }> {
   if ((options.runner !== undefined && options.runner !== "local") || options.docker !== undefined) {
-    throw new DalError("PROPOSE_RUNNER_UNSUPPORTED", "Docker proposer execution is disabled; omit --runner docker and use payload-only DeepSeek HTTPS");
+    throw new DalError("PROPOSE_RUNNER_UNSUPPORTED", "Docker proposer execution is disabled; use an approved payload-only HTTPS request");
   }
   const prepared = await prepareProposeRequest({
     clustersDir: options.clustersDir,
     model: options.model,
+    budget: options.budget,
     ...(options.runsDir !== undefined ? { runsDir: options.runsDir } : {}),
   });
 
@@ -235,25 +265,42 @@ export async function runPropose(options: {
   const decision = await validateApprovalDecision(document.value);
   await verifyApproval(decision, { action: "send_data_externally", scope: prepared.requestDigest, at: new Date() });
 
+  const destination = resolve(process.cwd(), options.outputPath);
+  try {
+    await lstat(destination);
+    throw new DalError("PROPOSE_OUTPUT_CONFLICT", "Draft output already exists; no request was sent");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  const reservation = await reserveProposalBudget({
+    store: options.budgetStore ?? resolve(process.cwd(), ".dal/proposal-budgets"),
+    budget: prepared.request.budget,
+    provider: prepared.request.provider,
+    requestDigest: prepared.requestDigest,
+    approvalId: decision.decision_id,
+  });
+  const budgetReservation = { reserved_microusd: reservation.reserved_microusd, remaining_microusd: reservation.remaining_microusd };
+
   const runner = options.runnerOverride ?? (() => sendChatRequest(prepared.request));
-  const runnerKind = options.runnerOverride !== undefined ? "injected" : "deepseek-https";
+  const runnerKind = options.runnerOverride !== undefined ? "injected"
+    : prepared.request.provider === "openai" ? "openai-https"
+    : prepared.request.provider === "anthropic" ? "anthropic-https" : "deepseek-https";
   const draft = await proposeDraft({
     payload: prepared.payload,
     payloadDigest: prepared.digest,
     requestDigest: prepared.requestDigest,
     runner,
     runnerKind,
-    model: { provider: prepared.request.provider, model: prepared.request.body.model },
+    model: requestModel(prepared.request),
   });
 
-  const destination = resolve(process.cwd(), options.outputPath);
   const published = await publishJsonExclusive(destination, draft);
   if (!published) {
     const existing = await readJsonFile<ProposalDraft>(destination);
     if (sha256(canonicalJson(existing.value)) === sha256(canonicalJson(draft))) {
-      return { status: "idempotent", path: destination, draft: existing.value, payload_digest: prepared.digest, request_digest: prepared.requestDigest };
+      return { status: "idempotent", path: destination, draft: existing.value, payload_digest: prepared.digest, request_digest: prepared.requestDigest, budget_reservation: budgetReservation };
     }
     throw new DalError("PROPOSE_OUTPUT_CONFLICT", `Draft output already exists with different content: ${destination}`);
   }
-  return { status: "recorded", path: destination, draft, payload_digest: prepared.digest, request_digest: prepared.requestDigest };
+  return { status: "recorded", path: destination, draft, payload_digest: prepared.digest, request_digest: prepared.requestDigest, budget_reservation: budgetReservation };
 }

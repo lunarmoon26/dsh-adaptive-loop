@@ -166,9 +166,11 @@ export function apply(ctx: Context, config: Config): void {
     defineTool({
       name: "dal_proposal_prepare",
       description:
-        "Prepare a versioned text-only DeepSeek request from sanitized clusters and an explicit model. Prints the full request digest for separate human send_data_externally approval. Preparation is local: no model or network call.",
+        "Prepare a versioned text-only provider request from sanitized clusters, an explicit model, and a budget file. Prints the full request digest for separate human send_data_externally approval. Preparation is local: no model or network call.",
       parameters: {
-        model: { type: "string", required: true, description: "Explicit DeepSeek model ID for the approved request." },
+        model: { type: "string", required: true, description: "Explicit model ID for the approved request." },
+        provider: { type: "string", description: "Provider route: openai, anthropic, or deepseek-official (default)." },
+        budget: { type: "string", required: true, description: "Local JSON budget file with budget_id, provider_limit_microusd and reservation_microusd." },
         clusters: {
           type: "string",
               description: "Optional cluster store directory; defaults to .dal/clusters.",
@@ -197,14 +199,18 @@ export function apply(ctx: Context, config: Config): void {
         ],
       },
       async execute(args) {
-        const { clusters, runs, output: requested, model } = args as { clusters?: string; runs?: string; output?: string; model: string };
-        if (typeof model !== "string" || !model) throw new Error("An explicit DeepSeek model is required");
+        const { clusters, runs, output: requested, model, provider, budget } = args as { clusters?: string; runs?: string; output?: string; model: string; provider?: string; budget: string };
+        if (typeof model !== "string" || !model) throw new Error("An explicit model is required");
         const output = requested ?? `.dal/check/prepared-${randomUUID()}.json`;
         const result = await runCli(cliCommand, timeoutMs, undefined, [
           "propose",
           "prepare",
           "--model",
           model,
+          "--provider",
+          provider ?? "deepseek-official",
+          "--budget",
+          budget,
           "--clusters",
           clusters ?? DEFAULT_CLUSTERS,
           "--runs",

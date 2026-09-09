@@ -1,17 +1,23 @@
 import { spawnSync } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, realpath, lstat, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { zstdDecompressSync } from "node:zlib";
 
 import { verifyApprovalFile } from "../../src/approval.js";
-import { loadDotEnv } from "../../src/docker.js";
+import { GATEWAY_ROUTES, validateSpendPolicy, validateGatewayFailure, type GatewayFailure, type E2eSpendPolicy } from "../../src/e2e-model-gateway.js";
+import { OPENAI_TEXT_REPLAY_PROFILE } from "../../src/e2e-openai-text-replay.js";
 import { canonicalJson, sha256 } from "../../src/json.js";
 import { ingestRunRecord } from "../../src/runs.js";
-import { buildCompositionPatch, buildModelPatch, promptFor, providerSpec } from "./e2e-prompt.js";
+import { buildGatewayCompositionPatch, promptFor } from "./e2e-prompt.js";
 import { compareGate, readSummary, type E2eSummary, type TaskSummary } from "./e2e-summary.js";
 import {
   candidateDockerArgv,
+  containerIsolationFacts,
+  type ContainerInspection,
+  gatewayDockerArgv,
+  networkDockerArgv,
   graderDockerArgv,
   SERVICE_ALIAS,
   SERVICE_URL,
@@ -54,6 +60,96 @@ const repoRoot = resolve(workspace, "..", "..");
 const DEFAULT_IMAGE = "dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2";
 const POLICY_PATH = join(workspace, "tasks", "policy.md");
 const SKILL_PATH = join(workspace, ".agents", "skills", "refund-workflow", "SKILL.md");
+
+export function executionMode(args: Map<string, string>): "rehearsal" | "live" {
+  const mode = args.get("mode");
+  if (mode !== "rehearsal" && mode !== "live") throw new Error("--mode rehearsal|live is required");
+  return mode;
+}
+
+/** Stable policy identity is approved before ephemeral capabilities are generated. */
+export function gatewayPolicyTemplate(args: Map<string, string>, runId: string): E2eSpendPolicy {
+  const mode = executionMode(args);
+  const campaign = args.get("campaign");
+  const rawCap = args.get("provider-cap-microusd") ?? "";
+  if (!/^\d+$/.test(rawCap) || !Number.isSafeInteger(Number(rawCap)) || Number(rawCap) < 1) throw new Error("--provider-cap-microusd must be an explicit positive safe integer");
+  if (!campaign || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(campaign)) throw new Error("--campaign must be a safe identifier of at most 80 characters");
+  const provider = args.get("provider");
+  const policy = {
+    schema_version: "1.0.0", campaign_id: campaign,
+    budget_id: mode === "rehearsal" ? `rehearsal-${campaign}` : campaign,
+    approval_id: args.get("approval-id") ?? (mode === "rehearsal" ? "dec-rehearsal" : ""),
+    run_id: runId, provider, model: args.get("model"),
+    provider_limit_microusd: Number(rawCap), max_request_bytes: 65536, max_response_bytes: 2097152,
+    timeout_ms: 120000, max_output_tokens: 1024,
+    pricing_profile: "reviewed-text-upper-rates-20260907-v1", token_bound_profile: "json-bytes-times-two-plus-8192-v1",
+    input_microusd_per_token: provider === "openai" ? 5 : 4,
+    output_microusd_per_token: provider === "openai" ? 18 : 10,
+  };
+  validateSpendPolicy(policy);
+  return policy;
+}
+
+export async function gatewayLedgerRoot(args: Map<string, string>): Promise<string> {
+  const root = await realpath(repoRoot);
+  const path = join(root, ".dal", "check", "spend");
+  if (args.has("gateway-ledger") && args.get("gateway-ledger") !== path) throw new Error("--gateway-ledger overrides are disabled; use the canonical repository .dal/check/spend root");
+  await assertRealDirectoryAncestors(path);
+  return path;
+}
+
+/** Rehearsal records cannot enter the ordinary proposal/cluster input store. */
+export async function e2eRunStore(args: Map<string, string>): Promise<string> {
+  const root = await realpath(repoRoot);
+  if (executionMode(args) === "live") return args.get("store") ?? join(root, ".dal", "runs");
+  if (args.has("store")) throw new Error("--store is disabled in rehearsal; records are isolated under .dal/check/rehearsal-runs");
+  const campaign = args.get("campaign");
+  if (!campaign || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(campaign)) throw new Error("--campaign requires a safe identifier");
+  const path = join(root, ".dal", "check", "rehearsal-runs", campaign);
+  await assertRealDirectoryAncestors(path);
+  return path;
+}
+
+async function assertRealDirectoryAncestors(path: string): Promise<void> {
+  // Check without creating paths during prepare; symlink aliases cannot redirect evidence or budget.
+  let ancestor = path;
+  for (;;) {
+    const info = await lstat(ancestor).catch(error => { if (error.code === "ENOENT") return null; throw error; });
+    if (info !== null) {
+      if (!info.isDirectory() || await realpath(ancestor) !== ancestor) throw new Error("Evidence and ledger ancestors must be real directories");
+      break;
+    }
+    ancestor = dirname(ancestor);
+  }
+}
+
+export function plannedRunId(args: Map<string, string>, taskId: string, attempt: number): string {
+  const batch = args.get("batch");
+  if (!batch || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(batch)) throw new Error("--batch requires a unique planned safe identifier");
+  return `run-e2e-${sha256(canonicalJson({ campaign: args.get("campaign"), mode: executionMode(args), provider: args.get("provider"), batch, taskId, attempt })).slice(0, 48)}`;
+}
+
+export function safeGatewayReceipt(value: unknown, policy: E2eSpendPolicy, mode: "live" | "rehearsal") {
+  const receipt = value as Record<string, unknown> | null;
+  if (!receipt || receipt.campaign_id !== policy.campaign_id || receipt.run_id !== policy.run_id || receipt.provider !== policy.provider || receipt.mode !== mode || receipt.accounting !== "upper-bound-reservations-no-refund") throw new Error("Gateway receipt identity mismatch");
+  const count = (v: unknown): number => { if (!Number.isSafeInteger(v) || Number(v) < 0) throw new Error("Invalid gateway receipt counter"); return Number(v); };
+  const counts = receipt.process_counts as Record<string, unknown> | undefined;
+  if (!counts) throw new Error("Missing gateway counters");
+  const reserved = count(receipt.reserved_microusd);
+  if (reserved > policy.provider_limit_microusd) throw new Error("Gateway receipt exceeds campaign cap");
+  let diagnostics: { records: GatewayFailure[]; dropped_count: number } | undefined;
+  if (receipt.failure_diagnostics !== undefined) {
+    const value = receipt.failure_diagnostics as Record<string, unknown> | null;
+    if (!value || Object.keys(value).length !== 2 || !Array.isArray(value.records) || value.records.length > 32 || !("dropped_count" in value)) throw new Error("Invalid gateway failure diagnostics");
+    const records = value.records.map(record => { validateGatewayFailure(record); return { ...record }; });
+    diagnostics = { records, dropped_count: count(value.dropped_count) };
+  }
+  return { campaign_id: policy.campaign_id, run_id: policy.run_id, provider: policy.provider, mode,
+    reservations: count(receipt.reservations), reserved_microusd: reserved,
+    process_counts: { completed: count(counts.completed), failed: count(counts.failed), rejected: count(counts.rejected), response_bytes: count(counts.response_bytes) },
+    ...(diagnostics === undefined ? {} : { failure_diagnostics: diagnostics }),
+    accounting: "upper-bound-reservations-no-refund" };
+}
 
 interface RunTask {
   task_id: string;
@@ -107,9 +203,9 @@ function resolutionProfile(args: Map<string, string>): ResolutionProfile {
 }
 
 export function renderedCompositionPatch(args: Map<string, string>): string {
-  return buildCompositionPatch(
-    args.get("provider") ?? "deepseek-official",
-    args.get("model") ?? "deepseek-v4-flash",
+  return buildGatewayCompositionPatch(
+    args.get("provider") ?? "",
+    args.get("model") ?? "",
     SERVICE_URL,
   );
 }
@@ -133,8 +229,8 @@ function argumentsFrom(argv: readonly string[]): Map<string, string> {
 
 
 /** Content digest of the pinned harness image (docker runner only). */
-async function containerImageDigest(): Promise<string | null> {
-  const result = spawnSync("docker", ["image", "inspect", "--format", "{{.Id}}", DEFAULT_IMAGE], { encoding: "utf8", timeout: 30_000 });
+async function containerImageDigest(image: string): Promise<string | null> {
+  const result = spawnSync("docker", ["image", "inspect", "--format", "{{.Id}}", image], { encoding: "utf8", timeout: 30_000 });
   if (result.status !== 0) {
     return null;
   }
@@ -164,7 +260,7 @@ async function dirDigest(root: string): Promise<string> {
 async function containerDirDigest(image: string, containerDir: string): Promise<string | null> {
   const result = spawnSync(
     "docker",
-    ["run", "--rm", image, "sh", "-c", `cd ${containerDir} && find . -type f | sort | xargs sha256sum | sha256sum`],
+    ["run", "--rm", "--network", "none", image, "sh", "-c", `cd ${containerDir} && find . -type f | sort | xargs sha256sum | sha256sum`],
     { encoding: "utf8", timeout: 120_000 },
   );
   if (result.status !== 0) {
@@ -203,22 +299,42 @@ export async function transmissionManifest(
     agentTasks.push({ task_id: taskId, sha256: sha256(stableJson(agentVisibleTask(task))) });
     evaluatorTasks.push({ task_id: taskId, sha256: sha256(stableJson(task)) });
   }
-  const imageDigest = pinnedImageDigest ?? await containerImageDigest();
-  const imageReference = imageDigest === null ? DEFAULT_IMAGE : `sha256:${imageDigest}`;
+  const mode = executionMode(args);
+  const policies = tasks.flatMap(taskId => Array.from({ length: attemptCount(args) }, (_, index) => ({
+    task_id: taskId, attempt: index + 1, policy: gatewayPolicyTemplate(args, plannedRunId(args, taskId, index + 1)),
+  })));
+  const ledgerRoot = await gatewayLedgerRoot(args);
+  const runStore = await e2eRunStore(args);
+  const image = args.get("image") ?? process.env.DAL_E2E_IMAGE ?? DEFAULT_IMAGE;
+  const imageDigest = pinnedImageDigest ?? await containerImageDigest(image);
+  if (imageDigest === null || !/^[a-f0-9]{64}$/.test(imageDigest)) throw new Error("Pinned Docker image unavailable");
+  const imageReference = `sha256:${imageDigest}`;
   const policyDigest = sha256(await readFile(POLICY_PATH, "utf8"));
   const skillDigest = sha256(await readFile(SKILL_PATH, "utf8"));
   const workflowToolsDigest = await containerDirDigest(imageReference, "/opt/dal/plugins/dal-workflow-tools");
   if (workflowToolsDigest === null) {
     throw new Error(`Unable to inspect workflow tools in ${imageReference}; refusing an incomplete transmission manifest`);
   }
+  const { verifyImageBuildProvenance } = await import("../../src/e2e-build-provenance.js");
+  const buildProvenance = await verifyImageBuildProvenance(repoRoot, imageReference);
+  const gatewayImageDigest = buildProvenance.files["dist/e2e-model-gateway.js"];
+  if (!gatewayImageDigest) throw new Error("Image is missing the compiled spend gateway; build the derived image before prepare");
   const prompts = tasks.map((taskId) => ({ task_id: taskId, prompt: promptFor(taskId) }));
   const driverSources = {
+    openai_text_replay_profile: OPENAI_TEXT_REPLAY_PROFILE,
+    gateway_sha256: sha256(await readFile(join(repoRoot, "src/e2e-model-gateway.ts"), "utf8")),
+    gateway_schema_sha256: sha256(await readFile(join(repoRoot, "schemas/e2e-spend-policy.v1.schema.json"), "utf8")),
+    ledger_sha256: sha256(await readFile(join(repoRoot, "src/proposal-budget.ts"), "utf8")),
+    executed_gateway_sha256: gatewayImageDigest,
+    build_provenance: buildProvenance,
     run_e2e_sha256: sha256(await readFile(join(workspace, "run-e2e.ts"), "utf8")),
     prompt_sha256: sha256(await readFile(join(workspace, "e2e-prompt.ts"), "utf8")),
     summary_sha256: sha256(await readFile(join(workspace, "e2e-summary.ts"), "utf8")),
     topology_sha256: sha256(await readFile(join(workspace, "e2e-topology.ts"), "utf8")),
   };
   const benchmarkContext = {
+    mode,
+    gateway_limits: { request_bytes: 65536, output_tokens: 1024, context_window: 139000 },
     runner,
     fault_profile: faultProfile(args),
     resolution_profile: resolutionProfile(args),
@@ -233,6 +349,13 @@ export async function transmissionManifest(
     driver_sources: driverSources,
   };
   const manifest: TransmissionManifest = {
+    mode,
+    campaign_id: args.get("campaign"),
+    gateway_ledger_root: ledgerRoot,
+    run_store: runStore,
+    gateway_routes: GATEWAY_ROUTES,
+    gateway_policies: policies,
+    network_policy: { candidate: "internal-only", service: "internal-only", grader: "internal-only", gateway_outbound: mode === "live", host_network: false, docker_socket: false },
     purpose: "tau-style-workflow e2e run batch",
     provider,
     model,
@@ -270,8 +393,8 @@ function requireManifestImageDigest(manifest: TransmissionManifest): string {
 
 function attemptCount(args: Map<string, string>): number {
   const raw = args.get("attempts");
-  const count = raw === undefined ? 1 : Number.parseInt(raw, 10);
-  if (!Number.isInteger(count) || count < 1) {
+  const count = raw === undefined ? 1 : Number(raw);
+  if (!Number.isSafeInteger(count) || count < 1 || (raw !== undefined && !/^\d+$/.test(raw))) {
     throw new Error("--attempts must be a positive integer");
   }
   return count;
@@ -337,7 +460,7 @@ const SERVICE_ROOT = ".dal/benchmark/service";
  * session id and the raw event-log head digest, or nulls when no session
  * log was written.
  */
-async function captureSession(homeRoot: string): Promise<{ sessionId: string | null; eventLogHead: string | null }> {
+async function captureSession(homeRoot: string): Promise<{ sessionId: string | null; eventLogHead: string | null; observation?: ReturnType<typeof sessionObservation> }> {
   const candidates: { mtimeMs: number; path: string }[] = [];
   try {
     const sessionsRoot = join(homeRoot, "sessions");
@@ -354,7 +477,7 @@ async function captureSession(homeRoot: string): Promise<{ sessionId: string | n
           continue;
         }
         for (const file of await readdir(sessionDir)) {
-          if (!file.startsWith("session.jsonl")) {
+          if (file !== "session.jsonl" && file !== "session.jsonl.zstd") {
             continue;
           }
           const path = join(sessionDir, file);
@@ -373,10 +496,71 @@ async function captureSession(homeRoot: string): Promise<{ sessionId: string | n
   }
   candidates.sort((left, right) => right.mtimeMs - left.mtimeMs);
   const newest = candidates[0]!;
+  const bytes = await readFile(newest.path);
+  const raw = newest.path.endsWith(".zstd") ? decodeSessionFrames(bytes) : bytes.toString("utf8");
   return {
     sessionId: basename(dirname(newest.path)),
-    eventLogHead: sha256(await readFile(newest.path, "utf8")),
+    eventLogHead: sha256(raw),
+    observation: sessionObservation(raw),
   };
+}
+
+/** DSH appends independent Zstandard frames; Node decodes only one per call. */
+export function decodeSessionFrames(bytes: Buffer): string {
+  const chunks: Buffer[] = [];
+  let offset = 0;
+  let remaining = 32 * 1024 * 1024;
+  while (offset < bytes.length) {
+    // Validate complete frame boundaries first: Node can accept a truncated final frame.
+    let end = offset;
+    const advance = (count: number) => { end += count; if (end > bytes.length) throw new Error("Truncated compressed session frame"); };
+    advance(5);
+    const descriptor = bytes[offset + 4]!;
+    if (bytes.readUInt32LE(offset) !== 0xfd2fb528 || (descriptor & 0x18) !== 0) throw new Error("Invalid compressed session frame");
+    const singleSegment = (descriptor & 0x20) !== 0;
+    const contentSizeFlag = descriptor >>> 6;
+    const dictionaryFlag = descriptor & 3;
+    advance((singleSegment ? 0 : 1) + (dictionaryFlag === 3 ? 4 : dictionaryFlag) + (contentSizeFlag === 0 ? (singleSegment ? 1 : 0) : 1 << contentSizeFlag));
+    for (;;) {
+      advance(3);
+      const block = bytes.readUIntLE(end - 3, 3);
+      const type = (block >>> 1) & 3;
+      if (type === 3) throw new Error("Invalid compressed session block");
+      advance(type === 1 ? 1 : block >>> 3);
+      if ((block & 1) !== 0) break;
+    }
+    if ((descriptor & 4) !== 0) advance(4);
+    const decoded = zstdDecompressSync(bytes.subarray(offset, end), { maxOutputLength: remaining });
+    chunks.push(decoded);
+    remaining -= decoded.length;
+    offset = end;
+    if (remaining <= 0 && offset < bytes.length) throw new Error("Session evidence exceeds bound");
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+/** Extract counters and protocol facts, never retain transcript content. */
+export function sessionObservation(raw: string) {
+  let toolCalls = 0;
+  let input = 0;
+  let output = 0;
+  let usageObserved = false;
+  const getOrderCalls = new Set<string>();
+  let getOrderSucceeded = false;
+  let done = false;
+  for (const line of raw.split("\n").filter(Boolean)) {
+    const event = JSON.parse(line) as { type?: string; data?: { name?: string; callId?: string; error?: unknown; usage?: { inputTokens?: number; outputTokens?: number }; message?: { source?: { callId?: string }; content?: Array<{ type?: string; text?: string }> } } };
+    if (event.type === "tool/call") { toolCalls++; if (event.data?.name === "get_order" && event.data.callId) getOrderCalls.add(event.data.callId); }
+    if (event.type === "tool/result" && !event.data?.error && getOrderCalls.has(event.data?.message?.source?.callId ?? "")) getOrderSucceeded = true;
+    if (event.type === "assistant/message") {
+      const usage = event.data?.usage;
+      if (usage && Number.isSafeInteger(usage.inputTokens) && Number(usage.inputTokens) >= 0 && Number.isSafeInteger(usage.outputTokens) && Number(usage.outputTokens) >= 0) {
+        input += usage.inputTokens!; output += usage.outputTokens!; usageObserved = true;
+      }
+      if (getOrderSucceeded && event.data?.message?.content?.some(block => block.type === "text" && block.text?.trim() === "DONE")) done = true;
+    }
+  }
+  return { tool_calls: toolCalls, ...(usageObserved ? { input_tokens: input, output_tokens: output } : {}), get_order_succeeded: getOrderSucceeded, get_order_then_done: getOrderSucceeded && done };
 }
 
 /** Whether the docker daemon answers a trivial query. */
@@ -399,21 +583,28 @@ async function ensureDocker(): Promise<void> {
   throw new Error("Docker daemon unavailable and did not recover after relaunching Docker Desktop");
 }
 
-function cleanupTopology(topology: DockerTopology): void {
-  for (const container of [topology.candidateContainer, topology.graderContainer, topology.serviceContainer]) {
-    spawnSync("docker", ["rm", "-f", container], { encoding: "utf8", timeout: 30_000 });
-  }
-  for (const network of [topology.candidateNetwork, topology.graderNetwork]) {
-    spawnSync("docker", ["network", "rm", network], { encoding: "utf8", timeout: 30_000 });
+function cleanupTopology(topology: DockerTopology, owned: Array<{ kind: "container" | "network"; id: string }>): void {
+  for (const resource of [...owned].reverse()) {
+    const inspected = spawnSync("docker", [resource.kind, "inspect", "--format", resource.kind === "network" ? '{{index .Labels "dal.e2e.attempt"}}' : '{{index .Config.Labels "dal.e2e.attempt"}}', resource.id], { encoding: "utf8", timeout: 30_000 });
+    if (inspected.status !== 0 || inspected.stdout.trim() !== topology.id) continue;
+    spawnSync("docker", resource.kind === "container" ? ["rm", "-f", resource.id] : ["network", "rm", resource.id], { encoding: "utf8", timeout: 30_000 });
   }
 }
 
 function requireDockerSuccess(argv: string[], label: string, env: NodeJS.ProcessEnv = process.env): string {
   const result = spawnSync("docker", argv, { encoding: "utf8", timeout: 120_000, env });
   if (result.error !== undefined || result.status !== 0) {
-    throw new Error(`${label} failed: ${result.error?.message ?? String(result.stderr).slice(-500)}`);
+    throw new Error(`${label} failed (docker status ${result.status ?? "unavailable"})`);
   }
   return result.stdout.trim();
+}
+
+function dockerLauncherEnv(capabilities: Record<string, string>): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...capabilities };
+  for (const name of ["PATH", "HOME", "TMPDIR", "DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_CONFIG", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"]) {
+    if (process.env[name] !== undefined) env[name] = process.env[name];
+  }
+  return env;
 }
 
 async function waitForService(container: string): Promise<void> {
@@ -435,15 +626,33 @@ async function runTask(
   batch: string,
   approvedImageDigest: string,
   approvedManifestDigest: string,
-): Promise<{ task: WorkflowTask; verdict: ReturnType<typeof gradeTask>; state: unknown; durationMs: number; prompt: string; modelPatchSha256: string; receiptPath: string; runId: string }> {
+  attempt: number,
+): Promise<{ task: WorkflowTask; verdict: ReturnType<typeof gradeTask>; state: unknown; durationMs: number; prompt: string; modelPatchSha256: string; receiptPath: string; runId: string; observation?: ReturnType<typeof sessionObservation> }> {
   const task = JSON.parse(await readFile(join(workspace, "tasks", taskId), "utf8")) as WorkflowTask;
   const prompt = promptFor(taskId);
   const provider = args.get("provider") ?? "deepseek-official";
   const model = args.get("model") ?? "deepseek-v4-flash";
   const faults = faultProfile(args);
   const resolutions = resolutionProfile(args);
-  const attemptId = `${batch}-${task.task_id}-${randomUUID().slice(0, 8)}`;
-  const runId = `run-e2e-${task.task_id}-${batch}-${randomUUID().slice(0, 8)}`;
+  const runId = plannedRunId(args, taskId, attempt);
+  const attemptId = runId;
+  const mode = executionMode(args);
+  const policy = gatewayPolicyTemplate(args, runId);
+  const ledgerRoot = await gatewayLedgerRoot(args);
+  await assertTransmissionManifestCurrent(args, approvedImageDigest, approvedManifestDigest);
+  if (mode === "live") {
+    const approval = args.get("approval");
+    if (!approval) throw new Error("Live execution requires --approval");
+    const decision = await verifyApprovalFile(approval, { action: "send_data_externally", scope: approvedManifestDigest, at: new Date() });
+    if (decision.decision_id !== policy.approval_id) throw new Error("Approval identity does not match the gateway policy");
+    const keyEnv = policy.provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY";
+    if (!process.env[keyEnv]?.trim()) throw new Error(`Live gateway requires launcher environment ${keyEnv}; no attempt was claimed`);
+  }
+  const gatewayRoot = join(repoRoot, ".dal", "check", "e2e-gateways", runId);
+  await mkdir(gatewayRoot, { recursive: true, mode: 0o700 });
+  // Claim before staging or service initialization so replay cannot overwrite attempt evidence.
+  const policyPath = join(gatewayRoot, "policy.json");
+  await writeFile(policyPath, `${canonicalJson(policy)}\n`, { flag: "wx", mode: 0o400 });
   const stateRootHost = join(workspace, SERVICE_ROOT, batch, attemptId);
   await mkdir(stateRootHost, { recursive: true, mode: 0o700 });
   const seedState: ServiceState = {
@@ -458,8 +667,8 @@ async function runTask(
   await resetServiceState();
   const beforeDigest = sha256(stableJson(projectServiceState(seedState)));
 
-  const modelPatch = buildModelPatch(provider, model);
   const compositionPatch = renderedCompositionPatch(args);
+  const modelPatch = compositionPatch;
   const stageRoot = join(workspace, ".dal", "benchmark", "e2e", "staging", attemptId);
   await stageCandidateWorkspace({
     stageRoot,
@@ -486,11 +695,14 @@ async function runTask(
     throw new Error("Staged grader task does not match the approved transmission manifest");
   }
 
-  const keyEnv = providerSpec(provider).apiKeyEnv;
-  const key = process.env[keyEnv] ?? loadDotEnv(repoRoot)[keyEnv] ?? "";
-  if (key === "") {
-    throw new Error(`Provider "${provider}" needs ${keyEnv}; set it in the environment or ${repoRoot}/.env before running`);
+  if (mode === "live") {
+    const approval = args.get("approval");
+    if (!approval) throw new Error("Live execution requires --approval");
+    const decision = await verifyApprovalFile(approval, { action: "send_data_externally", scope: approvedManifestDigest, at: new Date() });
+    if (decision.decision_id !== policy.approval_id) throw new Error("Approval identity does not match the gateway policy");
   }
+  const gatewayToken = randomBytes(32).toString("hex");
+  await mkdir(ledgerRoot, { recursive: true, mode: 0o700 });
 
   const dshHomeHost = join(workspace, ".dal", "benchmark", "e2e", "dsh-home", attemptId);
   await mkdir(dshHomeHost, { recursive: true, mode: 0o700 });
@@ -509,21 +721,42 @@ async function runTask(
     verdict: Verdict;
   };
   await ensureDocker();
-  cleanupTopology(topology);
+  const owned: Array<{ kind: "container" | "network"; id: string }> = [];
+  let gatewayStarted = false;
+  let candidateId: string | undefined;
+  const createContainer = (argv: string[], label: string, env: NodeJS.ProcessEnv): string => {
+    const id = requireDockerSuccess(["create", ...argv.slice(1).filter(value => value !== "--rm" && value !== "--detach")], label, env);
+    owned.push({ kind: "container", id });
+    return id;
+  };
   try {
-    requireDockerSuccess(["network", "create", topology.candidateNetwork], "candidate network creation");
-    requireDockerSuccess(["network", "create", "--internal", topology.graderNetwork], "grader network creation");
-    const serviceEnv = {
-      ...process.env,
+    for (const argv of networkDockerArgv(topology, mode)) {
+      owned.push({ kind: "network", id: requireDockerSuccess(argv, "network creation") });
+    }
+    if (mode === "live") await verifyApprovalFile(args.get("approval")!, { action: "send_data_externally", scope: approvedManifestDigest, at: new Date() });
+    const gatewayEnv = dockerLauncherEnv({ DAL_GATEWAY_TOKEN: gatewayToken });
+    if (mode === "live") {
+      const keyEnv = policy.provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY";
+      const key = process.env[keyEnv];
+      if (!key) throw new Error(`Live gateway requires launcher environment ${keyEnv}`);
+      gatewayEnv[keyEnv] = key;
+    }
+    const gatewayId = createContainer(gatewayDockerArgv({ image: imageReference, topology, policyPath, ledgerRoot, mode, provider: policy.provider }), "gateway creation", gatewayEnv);
+    requireDockerSuccess(["start", gatewayId], "gateway launch");
+    gatewayStarted = true;
+    if (mode === "live") requireDockerSuccess(["network", "connect", topology.outboundNetwork, topology.gatewayContainer], "gateway outbound attachment");
+    await waitForService(topology.gatewayContainer);
+    const serviceEnv = dockerLauncherEnv({
       DAL_SERVICE_FAULTS: JSON.stringify(faults),
       DAL_SERVICE_RESOLUTIONS: JSON.stringify(resolutions),
       DAL_EVALUATOR_TOKEN: evaluatorToken,
-    };
-    requireDockerSuccess(
+    });
+    const serviceId = createContainer(
       serviceDockerArgv({ image: imageReference, topology, stateRootHost }),
       "workflow service container",
       serviceEnv,
     );
+    requireDockerSuccess(["start", serviceId], "service launch");
     requireDockerSuccess(
       ["network", "connect", "--alias", SERVICE_ALIAS, topology.graderNetwork, topology.serviceContainer],
       "grader network attachment",
@@ -535,46 +768,72 @@ async function runTask(
       topology,
       stageRoot,
       dshHomeHost,
-      keyEnv,
       prompt,
     });
-    let result: ReturnType<typeof spawnSync> | undefined;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      result = spawnSync("docker", argv, {
+    candidateId = createContainer(argv, "candidate creation", dockerLauncherEnv({ DAL_GATEWAY_TOKEN: gatewayToken }));
+    const graderId = createContainer(graderDockerArgv({ image: imageReference, topology, taskPath: graderTaskPath }), "grader creation", dockerLauncherEnv({ DAL_EVALUATOR_TOKEN: evaluatorToken }));
+    const captureIsolation = () => {
+      const internalNetworks = [topology.candidateNetwork, topology.graderNetwork];
+      const networkFacts = [...internalNetworks, ...(mode === "live" ? [topology.outboundNetwork] : [])].map(name => {
+        const info = JSON.parse(requireDockerSuccess(["network", "inspect", "--format", "{{json .}}", name], "network inspection")) as { Internal: boolean; Labels: Record<string, string> };
+        if (info.Internal !== internalNetworks.includes(name) || info.Labels["dal.e2e.attempt"] !== topology.id) throw new Error("Network isolation inspection failed");
+        return { name, internal: info.Internal };
+      });
+      const imageEnv = ["PATH", "NODE_VERSION", "YARN_VERSION", "NODE_ENV"];
+      const principals = [
+        { principal: "candidate", id: candidateId!, networks: [topology.candidateNetwork], envNames: [...imageEnv, "DSH_HOME", "DAL_GATEWAY_TOKEN"], mounts: [{ source: stageRoot, destination: "/workspace", writable: false }, { source: dshHomeHost, destination: "/dsh-home", writable: true }] },
+        { principal: "service", id: serviceId, networks: internalNetworks, envNames: [...imageEnv, "DAL_SERVICE_STATE_ROOT", "DAL_SERVICE_PORT", "DAL_SERVICE_FAULTS", "DAL_SERVICE_RESOLUTIONS", "DAL_EVALUATOR_TOKEN"], mounts: [{ source: stateRootHost, destination: "/service-state", writable: true }] },
+        { principal: "grader", id: graderId, networks: [topology.graderNetwork], envNames: [...imageEnv, "DAL_EVALUATOR_TOKEN"], mounts: [{ source: graderTaskPath, destination: "/oracle/task.json", writable: false }] },
+        { principal: "gateway", id: gatewayId, networks: [topology.candidateNetwork, ...(mode === "live" ? [topology.outboundNetwork] : [])], envNames: [...imageEnv, "DAL_GATEWAY_POLICY", "DAL_GATEWAY_LEDGER_ROOT", "DAL_GATEWAY_MODE", "DAL_GATEWAY_TOKEN", ...(mode === "live" ? [policy.provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY"] : [])], mounts: [{ source: policyPath, destination: "/gateway-policy.json", writable: false }, { source: ledgerRoot, destination: "/gateway-ledger", writable: true }] },
+      ].map(expected => {
+        const inspection = JSON.parse(requireDockerSuccess(["container", "inspect", "--format", "{{json .}}", expected.id], "container inspection")) as ContainerInspection;
+        return { principal: expected.principal, ...containerIsolationFacts(inspection, { ...expected, image: imageReference }) };
+      });
+      return { run_id: runId, mode, source: "docker-inspect", candidate_egress: "denied-by-internal-only-network", networks: networkFacts, principals };
+    };
+    await writeFile(join(gatewayRoot, "isolation-before.json"), `${canonicalJson(captureIsolation())}\n`, { flag: "wx", mode: 0o600 });
+    const result = spawnSync("docker", ["start", "--attach", candidateId], {
         encoding: "utf8",
         timeout: 900_000,
         maxBuffer: 32 * 1024 * 1024,
-        env: { ...process.env, [keyEnv]: key },
+        env: dockerLauncherEnv({}),
       });
-      if (result.error === undefined || attempt === 1) break;
-      console.error(`docker transport failure for ${taskId}: ${result.error.message}; cleaning the candidate and retrying once`);
-      spawnSync("docker", ["rm", "-f", topology.candidateContainer], { encoding: "utf8", timeout: 30_000 });
-      await resetServiceState();
-      await ensureDocker();
+    if (mode === "rehearsal") {
+      await writeFile(join(gatewayRoot, "candidate-diagnostics.json"), `${canonicalJson({ exit_code: result.status, transport_error: result.error !== undefined, final_done: (result.stdout ?? "").trim() === "DONE", stderr_bytes: Buffer.byteLength(result.stderr ?? "") })}\n`, { flag: "wx", mode: 0o600 });
     }
-    if (result === undefined || result.error !== undefined) {
-      throw new Error(`dsh headless failed to start for ${taskId}: ${result?.error?.message ?? "unknown transport error"}`);
+    if (result.error !== undefined) {
+      throw new Error(`dsh headless transport failed for ${taskId}; no retry`);
     }
     if (result.status !== 0) {
-      throw new Error(`dsh headless exited ${result.status} for ${taskId}: ${String(result.stderr).slice(-500)}`);
+      throw new Error(`dsh headless exited ${result.status} for ${taskId}`);
     }
 
     const grader = spawnSync(
       "docker",
-      graderDockerArgv({ image: imageReference, topology, taskPath: graderTaskPath }),
+      ["start", "--attach", graderId],
       {
         encoding: "utf8",
         timeout: 120_000,
         maxBuffer: 16 * 1024 * 1024,
-        env: { ...process.env, DAL_EVALUATOR_TOKEN: evaluatorToken },
+        env: dockerLauncherEnv({}),
       },
     );
     if (grader.error !== undefined || grader.status !== 0) {
-      throw new Error(`isolated grader failed for ${taskId}: ${grader.error?.message ?? String(grader.stderr).slice(-500)}`);
+      throw new Error(`isolated grader failed for ${taskId}`);
     }
     graded = JSON.parse(grader.stdout.trim()) as typeof graded;
+    await writeFile(join(gatewayRoot, "isolation-after.json"), `${canonicalJson(captureIsolation())}\n`, { flag: "wx", mode: 0o600 });
   } finally {
-    cleanupTopology(topology);
+    try {
+      if (candidateId) requireDockerSuccess(["stop", "--time", "5", candidateId], "candidate quiescence");
+      if (gatewayStarted) {
+        const raw = requireDockerSuccess(["exec", topology.gatewayContainer, "node", "-e", "fetch('http://127.0.0.1:8787/receipt',{headers:{authorization:'Bearer '+process.env.DAL_GATEWAY_TOKEN}}).then(async r=>{if(!r.ok)process.exit(1);console.log(JSON.stringify(await r.json()))}).catch(()=>process.exit(1))"], "gateway receipt");
+        const receipt = safeGatewayReceipt(JSON.parse(raw), policy, mode);
+        await writeFile(join(gatewayRoot, "receipt.json"), `${canonicalJson(receipt)}\n`, { flag: "wx", mode: 0o600 });
+        console.log(`gateway\t${runId}\treserved_microusd=${receipt.reserved_microusd}\taccounting=upper-bound-reservations-no-refund`);
+        for (const failure of receipt.failure_diagnostics?.records ?? []) console.log(`gateway-failure\tstage=${failure.stage}\tcode=${failure.code}\tupstream_status=${failure.upstream_status ?? "unavailable"}`);
+      }
+    } finally { cleanupTopology(topology, owned); }
   }
   const durationMs = Date.now() - started;
 
@@ -587,7 +846,14 @@ async function runTask(
   if (sha256(stableJson(JSON.parse(await readFile(graderTaskPath, "utf8")) as unknown)) !== stagedGraderTaskDigest) {
     throw new Error("Grader staging changed during execution; refusing the receipt");
   }
-  const { sessionId, eventLogHead } = await captureSession(dshHomeHost);
+  const { sessionId, eventLogHead, observation } = await captureSession(dshHomeHost);
+  if (!observation) throw new Error("Missing readable session counters; refusing invented run metrics");
+  if (mode === "rehearsal") {
+    const protocolSuccess = observation?.get_order_then_done === true;
+    await writeFile(join(gatewayRoot, "rehearsal.json"), `${canonicalJson({ mode, protocol_success: protocolSuccess, observation, business_success: verdict.pass, accounting: "synthetic-reservations-not-billing" })}\n`, { flag: "wx", mode: 0o600 });
+    console.log(`rehearsal\tprotocol=${protocolSuccess ? "passed" : "unproven"}\tbusiness=${verdict.pass ? "passed" : "failed"}`);
+    if (!protocolSuccess) throw new Error("Rehearsal protocol not proven: require recorded get_order followed by DONE");
+  }
   const imageDigest = approvedImageDigest;
   const toolsDigest = currentManifest.workflow_tools_sha256;
   const compositionDigest = sha256(
@@ -639,8 +905,10 @@ async function runTask(
       total: verdict.total,
     },
   };
-  const receiptPath = join(repoRoot, ".dal", "check", "e2e-receipts", `${receipt.receipt_id}.json`);
-  await mkdir(join(repoRoot, ".dal", "check", "e2e-receipts"), { recursive: true, mode: 0o700 });
+  const receiptDirectory = mode === "rehearsal" ? join(await e2eRunStore(args), "receipts") : join(repoRoot, ".dal", "check", "e2e-receipts");
+  await assertRealDirectoryAncestors(receiptDirectory);
+  const receiptPath = join(receiptDirectory, `${receipt.receipt_id}.json`);
+  await mkdir(receiptDirectory, { recursive: true, mode: 0o700 });
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
 
   return {
@@ -652,6 +920,7 @@ async function runTask(
     modelPatchSha256: sha256(modelPatch),
     receiptPath: relative(repoRoot, receiptPath),
     runId,
+    ...(observation ? { observation } : {}),
   };
 }
 
@@ -662,8 +931,9 @@ async function main(): Promise<void> {
     console.log(await manifestDigest(args));
     return;
   }
+  const mode = executionMode(args);
   const approval = args.get("approval");
-  if (approval === undefined) {
+  if (mode === "live" && approval === undefined && args.get("prepare") !== "true" && args.get("manifest") === undefined) {
     throw new Error("Usage: run-e2e.ts --approval <decision-file> [--runner docker] [--tasks a.json,b.json] [--batch <id>] [--store <dir>] [--attempts N] [--compare <summary-file>] [--faults issue_refund=unknown,...] [--resolutions issue_refund=success,...] [--generation g0|g1] [--provider <p>] [--model <m>]");
   }
   const tasks = await taskIds(args);
@@ -671,10 +941,16 @@ async function main(): Promise<void> {
   const approvedImageDigest = requireManifestImageDigest(manifest);
   const digest = sha256(canonicalJson(manifest));
   console.error(`manifest digest: ${digest}`);
-  await verifyApprovalFile(approval, { action: "send_data_externally", scope: digest, at: new Date() });
+  if (args.get("prepare") === "true" || args.get("manifest") !== undefined) {
+    const path = await persistTransmissionManifest(manifest, digest);
+    if (args.get("manifest")) await writeFile(resolve(args.get("manifest")!), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx", mode: 0o600 });
+    console.log(JSON.stringify({ manifest_path: path, manifest_sha256: digest }));
+    return;
+  }
+  if (mode === "live") await verifyApprovalFile(approval!, { action: "send_data_externally", scope: digest, at: new Date() });
   const manifestPath = await persistTransmissionManifest(manifest, digest);
 
-  const store = args.get("store") ?? join(repoRoot, ".dal", "runs");
+  const store = await e2eRunStore(args);
   const batch = args.get("batch") ?? "baseline";
   const skillDigest = manifest.skill_sha256;
   const goalDigest = (task: WorkflowTask): string => sha256(stableJson(task.goal_state));
@@ -695,12 +971,13 @@ async function main(): Promise<void> {
       attempts_detail: [],
     };
     for (let attempt = 1; attempt <= attemptsPerTask; attempt += 1) {
-      const { task, verdict, state, durationMs, prompt, modelPatchSha256, receiptPath, runId } = await runTask(
+      const { task, verdict, state, durationMs, prompt, modelPatchSha256, receiptPath, runId, observation } = await runTask(
         args,
         taskId,
         batch,
         approvedImageDigest,
         digest,
+        attempt,
       );
       const passed = verdict.pass;
       if (!passed) {
@@ -769,14 +1046,19 @@ async function main(): Promise<void> {
           earned: verdict.earned,
           total: verdict.total,
         },
-        metrics: { duration_ms: durationMs, tool_calls: 0 },
-        evidence: [`dsh-session://e2e-${task.task_id}`, `repo://${receiptPath}`],
+        metrics: { duration_ms: durationMs, ...(observation ? { tool_calls: observation.tool_calls, ...(observation.input_tokens === undefined ? {} : { input_tokens: observation.input_tokens, output_tokens: observation.output_tokens }) } : {}) },
+        evidence: [`dal-e2e-mode://${mode}`, `dsh-session://e2e-${task.task_id}`, `repo://${receiptPath}`, `repo://.dal/check/e2e-gateways/${runId}/receipt.json`,
+          `repo://.dal/check/e2e-gateways/${runId}/isolation-before.json`, `repo://.dal/check/e2e-gateways/${runId}/isolation-after.json`,
+          ...(mode === "rehearsal" ? [`repo://.dal/check/e2e-gateways/${runId}/rehearsal.json`] : [])],
         privacy: { classification: "internal", contains_personal_data: false, redactions: [] },
       };
-      const recordPath = join(workspace, ".dal", "benchmark", "e2e", `${runId}.json`);
+      const recordDirectory = mode === "rehearsal" ? join(await e2eRunStore(args), "staged") : join(workspace, ".dal", "benchmark", "e2e");
+      await assertRealDirectoryAncestors(recordDirectory);
+      await mkdir(recordDirectory, { recursive: true, mode: 0o700 });
+      const recordPath = join(recordDirectory, `${runId}.json`);
       const recordRaw = `${JSON.stringify(record, null, 2)}\n`;
       await writeFile(recordPath, recordRaw, "utf8");
-      await ingestRunRecord(recordPath, store);
+      await ingestRunRecord(recordPath, await e2eRunStore(args));
       const receiptAbsolute = resolve(repoRoot, receiptPath);
       const receiptRaw = await readFile(receiptAbsolute);
       taskSummary.attempts_detail.push({
@@ -826,8 +1108,10 @@ async function main(): Promise<void> {
       variance: meanOfSquares - mean * mean,
     },
   };
-  const summaryPath = join(repoRoot, ".dal", "check", `e2e-summary-${batch}.json`);
-  await mkdir(join(repoRoot, ".dal", "check"), { recursive: true, mode: 0o700 });
+  const summaryDirectory = mode === "rehearsal" ? join(store, "summaries") : join(repoRoot, ".dal", "check");
+  await assertRealDirectoryAncestors(summaryDirectory);
+  const summaryPath = join(summaryDirectory, `e2e-summary-${batch}.json`);
+  await mkdir(summaryDirectory, { recursive: true, mode: 0o700 });
   await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
   for (const task of perTask) {
     console.log(

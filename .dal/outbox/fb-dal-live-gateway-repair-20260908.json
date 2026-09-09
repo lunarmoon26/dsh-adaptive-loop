@@ -1,0 +1,46 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-live-gateway-repair-20260908",
+  "change_id": "chg-dal-live-gateway-repair-20260908",
+  "created_at": "2026-09-08T18:55:15Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-gateway-repair" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": "repo://.dal/check/paid-adaptive-20260908-result.json"
+  },
+  "goal": "Reproduce and repair the confirmed OpenAI replay admission failure offline and retain safe diagnostics for future gateway failures without paid retries.",
+  "acceptance_criteria": [
+    { "id": "ac-reproduce", "statement": "Identify the OpenAI incompatibility from saved evidence and native offline reconstruction without claiming an unavailable historical wire capture.", "result": "passed", "evidence": ["ev-reconstruction"] },
+    { "id": "ac-projection", "statement": "Preserve visible context and tool linkage while excluding empty-visible opaque reasoning on the declared text-only route; leave the gateway restriction intact.", "result": "passed", "evidence": ["ev-replay", "ev-dsh"] },
+    { "id": "ac-diagnostics", "statement": "Persist bounded allowlisted guard/stage and observed HTTP status without sensitive data, and validate diagnostics before publishing receipts.", "result": "passed", "evidence": ["ev-diagnostics", "ev-gate"] },
+    { "id": "ac-verify", "statement": "Pass focused and full local verification and native keyless DSH rehearsals.", "result": "passed", "evidence": ["ev-dsh", "ev-gate"] },
+    { "id": "ac-authority", "statement": "Preserve old claims, reservations and approvals; prepare fresh manifests without authorizing paid retries.", "result": "passed", "evidence": ["ev-manifests"] }
+  ],
+  "outcome": { "status": "completed", "summary": "The reproduced OpenAI opaque-replay incompatibility is repaired and keyless-runtime verified. Safe failure diagnostics and preclaim credential checks are implemented. Original Anthropic cause and live acceptance of repaired replay remain unverified; no paid retry occurred.", "exception": null },
+  "what_worked": ["Native reconstruction isolated reasoning replay rather than speculative request-size or function-status issues.", "The richer real DSH rehearsal completes two gateway requests without rejection while retaining the strict gateway input policy.", "Diagnostic tests retain safe HTTP status/type and reject arbitrary provider message content.", "All local gates pass and old paid reservations remain untouched."],
+  "what_failed": ["Historical Anthropic upstream status was not persisted and cannot be recovered from existing evidence; no cause was invented."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "native-offline-reconstruction", "purpose": "Reconstruct the failed OpenAI replay with intercepted transport and sanitized structural reporting.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-reconstruction"] },
+    { "sequence": 2, "kind": "tool", "name": "keyless-dsh-rehearsal", "purpose": "Exercise reasoning-plus-tool replay and Anthropic protocol on the repaired image without provider access.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-dsh"] },
+    { "sequence": 3, "kind": "tool", "name": "pnpm-check", "purpose": "Run the complete local gate after repair and contract synchronization.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-gate"] },
+    { "sequence": 4, "kind": "tool", "name": "prepare-retry-manifests", "purpose": "Prepare fresh exact source/image scopes under the existing campaign caps, without sending.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-manifests"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-reconstruction", "kind": "file", "uri": "repo://docs/openai-text-replay.md", "summary": "Native offline serialization reproduced a 40211-byte rejected second request with empty-visible encrypted reasoning. Removing the reasoning item admitted the reconstructed request. Historical wire bytes were not retained; raw evidence and ciphertext were not disclosed.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" },
+    { "id": "ev-replay", "kind": "test", "uri": "repo://tests/e2e-openai-text-replay.test.ts", "summary": "Eighteen tests cover explicit reasoning none, opaque-empty history projection, preserved calls/results and visible context, nonempty reasoning denial, bounded input and endpoint-specific fetch behavior.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" },
+    { "id": "ev-diagnostics", "kind": "test", "uri": "repo://tests/e2e-model-gateway.test.ts", "summary": "Eighty-two gateway tests pass, including safe upstream status/type, pre-reservation reasoning rejection, credential/transport distinctions, bounded durable diagnostics and poisoned provider identifiers. Runner projection rejects malformed diagnostic wrappers and raw extra fields.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" },
+    { "id": "ev-dsh", "kind": "file", "uri": "repo://.dal/check/rehearsal-runs/repair-20260908/summaries", "summary": "Both exact-model keyless DSH protocols pass on repaired image 3dd84e86a6e82258b5c4ab84460fb47f16c02133d00ea5b4a814b2ecd032bdde. OpenAI fixture includes reasoning plus tool output and completes two requests with no rejection. Business failure remains the intentional no-op negative control; resources were cleaned.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" },
+    { "id": "ev-gate", "kind": "test", "uri": "command://pnpm-run-check", "summary": "All 43 files pass: 743 tests passed, seven opt-in skipped. Typecheck/build, capsule checks, policy and both offline scorecards pass. Focused repair proof passed 140 tests with one optional topology skip; review found no remaining actionable issue.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" },
+    { "id": "ev-manifests", "kind": "file", "uri": "repo://.dal/check/paid-adaptive-20260908-openai-repair.manifest.json", "summary": "Fresh OpenAI and Anthropic retry scopes bind the repaired source/image and original campaign caps. No new paid decision was created and no old claim, reservation or receipt was reset. Both retries require new exact approval.", "sha256": null, "observed_at": "2026-09-08T18:55:15Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-anthropic-cause", "statement": "The original Anthropic failure cannot be conclusively attributed from the retained generic error.", "level": "high", "resolution": "Use the new safe status/stage diagnostics on a separately approved attempt; do not infer authentication, quota or request errors retrospectively.", "evidence": ["ev-diagnostics"] },
+    { "id": "un-live-acceptance", "statement": "Keyless replay proof does not establish live provider acceptance or actual billing for the changed request representation.", "level": "medium", "resolution": "Use a fresh exact paid manifest approval and the existing no-refund campaign ledger before any retry.", "evidence": ["ev-dsh", "ev-manifests"] }
+  ],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-08T18:55:15Z", "notes": ["The user authorized proceeding with offline diagnostics and repair. Timestamp records acknowledgment, not the unavailable message timestamp. This is not approval for more provider calls. Contract/capsule synchronization preserves unaffected pins and freshness bounds. No keys were read, no candidate activated, and no commits or pushes performed."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

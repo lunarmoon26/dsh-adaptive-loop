@@ -21,6 +21,7 @@ import {
   topologyFor,
 } from "../benchmarks/tau-style-workflow/e2e-topology.js";
 import { initializeService } from "../benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/src/service.js";
+import { createBuildProvenance, expectedArtifactPaths, IMAGE_BUILD_PROBE, sourceInputMap } from "../src/e2e-build-provenance.js";
 import { canonicalJson, sha256 } from "../src/json.js";
 
 const repoRoot = join(import.meta.dirname, "..");
@@ -43,8 +44,8 @@ describe("tau-style three-container topology", () => {
     const skillPath = join(root, "SKILL.md");
     const policyPath = join(root, "policy.md");
     const args = new Map([
-      ["provider", "deepseek-official"],
-      ["model", "deepseek-v4-flash"],
+      ["provider", "openai"],
+      ["model", "gpt-5.6-terra"],
       ["faults", "issue_refund=unknown"],
       ["batch", "g1"],
     ]);
@@ -71,31 +72,43 @@ describe("tau-style three-container topology", () => {
     expect(await readFile(join(stageRoot, ".dal", "benchmark", "e2e", "model-patch.yml"), "utf8")).toBe(patch);
     expect(patch).toContain(`serviceUrl: ${SERVICE_URL}`);
     expect(renderedCompositionPatch(new Map([
-      ["provider", "deepseek-official"],
-      ["model", "deepseek-v4-flash"],
+      ["provider", "openai"],
+      ["model", "gpt-5.6-terra"],
       ["batch", "another-root"],
     ]))).toBe(patch);
     const fakeBin = join(root, "bin");
     const fakeDocker = join(fakeBin, "docker");
+    const inputs = await sourceInputMap(repoRoot);
+    const files = Object.fromEntries(expectedArtifactPaths(inputs).map(path => [path, path.startsWith("schemas/") ? inputs[path]! : "c".repeat(64)]));
+    const provenance = createBuildProvenance(inputs, inputs, files, `sha256:${"a".repeat(64)}`);
+    const shellQuote = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
     await mkdir(fakeBin, { recursive: true });
     await writeFile(fakeDocker, `#!/bin/sh
-if [ "$1" = "image" ]; then
-  printf '%s\\n' 'sha256:${"a".repeat(64)}'
-else
-  printf '%s\\n' '${"b".repeat(64)}  -'
-fi
+ if [ "$1" = "image" ]; then
+   printf '%s\\n' 'sha256:${"a".repeat(64)}'
+ elif [ "$1" = "run" ] && [ "$2" = "--rm" ] && [ "$3" = "--pull" ] && [ "$4" = "never" ] && [ "$5" = "--network" ] && [ "$6" = "none" ] && [ "$7" = "--read-only" ] && [ "$8" = "--cap-drop" ] && [ "$9" = "ALL" ] && [ "\${10}" = "--security-opt" ] && [ "\${11}" = "no-new-privileges" ] && [ "\${12}" = "--entrypoint" ] && [ "\${13}" = "node" ] && [ "\${14}" = "sha256:${"a".repeat(64)}" ] && [ "\${15}" = "-e" ] && [ "\${16}" = ${shellQuote(IMAGE_BUILD_PROBE)} ] && [ -z "\${17}" ]; then
+   printf '%s\\n' ${shellQuote(JSON.stringify({ provenance, files }))}
+ else
+   printf '%s\\n' '${"b".repeat(64)}  -'
+ fi
 `, "utf8");
     await chmod(fakeDocker, 0o755);
     const originalPath = process.env.PATH;
     process.env.PATH = `${fakeBin}:${originalPath ?? ""}`;
     try {
-      const manifestArgs = new Map([["tasks", "task-001-refund.json"]]);
+      const manifestArgs = new Map([["tasks", "task-001-refund.json"], ["mode", "rehearsal"], ["provider", "openai"], ["model", "gpt-5.6-terra"], ["campaign", "test-campaign"], ["provider-cap-microusd", "6000000"], ["batch", "test-batch"]]);
       const manifest = await transmissionManifest(manifestArgs);
-      expect(manifest.rendered_composition_patch).toBe(renderedCompositionPatch(new Map()));
+      expect(manifest.rendered_composition_patch).toBe(renderedCompositionPatch(manifestArgs));
       expect(manifest.evaluator_tasks).toEqual([{ task_id: "task-001-refund.json", sha256: expect.stringMatching(/^[0-9a-f]{64}$/) }]);
       expect(manifest.attempts_per_task).toBe(1);
       expect(manifest.benchmark_context_sha256).toMatch(/^[0-9a-f]{64}$/);
       expect(manifest.container_image_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(manifest.mode).toBe("rehearsal");
+      expect(manifest.gateway_policies).toEqual([{ task_id: "task-001-refund.json", attempt: 1, policy: expect.objectContaining({ campaign_id: "test-campaign", provider_limit_microusd: 6000000, max_output_tokens: 1024 }) }]);
+      for (const [key, value] of [["campaign", "another-campaign"], ["provider-cap-microusd", "5000000"], ["batch", "another-batch"]]) {
+        const changed = new Map(manifestArgs); changed.set(key!, value!);
+        await expect(assertTransmissionManifestCurrent(changed, manifest.container_image_sha256!, sha256(canonicalJson(manifest)))).rejects.toThrow("drifted");
+      }
       const driftedArgs = new Map(manifestArgs);
       driftedArgs.set("attempts", "2");
       await expect(assertTransmissionManifestCurrent(
@@ -162,7 +175,7 @@ describe.skipIf(process.env.DAL_E2E_TOPOLOGY_PROBE !== "1")("live tau-style cont
       return result.stdout.trim();
     };
     try {
-      run(["network", "create", topology.candidateNetwork]);
+      run(["network", "create", "--internal", topology.candidateNetwork]);
       run(["network", "create", "--internal", topology.graderNetwork]);
       run(serviceDockerArgv({ image: benchmarkImage, topology, stateRootHost: stateRoot }), {
         ...process.env,

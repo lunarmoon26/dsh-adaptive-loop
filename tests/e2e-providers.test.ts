@@ -18,7 +18,7 @@ describe("e2e multi-provider composition wiring", () => {
   });
 
   it("resolves every matrix provider to a route, key env, and default model", () => {
-    expect(providerSpec("openai")).toMatchObject({ route: "openai", apiKeyEnv: "OPENAI_API_KEY", defaultModel: "gpt-5.6-luna" });
+    expect(providerSpec("openai")).toMatchObject({ route: "openai", apiKeyEnv: "OPENAI_API_KEY", defaultModel: "gpt-5.6-terra" });
     expect(providerSpec("anthropic")).toMatchObject({ route: "anthropic", apiKeyEnv: "ANTHROPIC_API_KEY", defaultModel: "claude-sonnet-5" });
     expect(providerSpec("zai")).toMatchObject({ route: "zai", apiKeyEnv: "ZAI_API_KEY", defaultModel: "glm-5.2" });
     expect(providerSpec("moonshotai")).toMatchObject({ route: "moonshotai", apiKeyEnv: "MOONSHOT_API_KEY", defaultModel: "kimi-k3" });

@@ -6,6 +6,13 @@ Last contract review: 2026-09-05; pinned upstream evidence remains in [`research
 
 ## Purpose and scope
 
+Paid workflow experiments use a credential-isolated metered gateway outside the
+DSH candidate process. The internal-only candidate and hidden evaluator cannot
+access provider keys or the budget ledger. Rollout and proposal stages share
+one canonical campaign/provider ledger; image build provenance and exact source
+manifests are checked before approval. Rehearsal is keyless and stored separately.
+See [ADR 0010](decisions/0010-meter-rollouts-and-proposals-before-paid-experiments.md).
+
 The proposer has a narrower authority surface than the running agent: it sends
 one versioned, approved, text-only HTTPS request rather than starting DSH with
 workspace/profile access. Branch selection replays candidate/task/state/verdict

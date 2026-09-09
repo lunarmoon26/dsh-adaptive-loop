@@ -1,5 +1,209 @@
 # Requirement Evidence
 
+## Approved repaired baseline retries (2026-09-09)
+
+Change: `chg-dal-paid-retry-20260909`.
+Status: OpenAI baseline passed; Anthropic remains execution-blocked. Exactly one
+approved retry per provider ran, using the repaired manifests and the original
+campaign caps. No source changes, extra model requests, proposal generation or
+activation followed these two attempts.
+
+OpenAI `gpt-5.6-terra` completed five gateway requests, six tool calls and all
+three independent refund-workflow goals in 16345 ms. Captured usage is 36845 input
+and 207 output tokens. Execution receipt `rcp-task-001-refund-77b5af0f` binds the
+approved manifest, model, image, state/effects and passing grader verdict. Summary:
+`.dal/check/e2e-summary-openai-repair-01.json`. This is one successful baseline
+task, not evidence of adaptation gain or general reliability.
+
+Anthropic `claude-sonnet-5` failed its first admitted request. New diagnostics
+record upstream HTTP 400 and `invalid_request_error`, with no specific provider
+error code. No assistant usage or task score is available. The precise cause
+within this broad error class remains unknown; it is not scored as model inability.
+
+OpenAI reserved 2355010 microUSD for this retry, reaching 2786492 cumulatively.
+Anthropic reserved 339352, reaching 678704 cumulatively. Campaign reservations
+total 3465196 microUSD, not measured provider spending. Remaining allocations
+are 3213508 and 4321296 microUSD respectively. No reservation was refunded.
+All owned containers and networks are cleaned up.
+
+Safe results: `.dal/check/paid-adaptive-20260908-retry-result.json`.
+Feedback: `.dal/store/fb-dal-paid-retry-20260909.json` (blocked until a valid
+Anthropic baseline exists). Prior failures and evidence remain unchanged.
+
+## Live gateway repair (2026-09-08)
+
+Change: `chg-dal-live-gateway-repair-20260908`.
+Status: completed offline and keyless-runtime verified; no paid retry performed.
+
+Native offline reconstruction from saved OpenAI evidence produced a 40211-byte
+second request containing empty-visible encrypted reasoning, a complete tool call
+and inline output. It failed the input guard; removing the reasoning item admitted
+the reconstructed request. The historical exact wire body was not saved, so this
+is native reconstruction proof rather than a historical packet capture. Serialized
+size and function-call status were not the reproduced rejection mechanism.
+
+The image-bound caller projection now explicitly disables wire reasoning, removes
+only empty-visible reasoning history and optional paired function item IDs, and
+preserves visible messages, arguments, outputs and call linkage. The gateway still
+rejects opaque/reference-only reasoning. Nonempty visible reasoning fails closed.
+Both native keyless DSH rehearsals pass after the repair, including an OpenAI
+reasoning-plus-tool fixture that reproduces the missing coverage. This remains
+protocol proof with an intentionally failed business oracle, not provider quality.
+
+Gateway diagnostics persist a bounded closed vocabulary of failure stage/guard,
+observed HTTP status and allowlisted provider identifiers, without raw bodies,
+messages, ciphertext, keys or stacks. The runner validates and retains these
+records. Missing launcher credentials are checked after exact approval but before
+claiming the attempt. The original Anthropic failure remains unknown; tests of
+401/400/429 and other diagnostic paths do not retroactively establish its cause.
+
+Final verification: `pnpm run check` passes all 43 test files, 743 tests with seven
+opt-in skips, typecheck/build, all capsules, policy and both offline scorecards.
+Focused repair proof passed 140 tests with one optional topology skip. Code review
+reports no remaining actionable findings in the repair. Capsule source pins are
+reconciled to 1.7.4 without extending freshness bounds or altering unrelated pins.
+
+Verified repaired image:
+`sha256:3dd84e86a6e82258b5c4ab84460fb47f16c02133d00ea5b4a814b2ecd032bdde`.
+Rehearsal summaries:
+`.dal/check/rehearsal-runs/repair-20260908/summaries/e2e-summary-openai-replay-01.json`
+and `e2e-summary-anthropic-diagnostics-01.json`. Both protocols completed with zero
+gateway rejections. Owned containers/networks are cleaned up.
+
+Fresh, unapproved retry manifests use the original campaign and six/five USD
+caps, preserving the original failed attempts' reservations:
+- OpenAI: `5e0c16309d7586c2ef06a1ef44fafeb6c6ff7a18fa5d828102e52e3e80f6eba6`.
+- Anthropic: `e5eb669b6e56cb6e15bed5a5591436c3a17f70c3603c3a3559baeef896a84e12`.
+
+These code/image changes invalidate earlier paid approvals. Original receipts,
+claims and reservations are not reset or rewritten. No new provider request,
+actual credential inspection, candidate activation, commit or push occurred.
+Completion feedback: `.dal/store/fb-dal-live-gateway-repair-20260908.json`.
+
+## First approved paid baseline (2026-09-08)
+
+Change: `chg-dal-paid-baseline-20260908`.
+Status: blocked — both live executions stopped before a completed task; no valid
+baseline or adaptation-benefit result is available.
+
+The user approved the exact prepared OpenAI/Anthropic manifests and six/five USD
+campaign caps. Both short-lived decisions validated at the CLI and again at the
+execution boundary. Image/source manifests reverified unchanged before launch.
+
+| Provider | Direct observation | Reserved allocation |
+| --- | --- | ---: |
+| OpenAI `gpt-5.6-terra` | One upstream response completed; 6541 input and 56 output tokens captured; one successful `skill` call; next request rejected before forwarding | 431482 microUSD |
+| Anthropic `claude-sonnet-5` | One reservation, one failed gateway operation, zero response bytes; no assistant reply/tool execution | 339352 microUSD |
+
+Total reserved allocation is 770834 microUSD, not actual billing. No refund or
+paid retry was performed. Both service journals contain only their seed and zero
+business effects. Offline inspection confirms unfinished goals, not model
+inability. No branch score or improvement claim is published from these failures.
+
+OpenAI initially stopped before gateway creation because the launcher omitted
+explicit `.env` loading. After confirming no OpenAI ledger reservation or owned
+resources existed, the untouched prelaunch policy was archived with a recovery
+record and the identical approved scope resumed with explicit launcher loading.
+This recovery did not repeat an upstream request or change source/manifest bytes.
+
+OpenAI's rejected follow-up may involve reasoning replay, another unsupported
+SDK field, or another pre-reservation check; the exact rejected request and
+failing guard are unavailable. Anthropic's upstream status/error stage was not
+persisted, so the precise cause is unknown. Add safe status/guard diagnostics and
+reproduce the replay path offline before preparing any new paid approval.
+
+Safe result: `.dal/check/paid-adaptive-20260908-result.json`.
+Gateway receipts are under `.dal/check/e2e-gateways/` for the approved run IDs.
+Raw session data stays local. All owned containers and networks are cleaned up;
+the ledger and original failure evidence are retained.
+Feedback: `.dal/store/fb-dal-paid-baseline-20260908.json` (blocked).
+
+## Paid e2e preflight complete (2026-09-08)
+
+Change: `chg-dal-paid-e2e-preflight-20260907`.
+Status: completed for the first paid baseline batch; actual paid authorization
+and execution are not part of this receipt.
+
+| Requirement | Observed proof |
+| --- | --- |
+| Fixed-route, credential-isolated broker with durable cost admission | Gateway/ledger tests cover no upstream before reservation, concurrency, duplicate/retry refusal, partial outcomes, forbidden remote/media/built-in-tool inputs, response bounds and numeric JSON expansion |
+| Real DSH through both native provider protocols | Final image rehearsals for exact Terra and Sonnet each observed successful `get_order` then `DONE`; protocol passed while the intentionally no-op refund oracle failed |
+| Candidate isolation and cleanup | Before/after daemon inspections match: internal candidate network only, no provider keys/ledger/socket mounts, read-only container roots, no rehearsal egress; no owned containers/networks remain |
+| Rollout and automatic proposal share the cap | Same-campaign local HTTP proposal rehearsals increased ledger totals from 865974 to 945746 microUSD for OpenAI and 681384 to 740088 for Anthropic; these are synthetic reservations, not charges |
+| No rehearsal contamination | New rehearsal records are stored outside `.dal/runs`; selected mode-tagged and recognizable historical rehearsal evidence is denied by proposal preparation |
+| Reviewed source actually matches the image | Builder compiles before staging, compares source maps, excludes repository/credential context, and rehashes in-image compiled artifacts and schemas; stale or malformed provenance fails preflight |
+| Finite exact manifests without invented approvals | Campaign preparation and regeneration verification pass; one task/attempt per provider, exact models, shared ledger and explicit 6000000/5000000 microUSD caps; requests remain pending and unauthorized |
+
+Final derived image:
+`sha256:1897ee195e20401dac7571d031fc5160ebca43802f425cb7fb7801a6e82f6945`.
+Source map digest: `bb95a86c97b7ecdde44fd41e09b907e4bc97b182b7401db3730cc7860a7ba5d4`.
+Compiled artifact digest: `eaa7c3f19fc98669e7cd1414a1c0bef8e003a3c7133681564abe36d96fbfe9a3`.
+
+Final rehearsal summaries are under
+`.dal/check/rehearsal-runs/readiness-20260908/summaries/` for `openai-final`
+and `anthropic-final`. Each final protocol observation reports one successful
+tool call and a finish. Business failure is an intentional negative control,
+not a claim about either real provider's capability. Raw private artifacts are
+not committed. Earlier experiments are retained, not reset into fresh budgets.
+
+Prepared live campaign: `.dal/check/paid-adaptive-20260908-ready/`.
+OpenAI transmission digest:
+`f95ad01fd29209b4d9bc8edc8e3a7411aed2b59f7e714991718d1a24244cd298`.
+Anthropic transmission digest:
+`af55a7b73fc46346f0d20891c5cda313a23e5e01160e02a6619133410a6dc80c`.
+Verification regenerated these manifests after the final source/image build.
+Phase two prepares a new exact metered-proposal manifest only after baseline
+evidence exists; it does not pre-approve an unknown candidate or payload.
+
+Final `pnpm run check`: all 42 files pass, 709 tests pass and seven opt-in tests
+skip; typecheck/build, all three capsules, allowed-read policy and both offline
+scorecards pass. Final security review reports no remaining high/medium blocker
+for the first paid baseline. Spec/architecture/roadmap capsule pins are reviewed
+and refreshed to 1.7.3, without extending freshness bounds or changing unrelated
+pins. No separate intermediate capsule gate remains.
+
+The cost ceiling is conditional on the manifest's conservative pricing and
+text-token bound; it is not provider invoice measurement, taxes, unrelated
+account spending, or immunity to a malicious ledger owner. No paid model call,
+real credential inspection, activation, commit or push was performed.
+Completion feedback: `.dal/store/fb-dal-paid-e2e-preflight-20260908.json`.
+
+## Automatic multi-provider proposals (2026-09-07)
+
+Change: `chg-dal-multiprovider-proposals-20260907`.
+Status: completed locally after human-approved spec/roadmap capsule refresh.
+Both affected capsules are version 1.7.2; other source pins, claims and freshness
+bounds are preserved.
+
+| Requirement | Implementation | Observed evidence |
+| --- | --- | --- |
+| Exact OpenAI Terra and Anthropic Sonnet proposal routes without fallbacks | Native Responses/Messages adapters and strict v2 envelope; legacy explicit DeepSeek retained | 222 transport/schema tests pass, including reasoning-plus-answer output, tools/refusals/truncation, headers, credential selection and request tampering |
+| Automatic proposal generation from recorded failures | Ingestion, clustering, prepare, exact approval, real proposer orchestration with mocked native responses, persisted draft | 24 automatic tests pass for both exact models without runnerOverride |
+| Reserve before credential access/send and never refund unknown results | Per-budget/provider locked, fsynced, chained reservation ledger | 44 ledger tests pass, plus orchestration tests for exhaustion, duplicate sends, conflicts and failures |
+| CLI and workbench carry the same budget-bound request | Required budget file, explicit provider/model options and reservation allocation output | 20 proposer and 21 plugin-mode tests pass after rebuilding the CLI used by plugin subprocess tests |
+| Preserve historical machine contracts | V1 request schema remains unchanged; new sends use v2; draft provider provenance extended | Old schema retained; new complete request digest needs fresh approval |
+
+After approved refresh, full `pnpm run check` passes typecheck/build, all 37 test
+files (578 passed tests, seven opt-in skips), all capsules, the allowed-read
+policy and both offline scorecards without hard stops. Final review reports no
+code findings; diff whitespace checks pass. The earlier source-pin failure is
+preserved in the blocked receipt rather than rewritten. Earlier verification
+caught a stale built CLI and strict OpenAI single-item parser; rebuild and
+reasoning-envelope tests resolve those issues.
+
+This proves the complete automatic **proposal stage** locally with mocked
+providers, not live model execution or generated executable patches. Budget
+reservations are approved allocations, not invoice measurements or a hard
+account-dollar ceiling. The separate DSH rollout runner still requires its own
+credential-isolated budget enforcement and price bounds before paid e2e claims.
+
+Completion feedback: `.dal/store/fb-dal-multiprovider-proposals-complete-20260907.json`.
+It supersedes `.dal/store/fb-dal-multiprovider-proposals-20260907.json` without
+modifying that prior blocked receipt.
+No actual API key values were read, no model requests were sent, no candidate
+was installed/activated, and no commit/push was performed. The pre-existing
+`HANDOFF.md` deletion remains untouched.
+
 ## Proposer request and branch receipt boundary (2026-09-06)
 
 Change: `chg-dal-proposer-receipt-boundary-20260906`.

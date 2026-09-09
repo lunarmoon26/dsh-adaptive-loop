@@ -1,19 +1,33 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { runCli } from "../src/cli.js";
 import { clusterRunRecords } from "../src/clustering.js";
 import { prepareProposePayload, prepareProposeRequest, proposeDraft, runPropose } from "../src/propose.js";
-import { prepareChatRequest } from "../src/propose-transport.js";
+import { prepareChatRequest, type ProposalBudget } from "../src/propose-transport.js";
 import { ingestRunRecord } from "../src/runs.js";
 import { canonicalJson, sha256 } from "../src/json.js";
 import { assertSchema, SCHEMA_IDS } from "../src/schema.js";
 
 const model = { provider: "deepseek-official", model: "deepseek-v4-flash" };
-afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
+let budget: ProposalBudget;
+let budgetRoot: string;
+let budgetStore: string;
+beforeEach(async () => {
+  budgetRoot = await realpath(await mkdtemp(join(tmpdir(), "dal-propose-budget-")));
+  budgetStore = join(budgetRoot, "ledger");
+  budget = { budget_id: `test-${randomUUID()}`, provider_limit_microusd: 100, reservation_microusd: 10 };
+  for (const key of ["DEEPSEEK_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]) vi.stubEnv(key, "offline-test-key");
+  vi.stubGlobal("fetch", vi.fn(() => { throw new Error("Unexpected network call"); }));
+});
+afterEach(async () => {
+  vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks();
+  await rm(budgetRoot, { recursive: true, force: true });
+});
 
 const workspace = resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow");
 const fixture = (...parts: string[]): string => resolve(workspace, ...parts);
@@ -43,6 +57,17 @@ const validReply = JSON.stringify({
 });
 
 describe("governed proposer", () => {
+  it.each(["dal-e2e-mode://rehearsal", "repo://.dal/check/e2e-gateways/run-old-rehearsal/rehearsal.json"])("rejects selected rehearsal evidence %s before request preparation", async marker => {
+    const root = await mkdtemp(join(tmpdir(), "dal-rehearsal-evidence-"));
+    const input = join(root, "run.json");
+    const run = JSON.parse(await readFile(fixture("dal", "fixtures", "run-benchmark-fail.json"), "utf8"));
+    run.evidence.push(marker);
+    await writeFile(input, JSON.stringify(run));
+    const runs = join(root, "runs"), clusters = join(root, "clusters");
+    await ingestRunRecord(input, runs);
+    await clusterRunRecords({ store: runs, output: clusters });
+    await expect(prepareProposePayload({ clustersDir: clusters, runsDir: runs })).rejects.toMatchObject({ code: "PROPOSE_REHEARSAL_EVIDENCE" });
+  });
   it("prepares a sanitized payload from cluster records without raw run content", async () => {
     const runs = await mkdtemp(join(tmpdir(), "dal-propose-runs-"));
     const clusters = await mkdtemp(join(tmpdir(), "dal-propose-clusters-"));
@@ -63,7 +88,7 @@ describe("governed proposer", () => {
     const draft = await proposeDraft({
       payload: prepared.payload,
       payloadDigest: prepared.digest,
-      requestDigest: prepareChatRequest(prepared.payload, model).requestDigest,
+      requestDigest: prepareChatRequest(prepared.payload, model, budget).requestDigest,
       runner: async () => validReply,
       runnerKind: "injected",
       model: { provider: "deepseek-official", model: "deepseek-v4-flash" },
@@ -79,7 +104,7 @@ describe("governed proposer", () => {
       proposeDraft({
         payload: prepared.payload,
         payloadDigest: prepared.digest,
-        requestDigest: prepareChatRequest(prepared.payload, model).requestDigest,
+        requestDigest: prepareChatRequest(prepared.payload, model, budget).requestDigest,
         runner: async () => JSON.stringify({ ...JSON.parse(validReply), surface: "evaluator" }),
         runnerKind: "injected",
         model: { provider: "deepseek-official", model: "deepseek-v4-flash" },
@@ -89,7 +114,7 @@ describe("governed proposer", () => {
       proposeDraft({
         payload: prepared.payload,
         payloadDigest: prepared.digest,
-        requestDigest: prepareChatRequest(prepared.payload, model).requestDigest,
+        requestDigest: prepareChatRequest(prepared.payload, model, budget).requestDigest,
         runner: async () => "no json here",
         runnerKind: "injected",
         model: { provider: "deepseek-official", model: "deepseek-v4-flash" },
@@ -118,6 +143,7 @@ describe("governed proposer", () => {
     await writeFile(approvalPath, `${JSON.stringify(decision, null, 2)}\n`, "utf8");
     await expect(
       runPropose({
+        budget, budgetStore,
         clustersDir: clusters,
         approvalPath,
         workspaceDir: workspace,
@@ -130,7 +156,7 @@ describe("governed proposer", () => {
 
   it("records a draft under an approved decision with the exact request scope", async () => {
     const clusters = await makeClusters();
-    const prepared = await prepareProposeRequest({ clustersDir: clusters, model });
+    const prepared = await prepareProposeRequest({ clustersDir: clusters, model, budget });
     const approvalPath = join(await mkdtemp(join(tmpdir(), "dal-propose-dec-")), "decision.json");
     const decision = {
       $schema: "https://recursive-dev-loop.dev/schemas/approval-decision.v1.schema.json",
@@ -150,6 +176,7 @@ describe("governed proposer", () => {
     await writeFile(approvalPath, `${JSON.stringify(decision, null, 2)}\n`, "utf8");
     const outputDir = await mkdtemp(join(tmpdir(), "dal-propose-out-"));
     const result = await runPropose({
+      budget, budgetStore,
       clustersDir: clusters,
       approvalPath,
       workspaceDir: workspace,
@@ -169,12 +196,24 @@ describe("governed proposer", () => {
     const requestPath = join(await mkdtemp(join(tmpdir(), "dal-propose-out-")), "request.json");
     const captured = captureIo();
     const mock = vi.fn(); vi.stubGlobal("fetch", mock);
-    expect(await runCli(["propose", "prepare", "--clusters", clusters, "--model", model.model, "--output", requestPath], captured.io)).toBe(0);
+    const budgetPath = join(budgetRoot, "budget.json");
+    await writeFile(budgetPath, JSON.stringify(budget));
+    expect(await runCli(["propose", "prepare", "--clusters", clusters, "--model", model.model, "--budget", budgetPath, "--output", requestPath], captured.io)).toBe(0);
     const persisted = JSON.parse(await readFile(requestPath, "utf8"));
-    expect(persisted).toMatchObject({ $schema: SCHEMA_IDS.proposerRequest, schema_version: "1.0.0", endpoint: "https://api.deepseek.com/chat/completions", body: { model: model.model } });
-    await assertSchema(SCHEMA_IDS.proposerRequest, persisted, "Persisted proposer request");
+    expect(persisted).toMatchObject({ $schema: SCHEMA_IDS.proposerRequestV2, schema_version: "2.0.0", budget, endpoint: "https://api.deepseek.com/chat/completions", body: { model: model.model } });
+    await assertSchema(SCHEMA_IDS.proposerRequestV2, persisted, "Persisted proposer request");
     expect(JSON.parse(captured.stdout.join(""))).toMatchObject({ status: "prepared", request_digest: sha256(canonicalJson(persisted)) });
     expect(mock).not.toHaveBeenCalled();
+  });
+
+  it("requires a budget file for CLI preparation without sending or persisting", async () => {
+    const clusters = await makeClusters();
+    const outputPath = join(budgetRoot, "missing-budget-request.json");
+    const captured = captureIo();
+    expect(await runCli(["propose", "prepare", "--clusters", clusters, "--model", model.model, "--output", outputPath], captured.io)).not.toBe(0);
+    expect(captured.stderr.join("")).toContain("budget");
+    expect(fetch).not.toHaveBeenCalled();
+    await expect(readFile(outputPath)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("documents explicit-model request preparation, direct run, and branch candidate input", async () => {
@@ -184,6 +223,7 @@ describe("governed proposer", () => {
     const prepare = lines.find((line) => line.includes("dal propose prepare"));
     const run = lines.find((line) => line.includes("dal propose run"));
     expect(prepare).toContain("--model <m>");
+    expect(prepare).toContain("--budget <file>");
     expect(prepare).toContain("--output <request-file>");
     expect(prepare).not.toContain("[--model");
     expect(run).toContain("--model <m>");
@@ -195,7 +235,7 @@ describe("governed proposer", () => {
 describe("request approval confinement", () => {
   it("uses payload-only HTTPS with no workspace/profile reads or subprocess execution", async () => {
     const clustersDir = await makeClusters();
-    const prepared = await prepareProposeRequest({ clustersDir, model });
+    const prepared = await prepareProposeRequest({ clustersDir, model, budget });
     const approvalPath = await makeApproval(prepared.requestDigest);
     const outputPath = join(await mkdtemp(join(tmpdir(), "dal-propose-https-")), "draft.json");
     for (const name of ["propose.ts", "propose-transport.ts"]) {
@@ -206,7 +246,7 @@ describe("request approval confinement", () => {
     vi.stubEnv("DEEPSEEK_API_KEY", "offline-test-key");
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ finish_reason: "stop", message: { role: "assistant", content: validReply } }] })));
     vi.stubGlobal("fetch", fetchMock);
-    const result = await runPropose({ clustersDir, approvalPath, outputPath, model, runner: "local", workspaceDir: "/nonexistent-proposer-workspace" });
+    const result = await runPropose({ clustersDir, approvalPath, outputPath, model, budget, budgetStore, runner: "local", workspaceDir: "/nonexistent-proposer-workspace" });
     expect(result.draft.provenance.runner).toBe("deepseek-https");
     expect(result.request_digest).toBe(prepared.requestDigest);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -215,17 +255,17 @@ describe("request approval confinement", () => {
   it("missing approval never calls transport", async () => {
     const clustersDir = await makeClusters();
     const mock = vi.fn(); vi.stubGlobal("fetch", mock);
-    await expect(runPropose({ clustersDir, approvalPath: "/missing-decision.json", outputPath: "unused", model })).rejects.toMatchObject({ code: "FILE_READ_FAILED" });
+    await expect(runPropose({ clustersDir, approvalPath: "/missing-decision.json", outputPath: join(budgetRoot, "unused"), model, budget, budgetStore })).rejects.toMatchObject({ code: "FILE_READ_FAILED" });
     expect(mock).not.toHaveBeenCalled();
   });
 
   it.each(["payload", "endpoint", "model", "prompt", "expired", "rejected", "action"])("rejects %s approval before any transport or credential use", async (drift) => {
     const clustersDir = await makeClusters();
-    const prepared = await prepareProposeRequest({ clustersDir, model });
+    const prepared = await prepareProposeRequest({ clustersDir, model, budget });
     const changed = structuredClone(prepared.request);
     if (drift === "endpoint") changed.endpoint = "https://example.invalid/chat/completions";
     if (drift === "model") changed.body.model = "different-model";
-    if (drift === "prompt") changed.body.messages[0]!.content += " Different instructions.";
+    if (drift === "prompt") changed.body.messages![0]!.content += " Different instructions.";
     const digest = drift === "payload" ? prepared.digest : sha256(canonicalJson(changed));
     const approvalPath = await makeApproval(digest, drift === "expired" ? { expires_at: "2026-01-01T00:00:00.000Z" } :
       drift === "rejected" ? { decision: "rejected" } : drift === "action" ? { action: "change_shared_harness_config", scope: { kind: "configuration", value: digest, sha256: sha256(digest) } } : {});
@@ -240,24 +280,24 @@ describe("request approval confinement", () => {
       return Reflect.get(target, key);
       } });
     } }));
-    await expect(runPropose({ clustersDir, approvalPath, outputPath: "unused.json", model })).rejects.toMatchObject({ code: "APPROVAL_DENIED" });
+    await expect(runPropose({ clustersDir, approvalPath, outputPath: join(budgetRoot, "unused.json"), model, budget, budgetStore })).rejects.toMatchObject({ code: "APPROVAL_DENIED" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(credentialRead).not.toHaveBeenCalled();
   });
 
   it("rejects Docker configuration before reading any input", async () => {
-    await expect(runPropose({ clustersDir: "missing", approvalPath: "missing", outputPath: "unused", model, runner: "docker" }))
+    await expect(runPropose({ clustersDir: "missing", approvalPath: "missing", outputPath: join(budgetRoot, "unused"), model, budget, budgetStore, runner: "docker" }))
       .rejects.toMatchObject({ code: "PROPOSE_RUNNER_UNSUPPORTED" });
-    await expect(runPropose({ clustersDir: "missing", approvalPath: "missing", outputPath: "unused", model, docker: { image: "anything", runFlags: ["--privileged"], envNames: [] } }))
+    await expect(runPropose({ clustersDir: "missing", approvalPath: "missing", outputPath: join(budgetRoot, "unused"), model, budget, budgetStore, docker: { image: "anything", runFlags: ["--privileged"], envNames: [] } }))
       .rejects.toMatchObject({ code: "PROPOSE_RUNNER_UNSUPPORTED" });
   });
 
   it.each(["ghp_1234567890abcdefghij1234567890", "person@example.com"])("rejects sensitive replies without persistence", async (sensitive) => {
     const clustersDir = await makeClusters();
-    const prepared = await prepareProposeRequest({ clustersDir, model });
+    const prepared = await prepareProposeRequest({ clustersDir, model, budget });
     const approvalPath = await makeApproval(prepared.requestDigest);
     const outputPath = join(await mkdtemp(join(tmpdir(), "dal-propose-private-")), "draft.json");
-    const result = runPropose({ clustersDir, approvalPath, outputPath, model,
+    const result = runPropose({ clustersDir, approvalPath, outputPath, model, budget, budgetStore,
       runnerOverride: async () => JSON.stringify({ ...JSON.parse(validReply), title: sensitive }),
     });
     await expect(result).rejects.toThrow("sensitive material");

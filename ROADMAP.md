@@ -4,6 +4,50 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ## Next decision points
 
+### First live-run repair (2026-09-08)
+
+`chg-dal-live-gateway-repair-20260908` closes the reproduced OpenAI opaque-replay
+admission failure with a declared caller-side text-only projection, not a wider
+gateway allowlist. Native offline reconstruction and richer real DSH keyless
+rehearsal cover the observed reasoning-plus-tool path. Safe failure-stage/status
+diagnostics now distinguish future Anthropic upstream failures, whose historical
+cause remains unknown. Fresh source/image manifests and new exact paid decisions
+are required before retries; the original failed attempts and reservations remain
+untouched. See [the focused contract](docs/openai-text-replay.md).
+
+### Paid e2e preflight (2026-09-08)
+
+`chg-dal-paid-e2e-preflight-20260907` supplies a credential-isolated metered
+gateway for exact Terra/Sonnet rollout requests, a same-ledger automatic proposal
+handoff, source-to-image build provenance, isolated keyless rehearsal, and finite
+pending-approval campaign artifacts. Caps reserve conservative upper costs before
+every request and never refund uncertain results. The token-bound/pricing
+assumptions are explicit; provider invoices and unrelated account activity are
+not measured. Rehearsal evidence is stored separately and cannot become proposal
+training evidence. See [gateway](docs/e2e-spend-gateway.md),
+[proposal handoff](docs/metered-proposal.md), and
+[campaign preparation](docs/paid-campaign-preflight.md).
+
+Paid execution is the next operator gate, not another infrastructure increment.
+The first approved batch measures one fixed task per provider; later proposal
+requests are prepared from the resulting sanitized evidence and receive their
+own exact-digest approvals. No unknown future candidate is pre-approved and no
+single baseline run establishes adaptation benefit or production readiness.
+
+### Automatic multi-provider proposal stage (2026-09-07)
+
+`chg-dal-multiprovider-proposals-20260907` implements native text-only proposal
+generation for `openai/gpt-5.6-terra`, `anthropic/claude-sonnet-5`, and explicit
+DeepSeek models. The v2 approved envelope includes a durable reservation allocation;
+duplicate requests and exhausted allocations fail before send. Offline integration
+covers recorded failures through clusters, exact approval, mocked native provider
+responses, and schema-valid persisted drafts. See [the focused contract](docs/proposer-request.md).
+Live model proof, provider-price upper bounds, account-balance verification,
+e2e-wide credential-isolated spend enforcement, generated executable patches,
+and promotion remain separate gates. A proposal allocation ledger is not a hard
+provider billing ceiling. The new contract requires source-reviewed capsule pins
+and the complete local gate before closure.
+
 ### Accepted evolution direction (2026-09-05)
 
 Accepted architecture, not a claim of end-to-end implementation:
@@ -63,7 +107,7 @@ Accepted architecture, not a claim of end-to-end implementation:
 - Reserve weights for a later local knowledge-base small model (embedding/clustering tier for trace analysis), never silent fine-tuning of the main model.
 - Build the failure-clustering plugin in tiers: canonical deterministic fingerprints at ingestion, local embedding clustering, and a budgeted LLM classifier over cluster representatives only — never raw traces; cluster records are immutable and privacy-scanned before use.
 - Target closed-loop, repetitive workflow classes first: open-ended creative coding is an open-loop problem and gets no RSI claim. Benchmarks are bounded per task class — externally fixed objective, deterministic grader, held-out cases, and policy budgets; only cross-run evidence (Level 1+) counts as improvement.
-- Design the proposer as bounded search over candidate branches (select/expand/evaluate/backup, ReST-MCTS* shape; retain alternatives, DGM archive shape) behind the provider-neutral exchange. Breadth, depth, and evaluation counts are policy-bounded. `dal propose prepare|run` uses a fixed-route DeepSeek text request with an explicit model and approval bound to the complete request digest, not just sanitized source data. Multi-branch search and additional provider transports remain future work.
+- Design the proposer as bounded search over candidate branches (select/expand/evaluate/backup, ReST-MCTS* shape; retain alternatives, DGM archive shape) behind the provider-neutral exchange. Breadth, depth, and evaluation counts are policy-bounded. `dal propose prepare|run` uses a supported-provider text request with an explicit model and budget reservation, with approval bound to the complete v2 request digest. Multi-branch search and providers beyond the supported three remain future work.
 - Add deeper MCTS rollouts on top of the branch archive: selection descends with UCB1 at every level; expansion adds one governed proposal child; simulation grades with the deterministic dev cases (later, runs the candidate skill in the seam sandbox); backpropagation walks ancestors updating visits and accumulated scores so node values reflect their subtree (path-dependency credit); terminal conditions are depth caps, budget caps, hard-stop quarantine, or human promotion. Every rollout multiplies approval-bound model calls and confined evaluations, so rollout count, depth, and evaluation budget stay policy-owned.
 - Deploy accepted profile changes from workspace-owned plugin packages only after an isolated evaluator proves the immutable generation. HMR staging provides no evaluation or rollback authority. Production installation remains a human, approval-gated derived generation; keep the previous installed generation bootable and switch only after acceptance.
 - Study the community RSI frameworks before building the workbench (pinned in the research note): `deepseek-desk-rsi` (bounded perceive/integrate/verify/parity/repair/propose loop with an upstream parity gate), `dsh-self-evolving` (evidence-first, crash-resumable, auditable lineage, Harbor evaluation, one-shot loader admission), `dsh-continual-evolve` (versioned rollback-safe harness state from trajectories with a benchmark validation loop), and `dsh-sentinel` (condition-driven run-phase triggers). Audit their source; adopt ideas, never code.

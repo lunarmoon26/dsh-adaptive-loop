@@ -1,0 +1,50 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-paid-baseline-20260908",
+  "change_id": "chg-dal-paid-baseline-20260908",
+  "created_at": "2026-09-08T17:54:42Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-baseline" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": "repo://.dal/check/paid-adaptive-20260908-ready/campaign.json"
+  },
+  "goal": "Execute the two exact approved baseline attempts without exceeding campaign reservations, retrying paid requests, or activating candidates.",
+  "acceptance_criteria": [
+    { "id": "ac-authority", "statement": "Reverify exact manifests and approved, unexpired decisions before provider credential use.", "result": "passed", "evidence": ["ev-approval"] },
+    { "id": "ac-baseline", "statement": "Obtain completed baseline task results from both providers.", "result": "failed", "evidence": ["ev-outcome"] },
+    { "id": "ac-budget", "statement": "Preserve reservations within caps without refunds or paid retries and distinguish them from actual billing.", "result": "passed", "evidence": ["ev-outcome"] },
+    { "id": "ac-cleanup", "statement": "Clean owned resources and retain failure evidence without publishing invalid scores or activating a candidate.", "result": "passed", "evidence": ["ev-cleanup"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "Both approved live attempts ended in execution failures. OpenAI completed one response before local follow-up rejection; Anthropic failed after reservation without a response body. No valid baseline or improvement result was obtained.",
+    "exception": { "kind": "blocked", "reason": "The live gateway does not preserve enough safe failure-stage information to conclusively diagnose these failures; an OpenAI replay compatibility gap is suspected.", "owner": "evaluator-maintainer", "next_action": "Add safe numeric status and guard diagnostics, reproduce native replay offline, then prepare fresh exact paid approval before any retry." }
+  },
+  "what_worked": ["Both exact manifests and operation-time approvals verified.", "Gateway reservations stayed within the approved caps; no paid retry or refund occurred.", "Owned containers and networks were cleaned up and failure evidence remains local."],
+  "what_failed": ["OpenAI prelaunch omitted explicit environment-file loading; the known no-send claim was archived unchanged and the same scope resumed after verifying no reservation or gateway existed.", "OpenAI completed its first response but a subsequent request was rejected locally before forwarding.", "Anthropic failed after reservation without response bytes; upstream status and exact failure stage are unavailable."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "manifest-and-approval-verification", "purpose": "Verify the user-authorized exact batch and short-lived decisions.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-approval"] },
+    { "sequence": 2, "kind": "tool", "name": "openai-prelaunch", "purpose": "Start the approved OpenAI attempt.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-recovery"] },
+    { "sequence": 3, "kind": "tool", "name": "anthropic-baseline", "purpose": "Execute one approved Anthropic baseline attempt.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-outcome"] },
+    { "sequence": 4, "kind": "tool", "name": "openai-baseline", "purpose": "Resume the verified no-send prelaunch under the same exact approval with explicit environment loading.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-outcome", "ev-recovery"] },
+    { "sequence": 5, "kind": "tool", "name": "local-evidence-inspection", "purpose": "Inspect safe usage, failure and journal summaries without additional provider calls.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-outcome", "ev-cleanup"] }
+  ],
+  "failures_and_inefficiencies": [
+    { "id": "fi-launcher", "category": "tooling", "summary": "The first launcher invocation did not load the local environment file.", "impact": "low", "recoverable": true, "suggested_action": "Use the documented explicit environment-loading launcher before claiming the attempt.", "evidence": ["ev-recovery"] },
+    { "id": "fi-live-diagnostics", "category": "verification", "summary": "Live status and guard failures collapse into a generic gateway error, preventing conclusive root-cause attribution.", "impact": "high", "recoverable": true, "suggested_action": "Persist safe status/guard codes without response bodies or credentials and add actual replay-shape regressions.", "evidence": ["ev-outcome"] }
+  ],
+  "evidence": [
+    { "id": "ev-approval", "kind": "file", "uri": "repo://.dal/check/paid-adaptive-20260908-ready/campaign.json", "summary": "Exact source/image manifests verified. Two user-approved short-lived data-transfer decisions matched the prepared manifest digests, providers, models, task count and caps.", "sha256": null, "observed_at": "2026-09-08T17:54:42Z" },
+    { "id": "ev-outcome", "kind": "file", "uri": "repo://.dal/check/paid-adaptive-20260908-result.json", "summary": "OpenAI completed one response, captured 6541 input and 56 output tokens, then rejected a follow-up; 431482 microUSD reserved. Anthropic failed after admission with zero response bytes; 339352 microUSD reserved. Total 770834 is reservation accounting, not measured billing. Both journals have zero business effects.", "sha256": null, "observed_at": "2026-09-08T17:54:42Z" },
+    { "id": "ev-recovery", "kind": "file", "uri": "repo://.dal/check/e2e-gateways/run-e2e-3d95b5c6507e1cf92f59b3f50ecb9e42c3f5e4c15ed9b675/prelaunch-recovery.json", "summary": "Initial failure occurred before gateway creation or reservation. Original policy content was preserved under a separate filename, no owned resources remained, and the identical approved scope resumed without an upstream replay.", "sha256": null, "observed_at": "2026-09-08T17:54:42Z" },
+    { "id": "ev-cleanup", "kind": "test", "uri": "command://docker-owned-resource-inventory", "summary": "No owned baseline containers or networks remain. Ledger, source journals, session evidence and gateway receipts are retained. No candidate activation, extra proposal call, source modification, commit or push occurred.", "sha256": null, "observed_at": "2026-09-08T17:54:42Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-billing", "statement": "Actual provider charges are not measured; reservation totals must not be reported as spending.", "level": "medium", "resolution": "Consult provider billing separately; do not release reservations based on assumed zero cost.", "evidence": ["ev-outcome"] }
+  ],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-08T17:40:58Z", "notes": ["The user explicitly approved the exact baseline batch and caps. Timestamp records acknowledgment. No approval is inferred for further paid attempts, generated proposal requests, or activation."], "approval_refs": ["dec-paid-0c3edbb6c8940b0ac778bb5882388e36", "dec-paid-709d94e3336fb14597ed0566b0b6031d"] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

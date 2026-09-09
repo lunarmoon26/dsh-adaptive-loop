@@ -1,5 +1,6 @@
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 
 export const SERVICE_ALIAS = "dal-workflow-service";
 export const SERVICE_PORT = 8787;
@@ -13,6 +14,36 @@ export interface DockerTopology {
   serviceContainer: string;
   candidateContainer: string;
   graderContainer: string;
+  gatewayContainer: string;
+  outboundNetwork: string;
+}
+
+export interface ContainerInspection {
+  Image: string;
+  Config: { Env: string[] };
+  HostConfig: { NetworkMode: string; ReadonlyRootfs: boolean; Privileged: boolean; PidMode: string; IpcMode: string; CapAdd: string[] | null; CapDrop: string[] | null; SecurityOpt: string[] | null; PortBindings: Record<string, unknown> | null; ExtraHosts: string[] | null; Devices: unknown[] | null };
+  NetworkSettings: { Networks: Record<string, unknown> };
+  Mounts: Array<{ Type: string; Source: string; Destination: string; RW: boolean }>;
+}
+
+/** Validate daemon-observed confinement, returning no environment values or host paths. */
+export function containerIsolationFacts(info: ContainerInspection, expected: {
+  image: string; networks: string[]; envNames: string[];
+  mounts: Array<{ source: string; destination: string; writable: boolean }>;
+}) {
+  const deny = (): never => { throw new Error("Docker isolation inspection failed"); };
+  const networks = Object.keys(info.NetworkSettings.Networks).sort();
+  const envNames = info.Config.Env.map(entry => entry.split("=", 1)[0]!).sort();
+  const host = info.HostConfig;
+  if (info.Image !== expected.image || networks.join() !== [...expected.networks].sort().join() ||
+      host.NetworkMode === "host" || !host.ReadonlyRootfs || host.Privileged || host.PidMode === "host" || host.IpcMode === "host" ||
+      (host.CapAdd?.length ?? 0) > 0 || !host.CapDrop?.includes("ALL") || !host.SecurityOpt?.some(option => option === "no-new-privileges" || option === "no-new-privileges=true") ||
+      Object.keys(host.PortBindings ?? {}).length > 0 || (host.ExtraHosts?.length ?? 0) > 0 || (host.Devices?.length ?? 0) > 0 ||
+      envNames.some(name => !expected.envNames.includes(name)) || info.Mounts.length !== expected.mounts.length) deny();
+  for (const mount of info.Mounts) {
+    if (mount.Type !== "bind" || !expected.mounts.some(item => item.source === mount.Source && item.destination === mount.Destination && item.writable === mount.RW)) deny();
+  }
+  return { image: info.Image, networks, environment_names: envNames, mounts: info.Mounts.map(mount => ({ destination: mount.Destination, writable: mount.RW })), read_only_root: true, host_network: false, privileged: false, added_capabilities: false, published_ports: false, confinement_verified: true };
 }
 
 function dockerName(value: string): string {
@@ -21,7 +52,7 @@ function dockerName(value: string): string {
 }
 
 export function topologyFor(attemptId: string): DockerTopology {
-  const id = dockerName(`dal-e2e-${attemptId}`);
+  const id = `${dockerName(`dal-e2e-${attemptId}`).slice(0, 35)}-${createHash("sha256").update(attemptId).digest("hex").slice(0, 16)}`;
   return {
     id,
     candidateNetwork: `${id}-candidate`,
@@ -29,6 +60,8 @@ export function topologyFor(attemptId: string): DockerTopology {
     serviceContainer: `${id}-service`,
     candidateContainer: `${id}-candidate`,
     graderContainer: `${id}-grader`,
+    gatewayContainer: `${id}-gateway`,
+    outboundNetwork: `${id}-outbound`,
   };
 }
 
@@ -73,6 +106,7 @@ export function serviceDockerArgv(options: {
     "--network-alias",
     SERVICE_ALIAS,
     "--read-only",
+    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
     "--tmpfs",
     "/tmp:rw,noexec,nosuid,size=64m",
     "--mount",
@@ -98,7 +132,7 @@ export function candidateDockerArgv(options: {
   topology: DockerTopology;
   stageRoot: string;
   dshHomeHost: string;
-  keyEnv: string;
+  keyEnv?: string;
   prompt: string;
 }): string[] {
   return [
@@ -111,6 +145,7 @@ export function candidateDockerArgv(options: {
     "--network",
     options.topology.candidateNetwork,
     "--read-only",
+    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
     "--tmpfs",
     "/tmp:rw,noexec,nosuid,size=64m",
     "--mount",
@@ -120,17 +155,44 @@ export function candidateDockerArgv(options: {
     "-e",
     "DSH_HOME=/dsh-home",
     "-e",
-    options.keyEnv,
+    "DAL_GATEWAY_TOKEN",
     "-w",
     "/workspace",
     options.image,
-    "dsh",
+    "node",
+    "--expose-internals",
+    "--import",
+    "/opt/dal/dist/e2e-openai-text-replay-preload.js",
+    "/usr/local/lib/node_modules/@deepseek-ai/dsh/lib/bin.js",
     "--profile",
     "headless",
     "--patch",
     CONTAINER_PATCH_PATH,
     options.prompt,
   ];
+}
+
+export function networkDockerArgv(topology: DockerTopology, mode: "live" | "rehearsal"): string[][] {
+  return [topology.candidateNetwork, topology.graderNetwork, ...(mode === "live" ? [topology.outboundNetwork] : [])].map(name => [
+    "network", "create", "--label", `dal.e2e.attempt=${topology.id}`,
+    ...(name === topology.outboundNetwork ? [] : ["--internal"]), name,
+  ]);
+}
+
+export function gatewayDockerArgv(options: {
+  image: string; topology: DockerTopology; policyPath: string; ledgerRoot: string;
+  mode: "live" | "rehearsal"; provider: "openai" | "anthropic";
+}): string[] {
+  return ["run", "--detach", "--name", options.topology.gatewayContainer,
+    "--label", `dal.e2e.attempt=${options.topology.id}`,
+    "--network", options.topology.candidateNetwork, "--network-alias", "dal-model-gateway",
+    "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+    "--mount", `type=bind,src=${options.policyPath},dst=/gateway-policy.json,readonly`,
+    "--mount", `type=bind,src=${options.ledgerRoot},dst=/gateway-ledger`,
+    "-e", "DAL_GATEWAY_POLICY=/gateway-policy.json", "-e", "DAL_GATEWAY_LEDGER_ROOT=/gateway-ledger",
+    "-e", `DAL_GATEWAY_MODE=${options.mode}`, "-e", "DAL_GATEWAY_TOKEN",
+    ...(options.mode === "live" ? ["-e", options.provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY"] : []),
+    options.image, "node", "/opt/dal/dist/e2e-model-gateway.js"];
 }
 
 export function graderDockerArgv(options: {
@@ -148,6 +210,7 @@ export function graderDockerArgv(options: {
     "--network",
     options.topology.graderNetwork,
     "--read-only",
+    "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
     "--tmpfs",
     "/tmp:rw,noexec,nosuid,size=64m",
     "--mount",

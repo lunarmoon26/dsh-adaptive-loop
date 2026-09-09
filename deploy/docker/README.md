@@ -75,14 +75,16 @@ host's platform build. Paths under the workspace are auto-translated to
 
 ## Payload-only proposer (no Docker)
 
-The proposer does not run dsh or mount a workspace. It sends one fixed DeepSeek
-HTTPS chat-completions request after exact request-digest approval. Docker proposer
+The proposer does not run dsh or mount a workspace. It sends one fixed-route
+OpenAI, Anthropic, or DeepSeek HTTPS request after exact v2 request-digest approval
+and durable budget reservation. Docker proposer
 execution and Docker policy flags are rejected with `PROPOSE_RUNNER_UNSUPPORTED`.
-Prepare locally with an explicit model; preparation makes no external call:
+Prepare locally with an explicit model and reviewed budget allocation file (see
+the focused contract for its three required fields); preparation makes no external call:
 
 ```sh
 pnpm dal propose prepare --clusters .dal/clusters \
-  --provider deepseek-official --model deepseek-v4-flash --output request.json
+  --provider openai --model gpt-5.6-terra --budget budget.json --output request.json
 ```
 
 Review the versioned request and obtain an approved, unexpired
@@ -91,11 +93,13 @@ Review the versioned request and obtain an approved, unexpired
 
 ```sh
 pnpm dal propose run --clusters .dal/clusters \
-  --provider deepseek-official --model deepseek-v4-flash \
+  --provider openai --model gpt-5.6-terra --budget budget.json \
   --approval decision.json --output draft.json
 ```
 
-Only `DEEPSEEK_API_KEY` in the sending process environment supplies credentials;
+Use `--provider anthropic --model claude-sonnet-5` for Anthropic, or the explicit
+DeepSeek route/model. Only the selected `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or
+`DEEPSEEK_API_KEY` in the sending process environment supplies credentials;
 the proposer never loads `.env`, profiles, tools, or workspace artifacts. The key
 is read at send time and never persisted. Legacy `--runner local` uses the same
 payload-only HTTPS transport, and legacy `--workspace` is ignored. Request details
@@ -104,15 +108,22 @@ These commands are documentation, not authorization for a live model call.
 
 ## E2E batch driver (tau-style workflow)
 
-`pnpm benchmark:e2e` runs approval-bound pass@k batches against the
-benchmark-v2 image directly (not through the dal policy runner), so it
-manages its own container contract:
+The metered runner requires explicit mode, campaign, provider/model, provider cap,
+and an image with verified build provenance. Build the local derived image without
+using the repository as Docker context:
 
-- it passes exactly the selected provider's credential env (`.env.example`
-  lists all five) and fails closed before any call when the key is missing;
-- the candidate network allows provider egress and is not destination-
-  allowlisted; use a dedicated short-lived key and do not treat oracle
-  isolation as credential-egress confinement;
+```sh
+pnpm exec tsx benchmarks/tau-style-workflow/build-gateway-image.ts
+```
+
+The builder compiles first, compares source inventories before/after, copies only
+generated JavaScript and schemas into a private minimal context, and verifies
+in-image artifact hashes. The existing local benchmark-v2 image is the base; no
+provider credentials enter the build. It manages the following execution contract:
+
+- only the live model gateway receives the selected provider credential and an
+  outbound network; the candidate receives an ephemeral gateway capability on an
+  internal network with no provider key or ledger mount;
 - each attempt stages only the agent-visible task, policy, candidate skill,
   and exact composition patch into a read-only candidate workspace; the
   repository, goal state, grader source, journal, and receipts are not mounted;
@@ -127,9 +138,8 @@ manages its own container contract:
   `--resolutions` shape the run; see
   [`benchmarks/tau-style-workflow/PROVIDERS.md`](../../benchmarks/tau-style-workflow/PROVIDERS.md)
   for the multi-provider matrix and the transmission-manifest decision flow;
-- on a docker transport failure it removes the attempt's named containers,
-  atomically reseeds the journal, relaunches Docker Desktop when the daemon is
-  down, and retries the candidate once; final cleanup removes both networks;
+- there is no candidate retry after transport failure; final cleanup removes only
+  owned resources and preserves the shared campaign ledger;
 - `--runner local` is rejected because it cannot prove oracle isolation.
 
 The approval manifest binds rollout count, projected and full task digests,
@@ -142,7 +152,15 @@ compare gate can reject reused evidence, inconsistent counters, benchmark
 drift, hand-authored attribution, and model+harness confounding.
 Only `g0` and `g1` labels are accepted while G2 remains unmounted source.
 
-Run the no-model topology probe after rebuilding:
+For the native keyless DSH rehearsal and finite pending-approval live preparation,
+use [the preflight guide](../../docs/paid-campaign-preflight.md). Rehearsal has no
+gateway egress or keys, reports protocol and business outcomes separately, and
+stores its evidence outside `.dal/runs`. Both modes inspect isolation before and
+after execution. The same ledger and conservative reservation policy apply to
+[metered proposals](../../docs/metered-proposal.md); direct proposals are not the
+campaign handoff.
+
+The narrower no-model topology probe remains available after rebuilding:
 
 ```sh
 CI=true DAL_E2E_TOPOLOGY_PROBE=1 pnpm exec vitest run tests/e2e-topology.test.ts
