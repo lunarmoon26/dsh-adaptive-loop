@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/e2e-spend-policy.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "campaign_id", "budget_id", "approval_id", "run_id", "provider", "model", "provider_limit_microusd", "max_request_bytes", "max_response_bytes", "timeout_ms", "max_output_tokens", "pricing_profile", "token_bound_profile", "input_microusd_per_token", "output_microusd_per_token"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "campaign_id": {"$ref": "#/$defs/id"},
+    "budget_id": {"$ref": "#/$defs/id"},
+    "approval_id": {"type": "string", "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,95}(?![\\s\\S])"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "provider": {"enum": ["openai", "anthropic"]},
+    "model": {"enum": ["gpt-5.6-terra", "claude-sonnet-5"]},
+    "provider_limit_microusd": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
+    "max_request_bytes": {"const": 65536},
+    "max_response_bytes": {"const": 2097152},
+    "timeout_ms": {"const": 120000},
+    "max_output_tokens": {"const": 1024},
+    "pricing_profile": {"const": "reviewed-text-upper-rates-20260907-v1"},
+    "token_bound_profile": {"const": "json-bytes-times-two-plus-8192-v1"},
+    "input_microusd_per_token": {"enum": [5, 4]},
+    "output_microusd_per_token": {"enum": [18, 10]}
+  },
+  "$defs": {"id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}(?![\\s\\S])"}},
+  "allOf": [
+    {"if": {"properties": {"provider": {"const": "openai"}}}, "then": {"properties": {"model": {"const": "gpt-5.6-terra"}, "input_microusd_per_token": {"const": 5}, "output_microusd_per_token": {"const": 18}}}},
+    {"if": {"properties": {"provider": {"const": "anthropic"}}}, "then": {"properties": {"model": {"const": "claude-sonnet-5"}, "input_microusd_per_token": {"const": 4}, "output_microusd_per_token": {"const": 10}}}}
+  ]
+}

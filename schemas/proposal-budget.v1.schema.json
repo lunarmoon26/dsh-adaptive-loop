@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/proposal-budget.v1.schema.json",
+  "title": "Local proposer reservation ledger v1 (reservation units, not billed cost)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "kind", "budget_id", "provider", "provider_limit_microusd"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/proposal-budget.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "kind": { "enum": ["cap", "reservation"] },
+    "budget_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}(?![\\s\\S])" },
+    "provider": { "enum": ["openai", "anthropic", "deepseek-official"] },
+    "provider_limit_microusd": { "$ref": "#/$defs/positiveMicros" },
+    "reservation_microusd": { "$ref": "#/$defs/positiveMicros" },
+    "request_digest": { "$ref": "#/$defs/digest" },
+    "approval_id": { "type": "string", "pattern": "^dec-[a-z0-9][a-z0-9._-]{2,95}(?![\\s\\S])" },
+    "sequence": { "$ref": "#/$defs/positiveMicros" },
+    "previous_sha256": { "$ref": "#/$defs/digest" }
+  },
+  "if": { "properties": { "kind": { "const": "reservation" } } },
+  "then": {
+    "properties": { "reservation_microusd": {}, "request_digest": {}, "approval_id": {}, "sequence": {}, "previous_sha256": {} },
+    "required": ["reservation_microusd", "request_digest", "approval_id", "sequence", "previous_sha256"]
+  },
+  "else": { "properties": {
+    "reservation_microusd": false, "request_digest": false, "approval_id": false,
+    "sequence": false, "previous_sha256": false
+  } },
+  "$defs": {
+    "positiveMicros": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}(?![\\s\\S])" }
+  }
+}

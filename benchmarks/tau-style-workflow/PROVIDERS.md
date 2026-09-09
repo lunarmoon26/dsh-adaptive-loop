@@ -1,5 +1,21 @@
 # Multi-provider matrix (tau-style workflow)
 
+## Current metered experiment
+
+The current paid runner permits only explicit `openai/gpt-5.6-terra` and
+`anthropic/claude-sonnet-5` through the credential-isolated gateway. It requires
+explicit mode, campaign, cap, verified image provenance and exact live approval.
+Keys are never passed to the candidate. Current executable procedures are owned
+by [paid campaign preflight](../../docs/paid-campaign-preflight.md) and
+[metered proposal handoff](../../docs/metered-proposal.md).
+
+## Historical unmetered wiring — not current execution instructions
+
+The remaining material records the earlier catalog matrix and credential routing.
+Its commands omit required metering parameters and are not valid instructions
+for the current paid driver. Support in the underlying DSH catalog does not grant
+admission through the experiment gateway.
+
 The e2e driver can run the same pass@k batches against any provider whose
 route the harness can serve. DeepSeek runs through the in-box
 `dsh-llm-deepseek` adapter; every other provider runs through the in-box

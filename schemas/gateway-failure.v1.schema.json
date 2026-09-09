@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/gateway-failure.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stage", "code", "reserved", "upstream_status", "provider_error_type", "provider_error_code"],
+  "properties": {
+    "stage": {"enum": ["auth", "request", "admission", "reservation", "credential", "upstream", "response", "persistence", "cancel"]},
+    "code": {"enum": ["auth_denied", "route_denied", "request_content_type", "request_oversize", "request_json", "admission_denied", "model_or_stream", "output_limit", "unknown_fields", "cache_options", "text_format", "store_denied", "instructions_shape", "system_shape", "messages_shape", "stop_sequences", "tool_choice", "parallel_tool_calls", "sampling_range", "nesting_limit", "reasoning_denied", "reference_denied", "openai_input", "tools_denied", "budget_exhausted", "replay_rejected", "reservation_failed", "credential_missing", "credential_invalid", "network_exception", "http_rejected", "response_body_missing", "response_content_type", "response_oversize", "response_json", "response_incomplete", "sse_error", "sse_missing_terminal", "persistence_failed", "timeout", "disconnect", "shutdown"]},
+    "reserved": {"type": "boolean"},
+    "upstream_status": {"type": ["integer", "null"], "minimum": 100, "maximum": 599},
+    "provider_error_type": {"enum": [null, "authentication_error", "invalid_request_error", "rate_limit_error", "permission_error", "not_found_error", "api_error", "overloaded_error", "insufficient_quota"]},
+    "provider_error_code": {"enum": [null, "invalid_api_key", "invalid_request_error", "rate_limit_exceeded", "insufficient_quota", "model_not_found", "context_length_exceeded"]}
+  }
+}

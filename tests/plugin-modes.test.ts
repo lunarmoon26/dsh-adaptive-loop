@@ -571,7 +571,7 @@ describe("run-mode recorder", () => {
 const distCli = resolve(import.meta.dirname, "..", "dist", "cli.js");
 
 describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => {
-  function captureTools(): {
+  function captureTools(cliCommand = ["node", distCli]): {
     definitions: Array<{ name: string; execute: (args: unknown) => Promise<unknown> }>;
     ctx: { tools: { register: (definition: unknown) => void } };
   } {
@@ -583,7 +583,7 @@ describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => 
         },
       },
     };
-    applyImproveTools(ctx as never, { cliCommand: ["node", distCli] });
+    applyImproveTools(ctx as never, { cliCommand });
     return { definitions, ctx };
   }
 
@@ -599,7 +599,9 @@ describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => 
   });
 
   it("dal_reset_status reports a read-only dry run", async () => {
-    const { definitions } = captureTools();
+    const root = await workspace();
+    // Do not scan repository evidence while parallel tests create and remove fixtures.
+    const { definitions } = captureTools(["node", "--import", `data:text/javascript,${encodeURIComponent(`process.chdir(${JSON.stringify(root)})`)}`, distCli]);
     const result = (await definitions.find((definition) => definition.name === "dal_reset_status")!.execute({})) as {
       ready: boolean;
       total_files: number;
@@ -640,10 +642,13 @@ describe.skipIf(!existsSync(distCli))("improvement-mode workbench tools", () => 
       clusters, runs, output: join(root, "missing-model.json"),
     })).rejects.toThrow('missing required property "model"');
 
+    const budgetPath = join(root, "budget.json");
+    await writeFile(budgetPath, JSON.stringify({ budget_id: "budget-plugin-test", provider_limit_microusd: 1000000, reservation_microusd: 100000 }));
     const prepared = (await definitions.find((definition) => definition.name === "dal_proposal_prepare")!.execute({
       clusters,
       runs,
       model: "deepseek-v4-flash",
+      budget: budgetPath,
       output: join(root, "payload.json"),
     })) as { payload_digest: string; request_digest: string; request_path: string };
     expect(prepared.payload_digest).toMatch(/^[0-9a-f]{64}$/);

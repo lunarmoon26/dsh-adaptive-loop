@@ -1,0 +1,191 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-multiprovider-proposals-20260907",
+  "ingested_at": "2026-09-07T20:32:01.374Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-multiprovider-proposals-20260907.json",
+    "sha256": "0a845a9e5f9568758763cda039c2e1083b519cffd8e1e3056fd7eb6aeac5febd"
+  },
+  "feedback_sha256": "973e63f4c9b181067bd0da7315fc7986f265baa918395308cac3446e75f7c40c",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-07T20:32:01.374Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-multiprovider-proposals-20260907",
+    "change_id": "chg-dal-multiprovider-proposals-20260907",
+    "created_at": "2026-09-07T20:30:27Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-proposals"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Support the complete automatic proposal stage on exact OpenAI and Anthropic models with approved v2 requests and durable reservation admission.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-providers",
+        "statement": "Support native OpenAI gpt-5.6-terra and Anthropic claude-sonnet-5 requests without fallback or workspace/tool access, retaining explicit DeepSeek support.",
+        "result": "passed",
+        "evidence": [
+          "ev-transport"
+        ]
+      },
+      {
+        "id": "ac-automatic",
+        "statement": "Exercise recorded failures through clustering, approval-bound generation and schema-valid persisted drafts with mocked native providers.",
+        "result": "passed",
+        "evidence": [
+          "ev-automatic"
+        ]
+      },
+      {
+        "id": "ac-admission",
+        "statement": "Reserve approved allocation durably before sending and deny duplicate, over-limit, drifted or malformed admissions.",
+        "result": "passed",
+        "evidence": [
+          "ev-budget"
+        ]
+      },
+      {
+        "id": "ac-full-gate",
+        "statement": "Pass the complete repository gate with reviewed source capsule pins.",
+        "result": "failed",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "Automatic multi-provider proposal tests and all implementation checks pass. Full closure is blocked by the changed spec and roadmap capsule pins.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "Two capsule source digests need review after the v2 provider and budget contract change.",
+        "owner": "project-maintainer",
+        "next_action": "Review the multi-provider proposal contract, authorize source-pin refresh, and rerun the full gate. Paid DSH rollouts remain separately gated."
+      }
+    },
+    "what_worked": [
+      "Both requested providers complete the automatic proposal flow through native-wire mocked transports.",
+      "Reasoning output is excluded from the persisted OpenAI proposal; tools and incomplete outputs are rejected.",
+      "Reservations persist across success, failure and unknown outcomes; duplicate sends are denied."
+    ],
+    "what_failed": [
+      "The first plugin check used an outdated built CLI; rebuilding resolved the missing budget option.",
+      "Initial OpenAI parsing rejected valid reasoning-plus-message responses; focused positive and negative controls now cover them.",
+      "Full verification stops at the expected source-pin review gate."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Verify transport, budget, automatic proposal and CLI/workbench paths offline.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-transport",
+          "ev-automatic",
+          "ev-budget"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run all local verification stages.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-capsule-review",
+        "category": "verification",
+        "summary": "Source-bound capsule review remains necessary for final closure.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Review the v2 provider and reservation contract before refreshing pins.",
+        "evidence": [
+          "ev-gate"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-transport",
+        "kind": "test",
+        "uri": "repo://tests/propose-transport.test.ts",
+        "summary": "222 tests pass for provider-specific wire formats, exact models, v2 schema, request integrity, selected credentials, timeouts, byte limits, reasoning envelopes and rejected tools/refusals.",
+        "sha256": null,
+        "observed_at": "2026-09-07T20:30:27Z"
+      },
+      {
+        "id": "ev-automatic",
+        "kind": "test",
+        "uri": "repo://tests/propose-automatic.test.ts",
+        "summary": "24 tests pass for exact-model automatic proposal generation with mocked native fetch and no runner override; approval and budget failures precede transport.",
+        "sha256": null,
+        "observed_at": "2026-09-07T20:30:27Z"
+      },
+      {
+        "id": "ev-budget",
+        "kind": "test",
+        "uri": "repo://tests/proposal-budget.test.ts",
+        "summary": "44 tests pass for concurrent admissions, durable reservations, repeated digests, cap drift, provider separation and ledger corruption. Allocation accounting is not provider billing or DSH-wide spend enforcement.",
+        "sha256": null,
+        "observed_at": "2026-09-07T20:30:27Z"
+      },
+      {
+        "id": "ev-gate",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck/build pass; 577 tests pass, seven skip and one capsule test fails. Changed sources: spec in contract capsule and roadmap in adapter capsule. Later chained gates did not run. Final code review and diff whitespace checks pass.",
+        "sha256": null,
+        "observed_at": "2026-09-07T20:30:27Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The user requested automatic proposal support for both exact models. Final changed-contract and source-pin review is pending. No live model call, actual credential inspection, installation, activation, commit or push was performed."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

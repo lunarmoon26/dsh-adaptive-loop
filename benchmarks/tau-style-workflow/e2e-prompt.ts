@@ -51,7 +51,7 @@ export const PROVIDERS: Record<string, ProviderSpec> = {
   openai: {
     route: "openai",
     apiKeyEnv: "OPENAI_API_KEY",
-    defaultModel: "gpt-5.6-luna",
+    defaultModel: "gpt-5.6-terra",
     adapterRow: "pi-ai",
   },
   anthropic: {
@@ -102,7 +102,7 @@ export function buildPiAiRow(provider: string): string {
 export function buildToolsRow(
   serviceUrl: string,
 ): string {
-  return `- id: dal-workflow-tools\n  name: 'dal-workflow-tools'\n  config:\n    serviceUrl: ${serviceUrl}\n`;
+  return `- insert:\n    - id: dal-workflow-tools\n      name: '/opt/dal/plugins/dal-workflow-tools/lib/index.js'\n      config:\n        serviceUrl: ${serviceUrl}\n`;
 }
 
 /** The full composition patch: model route, provider adapter route, tools. */
@@ -112,4 +112,13 @@ export function buildCompositionPatch(
   serviceUrl: string,
 ): string {
   return `${buildModelPatch(provider, model)}${buildPiAiRow(provider)}${buildToolsRow(serviceUrl)}`;
+}
+
+/** Fixed gateway route; never inherit a public endpoint or catalog capacity. */
+export function buildGatewayCompositionPatch(provider: string, model: string, serviceUrl: string): string {
+  if (!((provider === "openai" && model === "gpt-5.6-terra") || (provider === "anthropic" && model === "claude-sonnet-5"))) {
+    throw new Error("Gateway requires the exact reviewed provider/model pair");
+  }
+  const base = `http://dal-model-gateway:8787${provider === "openai" ? "/v1" : ""}`;
+  return `${buildModelPatch(provider, model)}- id: session-title-llm\n  disabled: true\n- id: llm-pi-ai\n  config:\n    providers:\n      ${provider}:\n        apiKeyEnv: DAL_GATEWAY_TOKEN\n        baseURL: ${base}\n        api: ${provider === "openai" ? "openai-responses" : "anthropic-messages"}\n        cacheRetention: none\n        retryPolicy:\n          mode: normal\n          maxRetries: 0\n        models:\n          - id: ${model}\n            contextWindow: 139000\n            maxTokens: 1024\n            reasoningEfforts: false\n            input: [text]\n${buildToolsRow(serviceUrl)}`;
 }

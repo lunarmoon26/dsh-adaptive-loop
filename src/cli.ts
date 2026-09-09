@@ -744,11 +744,12 @@ async function admitStatusCommand(argv: readonly string[], io: CliIo): Promise<v
 
 async function proposePrepareCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["clusters", "runs", "output", "provider", "model"]);
-  exactlyPositionals(parsed, 0, "propose prepare --clusters <dir> --model <model> [--runs <dir>] --output <request-file>");
+  assertOptions(parsed, ["clusters", "runs", "output", "provider", "model", "budget"]);
+  exactlyPositionals(parsed, 0, "propose prepare --clusters <dir> --model <model> --budget <file> [--runs <dir>] --output <request-file>");
   const options: Parameters<typeof prepareProposeRequest>[0] = {
     clustersDir: requiredOption(parsed, "clusters"),
     model: { provider: oneOption(parsed, "provider") ?? "deepseek-official", model: requiredOption(parsed, "model") },
+    budget: (await readJsonFile<Parameters<typeof prepareProposeRequest>[0]["budget"]>(requiredOption(parsed, "budget"))).value,
   };
   const runs = oneOption(parsed, "runs");
   if (runs !== undefined) {
@@ -768,12 +769,13 @@ async function proposePrepareCommand(argv: readonly string[], io: CliIo): Promis
 
 async function proposeRunCommand(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["clusters", "runs", "approval", "workspace", "output", "provider", "model", "runner"]);
-  exactlyPositionals(parsed, 0, "propose run --clusters <dir> --model <model> [--runs <dir>] --approval <decision> --output <draft-file> [--provider <p>]");
+  assertOptions(parsed, ["clusters", "runs", "approval", "workspace", "output", "provider", "model", "runner", "budget"]);
+  exactlyPositionals(parsed, 0, "propose run --clusters <dir> --model <model> --budget <file> [--runs <dir>] --approval <decision> --output <draft-file> [--provider <p>]");
   const options: Parameters<typeof runPropose>[0] = {
     clustersDir: requiredOption(parsed, "clusters"),
     approvalPath: requiredOption(parsed, "approval"),
     outputPath: requiredOption(parsed, "output"),
+    budget: (await readJsonFile<Parameters<typeof runPropose>[0]["budget"]>(requiredOption(parsed, "budget"))).value,
     model: {
       provider: oneOption(parsed, "provider") ?? "deepseek-official",
       model: requiredOption(parsed, "model"),
@@ -794,6 +796,7 @@ async function proposeRunCommand(argv: readonly string[], io: CliIo): Promise<vo
     surface: result.draft.surface,
     payload_digest: result.payload_digest,
     request_digest: result.request_digest,
+    budget_reservation: result.budget_reservation,
     draft_path: displayPath(result.path),
   });
 }
@@ -1239,8 +1242,8 @@ Usage:
   dal admit issue --admission <id> --candidate <file-or-uri>
   dal admit complete --admission <id> --result <result-file>
   dal admit status --admission <id>
-  dal propose prepare --clusters <dir> [--runs <dir>] --model <m> --output <request-file> [--provider <p>]
-  dal propose run --clusters <dir> [--runs <dir>] --approval <decision> --model <m> --output <draft-file>
+  dal propose prepare --clusters <dir> [--runs <dir>] --model <m> --budget <file> --output <request-file> [--provider <p>]
+  dal propose run --clusters <dir> [--runs <dir>] --approval <decision> --model <m> --budget <file> --output <draft-file> [--provider <p>]
                      [--provider <p>]
   dal branch record --branch <id> --draft <file> [--candidate <file>] [--parent <branch-id>]
   dal branch evaluate --branch <id> --task <task-file> --state <state-file>

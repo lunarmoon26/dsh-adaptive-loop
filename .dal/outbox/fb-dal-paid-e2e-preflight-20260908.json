@@ -1,0 +1,43 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-paid-e2e-preflight-20260908",
+  "change_id": "chg-dal-paid-e2e-preflight-20260907",
+  "created_at": "2026-09-08T00:41:46Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-preflight" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Finish all technical preparation for the first exact-model paid baseline batch without making paid calls.",
+  "acceptance_criteria": [
+    { "id": "ac-broker", "statement": "Keep credentials and outbound access outside the candidate and reserve conservative cost before every admitted request.", "result": "passed", "evidence": ["ev-gateway", "ev-docker"] },
+    { "id": "ac-handoff", "statement": "Use the same canonical campaign/provider ledger for rollout and automatic proposals, without rehearsal contamination.", "result": "passed", "evidence": ["ev-proposal", "ev-gate"] },
+    { "id": "ac-provenance", "statement": "Verify source, schema and compiled-image provenance before preparing approval.", "result": "passed", "evidence": ["ev-image", "ev-manifests"] },
+    { "id": "ac-readiness", "statement": "Run actual keyless DSH native protocol rehearsals and prepare finite exact manifests with pending-only approval requests.", "result": "passed", "evidence": ["ev-docker", "ev-manifests"] },
+    { "id": "ac-full-gate", "statement": "Pass full local verification and reconcile contracts and reviewed source pins without another intermediate gate.", "result": "passed", "evidence": ["ev-gate"] }
+  ],
+  "outcome": { "status": "completed", "summary": "First paid baseline preparation is complete: final-image DSH rehearsals, same-ledger proposal handoff, source provenance, finite manifests and all local gates pass. Actual paid approvals remain pending.", "exception": null },
+  "what_worked": ["Both exact-model DSH protocol rehearsals perform a successful tool call and finish without provider keys or egress.", "The business oracle correctly rejects the intentional no-op fixture rather than fabricating success.", "Rollout and proposal reservations share one durable campaign/provider cap.", "Manifest verification rejects stale source/image artifacts and does not manufacture approval."],
+  "what_failed": ["Initial rehearsal exposed missing runtime flags, SDK wire-field mismatch, background title calls, plugin insertion and compressed-session decoding issues; all were resolved before the final rehearsal.", "Review found rehearsal contamination, alternate ledger roots and stale-build provenance risks; isolated stores, input rejection, fixed roots and verified build provenance resolve them.", "A raw Docker image ID was interpreted as a registry tag during build; a locally verified content-named base tag resolves the build without pulling model dependencies."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "keyless-dsh-rehearsal", "purpose": "Exercise both native protocols in the final isolated image.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-docker"] },
+    { "sequence": 2, "kind": "tool", "name": "metered-proposal-rehearsal", "purpose": "Verify automatic proposal generation consumes the same campaign allocation.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-proposal"] },
+    { "sequence": 3, "kind": "tool", "name": "prepare-paid-campaign", "purpose": "Generate and verify finite pending approval artifacts without sending.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-manifests"] },
+    { "sequence": 4, "kind": "tool", "name": "pnpm-check", "purpose": "Run the final complete local gate.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-gate"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-gateway", "kind": "test", "uri": "repo://tests/e2e-model-gateway.test.ts", "summary": "Broker tests cover admitted bytes including canonical expansion, fixed routes, no upstream before durable reservation, caps/concurrency/retries, unsupported inputs, streaming bounds and failures without refund. Billing remains conditional on disclosed rates/token assumptions.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" },
+    { "id": "ev-docker", "kind": "test", "uri": "repo://.dal/check/rehearsal-runs/readiness-20260908/summaries", "summary": "Final OpenAI and Anthropic rehearsals both report protocol success, a successful get_order followed by DONE, and intentional business failure. Before/after daemon isolation checks match. No owned containers or networks remain. Reservations are synthetic, not paid charges.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" },
+    { "id": "ev-proposal", "kind": "test", "uri": "repo://tests/metered-proposal.test.ts", "summary": "Same-campaign automatic proposals passed through the local broker. OpenAI allocation rose from 865974 to 945746 microUSD and Anthropic from 681384 to 740088, with one additional validated draft each. These rehearsal inputs are not paid-model evidence.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" },
+    { "id": "ev-image", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Final image 1897ee195e20401dac7571d031fc5160ebca43802f425cb7fb7801a6e82f6945 is verified against source and compiled artifact maps. Minimal build context excludes the repository and credentials.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" },
+    { "id": "ev-manifests", "kind": "file", "uri": "repo://.dal/check/paid-adaptive-20260908-ready/campaign.json", "summary": "Verified finite campaign: one refund task per provider, exact Terra/Sonnet models, caps of six and five USD, immutable image and shared ledger. Both approval requests remain pending and unauthorized; future proposal payloads require separate exact approval.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" },
+    { "id": "ev-gate", "kind": "test", "uri": "command://pnpm-run-check", "summary": "All 42 test files pass: 709 tests passed, seven opt-in skipped. Typecheck/build, all capsules, policy and both offline scorecards pass. Final targeted security review has no remaining high/medium blocker for the first paid baseline; diff checks pass.", "sha256": null, "observed_at": "2026-09-08T00:41:46Z" }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-08T00:41:46Z", "notes": ["The user directed completion of all pre-paid prerequisites; this includes synchronized contract and capsule work. Timestamp records acknowledgment, not the unavailable message timestamp. No exact paid-run decision is inferred from that instruction: generated requests remain pending. No provider credits were spent, real credentials inspected, candidate activated, or repository changes published."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

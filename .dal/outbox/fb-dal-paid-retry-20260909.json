@@ -1,0 +1,49 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-paid-retry-20260909",
+  "change_id": "chg-dal-paid-retry-20260909",
+  "created_at": "2026-09-09T19:45:06Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-dal-paid-retry" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": "repo://.dal/check/paid-adaptive-20260908-retry-result.json"
+  },
+  "goal": "Execute one approved repaired baseline retry per provider under the original cumulative caps and report independent outcomes without additional calls.",
+  "acceptance_criteria": [
+    { "id": "ac-scopes", "statement": "Reverify the repaired scopes and exact short-lived approvals before sending.", "result": "passed", "evidence": ["ev-approval"] },
+    { "id": "ac-openai", "statement": "Complete the OpenAI baseline with independent task-goal verification.", "result": "passed", "evidence": ["ev-openai"] },
+    { "id": "ac-anthropic", "statement": "Complete the Anthropic baseline with independent task-goal verification.", "result": "failed", "evidence": ["ev-anthropic"] },
+    { "id": "ac-budget-cleanup", "statement": "Preserve cumulative reservations, make no extra retries or proposal calls, and clean owned resources.", "result": "passed", "evidence": ["ev-accounting"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "OpenAI passed all three refund-workflow goals. Anthropic remains blocked by upstream HTTP 400 invalid_request_error; no model-quality score is assigned. No extra attempts occurred.",
+    "exception": { "kind": "blocked", "reason": "Anthropic rejected its first admitted request; the retained error class does not identify the exact invalid-request cause.", "owner": "evaluator-maintainer", "next_action": "Investigate the Anthropic request/account compatibility offline and require fresh exact approval before another paid attempt. Preserve the successful OpenAI baseline and all reservations." }
+  },
+  "what_worked": ["OpenAI completed the repaired multi-turn tool workflow and all independent task checks.", "New diagnostics distinguish Anthropic upstream HTTP 400 invalid_request_error from local admission failure.", "Cumulative reservations remained below the original caps and cleanup completed."],
+  "what_failed": ["Anthropic's first request was rejected upstream; no completed Anthropic baseline exists."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "verify-scopes-and-approvals", "purpose": "Confirm exact repaired manifests and user-authorized short-lived scopes.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-approval"] },
+    { "sequence": 2, "kind": "tool", "name": "openai-baseline-retry", "purpose": "Execute one repaired OpenAI baseline attempt.", "outcome": "succeeded", "duration_ms": 16345, "evidence": ["ev-openai"] },
+    { "sequence": 3, "kind": "tool", "name": "anthropic-baseline-retry", "purpose": "Execute one repaired Anthropic baseline attempt.", "outcome": "failed", "duration_ms": null, "evidence": ["ev-anthropic"] },
+    { "sequence": 4, "kind": "tool", "name": "result-and-cleanup-inspection", "purpose": "Inspect safe results, reservations and owned resource cleanup without further provider calls.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-accounting"] }
+  ],
+  "failures_and_inefficiencies": [
+    { "id": "fi-anthropic-invalid-request", "category": "harness", "summary": "Anthropic request or account compatibility remains unresolved despite a passing keyless protocol rehearsal.", "impact": "high", "recoverable": true, "suggested_action": "Use the saved exact source/request contract and safe HTTP error classification for offline diagnosis before proposing another paid run.", "evidence": ["ev-anthropic"] }
+  ],
+  "evidence": [
+    { "id": "ev-approval", "kind": "file", "uri": "repo://.dal/check/paid-openai-repair-20260909.decision.json", "summary": "Both repaired manifest digests reverified unchanged. User approved one retry each; corresponding short-lived decisions validated at the CLI and execution boundary under the original six/five USD campaign caps.", "sha256": null, "observed_at": "2026-09-09T19:45:06Z" },
+    { "id": "ev-openai", "kind": "file", "uri": "repo://.dal/check/e2e-receipts/rcp-task-001-refund-77b5af0f.json", "summary": "Exact Terra model completed five gateway responses and six tool calls; all three goals passed. Captured usage: 36845 input and 207 output tokens. This is one baseline task, not adaptation benefit or a reliability estimate.", "sha256": null, "observed_at": "2026-09-09T19:45:06Z" },
+    { "id": "ev-anthropic", "kind": "file", "uri": "repo://.dal/check/e2e-gateways/run-e2e-f1f8a78013cec91d39b3e2a3c470a3b3f718dafb89de577e/receipt.json", "summary": "One reservation and failed gateway operation; upstream stage, http_rejected, status 400, invalid_request_error, no specific provider code or captured assistant usage. No task-quality score is assigned.", "sha256": null, "observed_at": "2026-09-09T19:45:06Z" },
+    { "id": "ev-accounting", "kind": "file", "uri": "repo://.dal/check/paid-adaptive-20260908-retry-result.json", "summary": "Cumulative reservations: OpenAI2786492 and Anthropic678704 microUSD, total3465196. They are not measured charges. Prior allocations remain charged; no extra retry, proposal call or activation. Owned container/network inventories are empty.", "sha256": null, "observed_at": "2026-09-09T19:45:06Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-anthropic-cause", "statement": "HTTP 400 invalid_request_error does not conclusively distinguish request format, model access, or account-specific rejection.", "level": "high", "resolution": "Investigate offline where possible; do not infer a cause or spend again without a fresh approved scope.", "evidence": ["ev-anthropic"] },
+    { "id": "un-billing", "statement": "Actual account charges and balances have not been measured.", "level": "medium", "resolution": "Consult provider billing separately and keep reservation accounting distinct.", "evidence": ["ev-accounting"] }
+  ],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-09T19:40:24Z", "notes": ["The user explicitly approved one repaired retry per provider under cumulative caps. Timestamp records acknowledgment. No additional proposal, activation, or paid retry authority is inferred."], "approval_refs": ["dec-paid-openai-repair-20260908", "dec-paid-anthropic-repair-20260908"] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}
