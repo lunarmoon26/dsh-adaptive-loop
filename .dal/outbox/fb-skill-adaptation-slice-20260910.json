@@ -1,0 +1,38 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-skill-adaptation-slice-20260910",
+  "change_id": "chg-dal-skill-adaptation-slice-20260910",
+  "created_at": "2026-09-10T04:26:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "agent-local" },
+    "harness": { "name": "opencode", "version": "unknown", "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": "aaeb2cc88a846c8094ebea66075862e56de9e842", "branch": "main", "dirty": true },
+    "task_ref": "repo://docs/skill-adaptation-experiment.md"
+  },
+  "goal": "Connect bounded generated skill edits to exact-artifact isolated evaluation and honest adaptation reporting without paid execution or promotion.",
+  "acceptance_criteria": [
+    { "id": "ac-proposal", "statement": "Reject invalid edits, base drift, unsafe content and ineligible or incomplete development enrollment before the relevant send or staging operation.", "result": "passed", "evidence": ["ev-check"] },
+    { "id": "ac-artifact", "statement": "Stage and execute the exact generated Markdown artifact, binding identity and rejecting approved-byte drift without overwriting the baseline.", "result": "passed", "evidence": ["ev-check", "ev-rehearsal"] },
+    { "id": "ac-report", "statement": "Require comparable receipt-bound outcomes and positive gain; reject regression and never label equality or mock integration as adaptive improvement.", "result": "passed", "evidence": ["ev-check", "ev-rehearsal"] },
+    { "id": "ac-scope", "statement": "Preserve campaign budgets and approval boundaries without adding controllers, providers or promotion mechanisms.", "result": "passed", "evidence": ["ev-check", "ev-preparation"] }
+  ],
+  "outcome": { "status": "completed", "summary": "Implementation and local integration verification passed. Real development failure and paid adaptation benefit remain unmeasured; the next exact baseline manifest is prepared but not authorized or executed.", "exception": null },
+  "what_worked": ["Reused existing optimizer validation, isolated runner, shared ledger and receipt comparison.", "Full verification passed with 884 tests passing and 7 opt-in tests skipped.", "Keyless DSH protocol passed while the no-op business outcome correctly failed."],
+  "what_failed": ["Review found subset-only development enrollment; complete enrollment is now enforced and regression-tested.", "The initial omission-test fixture reused receipt identity and failed eligibility; corrected bindings establish eligibility before the omission assertion.", "Contract digest drift was detected and synchronized after source review.", "Initial baseline preparation omitted the required approval identifier and was rejected before any external call; corrected preparation succeeded."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "pnpm run check", "purpose": "Verify implementation and repository gates.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-check"] },
+    { "sequence": 2, "kind": "tool", "name": "run-e2e rehearsal", "purpose": "Verify generated artifact execution through the keyless isolated runner.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-rehearsal"] },
+    { "sequence": 3, "kind": "tool", "name": "run-e2e prepare", "purpose": "Prepare the next exact baseline scope without provider access.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-preparation"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-check", "kind": "test", "uri": "command://pnpm-run-check", "summary": "Typecheck, build, all 46 test files, capsule checks, policy and both offline evaluation suites passed. Git diff whitespace validation passed.", "sha256": null, "observed_at": "2026-09-10T04:23:00.000Z" },
+    { "id": "ev-rehearsal", "kind": "test", "uri": "repo://.dal/check/rehearsal-runs/skill-slice-20260910/summaries/e2e-summary-staged-candidate-02.json", "summary": "Generated candidate used by keyless DSH: protocol passed, business checks failed as expected for the no-op fixture. Not model improvement.", "sha256": null, "observed_at": "2026-09-10T04:26:00.000Z" },
+    { "id": "ev-preparation", "kind": "test", "uri": "repo://.dal/check/e2e-manifests/9cfabade1014ed141e9bafef4c67d009ee97fad995077989c3aee3188f7d9aec.json", "summary": "Prepared one current-skill development baseline with unknown partial-refund resolution. No paid execution or approval decision was created.", "sha256": null, "observed_at": "2026-09-10T04:26:00.000Z" }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "pending", "reviewer": null, "reviewed_at": null, "notes": ["Implementation review remains pending. Paid baseline execution requires a separate exact, unexpired external-transfer approval. Candidate generation and later evaluation require their own approvals."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

@@ -4,6 +4,24 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ## Next decision points
 
+### Core skill adaptation experiment (2026-09-10)
+
+`chg-dal-skill-adaptation-slice-20260910` connects generated bounded skill edits,
+exclusive candidate staging, explicit-artifact DSH evaluation and strict
+improvement reporting. The selected hypothesis is unknown partial-refund
+recovery on task 004; actual baseline failure is required, with a no-change exit
+if it already works. Transfer/refusal cases are withheld from proposal inputs.
+See [the experiment contract](docs/skill-adaptation-experiment.md).
+
+The implementation path is verified; a real paid adaptation gain is not yet
+measured. One paid baseline recovered the unknown effect but failed an unspecified
+exact reason-code requirement. The visible policy now defines that code; the
+grader and skill remain unchanged. Next, agree on a valid development experiment
+and sufficient budget, then prepare fresh approval under the corrected policy.
+Historical results are not a cross-policy adaptation comparison. Subsequent
+phases proceed only if evidence justifies a candidate and the approved budget
+can cover them; no more clustering, providers or controllers are needed.
+
 ### Explicit Anthropic Off (2026-09-09)
 
 `chg-dal-anthropic-off-20260910` corrects the text-mode configuration: keep

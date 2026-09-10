@@ -27,6 +27,121 @@ These bounds are reviewed accounting assumptions, not measured provider billing,
 execution attestation, optimization quality, or permission to apply the proposal.
 Base digests in proposal text remain unverified human-review assertions.
 
+## Optional Skill Candidate
+
+Change: `chg-dal-skill-adaptation-slice-20260910`. The accepted experiment scope
+is [one workspace skill adaptation](skill-adaptation-experiment.md). Omitting
+both new flags preserves the prediction-draft path above.
+
+Add `--exchange FILE --candidate-out .dal/candidates/NAME.md` to **every**
+prepare, verify, and execution invocation. This mode requires invocation from
+the DAL checkout root because the existing optimizer evaluator resolves
+repository URIs against cwd; the driver never changes cwd. The exchange must
+validate against `optimizer-exchange.v1`, target `kind: skill` with
+`format: bounded_edits`, and name a canonical `repo://` workspace skill source:
+an `.agents/skills/NAME/SKILL.md` path (optionally below a workspace subdirectory)
+or a direct `.dal/candidates/NAME.md`. Arbitrary task, fixture, evaluator and
+other Markdown paths are not skill sources. `file://` and other URI schemes
+are not supported by the existing evaluator.
+
+For **live skill mode**, every prepare/verify/execution invocation additionally
+requires `--development-baseline SUMMARY --runs DIR`. The summary must be a
+root-local `e2e-summary-v1` artifact. `assessDevelopmentBaseline` must report
+`eligible: true`: the exact development task `task-004-partial-refund.json`,
+`issue_refund=unknown` with `issue_refund=success`, generation `g0`, declared-live
+isolated execution, verified metrics and receipt/run evidence, and at least one
+business failure. A passing baseline means no change needed; a state-only
+synthetic failure or unavailable receipt does not qualify. The validated
+summary's provider/model must match the proposal gateway, and its candidate
+digest must equal the exchange's actual base skill digest.
+
+The supplied run IDs must equal the complete set of summary attempts, and each
+exact file digest must match its attempt. Every cluster member and
+representative, including clusters beyond the payload's projection cap, must
+belong to those attempts and be present in `--runs`. Extra transfer, held-out or
+nondevelopment IDs and substituted summaries under an allowed run ID are
+rejected before preparing an external manifest.
+
+`inputs.development_baseline` binds summary path/byte hash, the assessor's
+evidence references, and raw file hashes for its manifest, receipts and runs.
+These scientific-gate inputs stay local, outside the native payload. The driver
+hashes `skill-adaptation.ts`, `e2e-summary.ts` and their receipt/run validators
+into `driver_sources`; normal manifest regeneration repeats the assessment and
+bindings before broker startup and before candidate publication. This gate is
+not independent execution attestation and never replaces exact external-transfer
+approval. Digest-bound synthetic test fixtures test validation, not real model
+failure or improvement.
+
+Rehearsal skill mode requires no actual-model baseline claim and rejects
+`--development-baseline`; it uses explicit fixtures instead. The flag is also
+rejected for the default prediction-draft path, whose behavior remains unchanged.
+
+- Exchange and base files must be root-local regular files with no symlink
+  ancestors, traversal, URL escapes, hard links, or env paths. Reads reject
+  invalid UTF-8, oversized inputs and observed file drift. The base SHA-256 is
+  computed from actual bytes and must match the exchange before preparation.
+- The native payload retains literal `task: propose_one_falsifiable_change`
+  and sanitized development failure clusters, restricts editable surfaces to
+  `skills`, and adds `output_kind: optimizer_candidate` and `skill_target`
+  containing `exchange_id`, `target_uri`, `base_sha256`, and `base_text`.
+  Only allowed metric names are projected from the exchange objective. Dataset
+  references and their contents, evaluator fixtures, and transfer/holdout cases
+  are never retrieved or included. Operators supply only development clusters
+  and summaries. Live skill proposals enforce the development-baseline gate
+  above; rehearsal fixtures are not actual-model failure evidence.
+- Base text is privacy-scanned. The complete request retains the existing
+  64 KiB bound, fixed system instructions, exact provider/model routes, 1024
+  output-token cap, campaign ledger and no-refund behavior. Supplying an exchange
+  does not approve source disclosure. Live sending still requires a separate
+  unexpired external-transfer decision for the exact manifest including the
+  reviewed base text; the exchange's privacy flag remains non-authorizing.
+- `inputs.skill` and `skill_proposal` bind the exact exchange/base byte hashes,
+  paths, target identity and Markdown destination. Helper and evaluator source
+  hashes join `driver_sources`. Verification rebuilds these inputs, payload and
+  native body before gateway startup, then repeats after the reply and before
+  candidate publication. Changing even exchange whitespace or the staging
+  destination invalidates the manifest.
+- Execution `--output FILE.json` is the structured candidate destination,
+  outside `.dal/candidates`, not a prediction draft. Its parent and the
+  `.dal/candidates` directory must already exist and be real directories.
+  Existing JSON, Markdown, receipt or verdict outputs fail before sending.
+  Native replies must be complete `optimizer-candidate.v1` objects including
+  edits, privacy-safe and bound to the exact exchange/surface/target/base.
+  No fields are relabeled, inferred or stripped, including invented model
+  metadata. Edit replacements are bounded in UTF-8 bytes.
+- Only schema-valid, privacy-safe, exactly matched candidate JSON is published.
+  `evaluateOptimizerCandidate` then owns sequential reconstruction, metric and
+  edit checks, base-content digest verification, the no-change gate and exclusive
+  raw Markdown staging. An invalid edit or no-change reply can leave validated
+  JSON and a separate `FILE.json.optimizer-verdict.json` diagnostic, but never
+  staged Markdown. Malformed, private or mismatched replies publish neither
+  candidate JSON nor Markdown. Drift detected before publication does likewise.
+- The adjacent gateway receipt adds `candidate_validated` in this mode; this
+  means reply schema/privacy/identity validation, **not** a passing edit verdict.
+  The separate bounded optimizer verdict contains checks and artifact digests,
+  not full skill text. Successful execution additionally returns
+  `candidate_path`, `candidate_sha256`, and `verdict_path`. These are staging
+  results, not outcome improvement, apply approval or live activation.
+
+The controller-computed base hash is authoritative request input only. Returned
+artifact digests remain unverified claims until the deterministic validator
+checks actual bytes. The fixed transport instruction is unchanged.
+
+The ordinary rehearsal fixture returns a prediction draft. Skill-mode keyless
+rehearsal returns bounded native optimizer candidate JSON through the gateway's
+`output_kind` branch. The reconstructed fixture was executed by isolated DSH
+with matching skill bytes: protocol passed and its no-op business outcome failed.
+This proves integration, not model improvement.
+
+The completed repository gate passed 885 tests with 7 opt-in tests skipped,
+plus typechecking, build, capsules, policy checks and offline evaluations.
+Focused coverage includes native mocks for both exact providers, UTF-8/BOM/CRLF
+byte preservation, invalid/no-change edits, output conflicts, privacy/size bounds,
+excluded datasets, complete development enrollment and pre/post-response drift.
+See the experiment contract for the actual paid baseline finding and why its
+reason-code mismatch does not justify a recovery-skill proposal. Receipt-valid
+business failure is an eligibility check, not proof of a causal skill defect.
+
 ## Keyless Workflow
 
 The repository's `.dal/clusters` is initially empty. Existing input fixtures are

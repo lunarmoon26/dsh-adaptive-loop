@@ -162,6 +162,20 @@ The optimizer exchange ships as a deterministic, prepare/evaluate-only adapter b
 
 ### DAL-022 — Benchmark measurement integrity
 
+The bounded skill-adaptation path connects metered generation to the existing
+optimizer validator and isolated runner. Live skill proposals require a verified
+failed development baseline, matching model/base identity and enrolled development
+run/cluster inputs; no-change baselines and held-out input contamination fail
+eligibility. The approved payload includes only sanitized development summaries
+and the explicit base skill bytes, never dataset/grader/holdout contents. The
+returned `optimizer-candidate.v1` edit object is reconstructed and staged by the
+existing validator; structural validity is not task success. The runner's optional
+`--skill` selects a bounded, privacy-scanned repository Markdown artifact and binds
+its URI/bytes into the manifest and run record, without overwriting the baseline.
+The experiment report reuses receipt validation, requires live context and a
+positive verified outcome delta for improvement, and never authorizes promotion.
+See [the single experiment contract](skill-adaptation-experiment.md).
+
 The tau-style benchmark separates execution health from task quality: a completed harness attempt records `outcome: succeeded` even when `business_outcome.status` is `failed`; runtime failures and business failures validate and cluster independently, and optimizer episodes retain both labels. A failed business outcome must name at least one failed deterministic check. Workflow task syntax is owned by `workflow-task.v1`: goal state, policy reference, and required/forbidden effect rules are evaluator-only. Grader `2.0.0` requires explicit effect-log evidence whenever rules exist, so an unchanged refusal state passes only with the matching successful `refuse_request` and no forbidden attempt. Branch evaluations accept `--effects`, persist its reference/digest, and require receipt binding for effect-aware provenance.
 
 E2e attempts use an internal candidate network, a typed state service, a hidden grader and a credential-isolated model gateway. All containers use the approved immutable image; source/schema/compiled-artifact provenance is verified before preparation. The candidate receives only a projected read-only task workspace and an ephemeral gateway capability, never provider keys or a ledger mount. Only a live gateway has outbound networking. The state service remains the sole journal writer and the hidden grader obtains authenticated state/effects. The manifest binds task/skill/policy/source/image/composition, finite attempts, mode, campaign, gateway policies and the fixed shared ledger. Exact unexpired external-transfer approval precedes live credential access; every request reserves a conservative full cost before forwarding, with no automatic retry or refund. Current paid profiles are exact OpenAI Terra and Anthropic Sonnet; other routes fail closed in this metered experiment. Rollout and metered proposal handoff share campaign/provider caps. Token-bound and pricing assumptions are explicit in [gateway contract](e2e-spend-gateway.md); reservations are not invoice measurements. See [campaign preparation](paid-campaign-preflight.md) and [metered proposal](metered-proposal.md).

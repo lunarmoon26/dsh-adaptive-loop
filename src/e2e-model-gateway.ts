@@ -151,7 +151,19 @@ export function createRehearsalUpstream(): GatewayUpstream {
       let payload: unknown;
       try { payload = JSON.parse(prompt.content); } catch { /* Not a proposer prompt. */ }
       if (object(payload) && payload.task === "propose_one_falsifiable_change" && text(payload.output_contract)) {
-        const proposal = JSON.stringify({
+        const target = payload.skill_target;
+        const skillFixture = payload.output_kind === "optimizer_candidate" && object(target) && text(target.base_text) &&
+          text(target.exchange_id) && text(target.target_uri) && text(target.base_sha256);
+        const firstLine = skillFixture ? (target.base_text as string).split("\n")[0]!.slice(0, 256) : "";
+        const proposal = JSON.stringify(skillFixture ? {
+          $schema: "https://recursive-dev-loop.dev/schemas/optimizer-candidate.v1.schema.json", schema_version: "1.0.0",
+          candidate_id: "cand-keyless-skill-fixture", exchange_id: target.exchange_id, surface: "skills",
+          target_uri: target.target_uri, base_sha256: target.base_sha256,
+          title: "Keyless skill candidate", objective: "Verify candidate generation and staging, not model improvement.",
+          statement: "This synthetic fixture establishes no outcome improvement.",
+          improvements: [{ metric: "task_success_rate", expected_delta: 0 }], regressions: [],
+          edits: [{ anchor: "keyless-fixture", before: firstLine, after: `${firstLine}\n# Keyless fixture only; no improvement claim\n` }],
+        } : {
           surface: "skills", target_uri: "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
           base_sha256: "9".repeat(64), title: "Rehearsal proposal: require return labels",
           objective: "Create a return label before issuing a full refund.",

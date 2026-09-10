@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -9,6 +9,7 @@ import { clusterRunRecords } from "../src/clustering.js";
 import { runEvaluationSuite } from "../src/evaluation.js";
 import { SCHEMA_IDS, assertSchema } from "../src/schema.js";
 import type { WorkflowEffectObservation } from "../src/workflow-grader.js";
+import { getEffectStatus, initializeService, issueRefund, loadEffectEntries, loadState, projectServiceState, type ServiceEnvironment, type ServiceState } from "../benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/src/service.js";
 
 const workspace = resolve(import.meta.dirname, "..", "benchmarks", "tau-style-workflow");
 const fixture = (...parts: string[]): string => resolve(workspace, ...parts);
@@ -33,6 +34,32 @@ describe("tau-style workflow benchmark workspace", () => {
     const verdict = gradeTask(task, state);
     expect(verdict.pass).toBe(false);
     expect(verdict.checks.find((check) => check.id === "policy:full-refund-requires-label")?.pass).toBe(false);
+  });
+
+  it("makes the partial-refund reason visible and passes the unchanged goal after unknown resolution", async () => {
+    const task = await readJson<WorkflowTask>("tasks", "task-004-partial-refund.json");
+    const policy = await readFile(fixture("tasks", task.policy_ref), "utf8");
+    const reason = "faulty-item";
+    expect(policy).toContain(`\`${reason}\``);
+    const env: ServiceEnvironment = {
+      stateRoot: await mkdtemp(join(tmpdir(), "dal-partial-refund-contract-")),
+      faults: { issue_refund: "unknown" },
+      resolutions: { issue_refund: "success" },
+    };
+    try {
+      await initializeService(env, { bookings: {}, ...task.initial_state } as ServiceState);
+      expect((await issueRefund(env, { order_id: "o-4001", amount: 30, reason, idempotency_key: "partial-contract" })).outcome).toBe("unknown");
+      expect((await loadState(env)).refunds).toHaveLength(0);
+      expect(await getEffectStatus(env, "partial-contract")).toMatchObject({ outcome: "success" });
+      const state = projectServiceState(await loadState(env));
+      const effects = await loadEffectEntries(env);
+      expect(state.refunds).toEqual([{ order: "o-4001", amount: 30, reason }]);
+      expect(gradeTask(task, state, effects).pass).toBe(true);
+      const wrongReason = { ...state, refunds: [{ ...state.refunds[0]!, reason: "faulty" }] };
+      expect(gradeTask(task, wrongReason, effects).checks.find(check => check.id === "goal:refunds")?.pass).toBe(false);
+    } finally {
+      await rm(env.stateRoot, { recursive: true, force: true });
+    }
   });
 
   it("requires a matching refusal effect in addition to unchanged state", async () => {
