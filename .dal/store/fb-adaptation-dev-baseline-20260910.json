@@ -1,0 +1,179 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-adaptation-dev-baseline-20260910",
+  "ingested_at": "2026-09-10T19:53:37.920Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-adaptation-dev-baseline-20260910.json",
+    "sha256": "27f7d9c0388fb2fa7a3de2eaabd73421703234691b88aab9401b600233730999"
+  },
+  "feedback_sha256": "a44b5102bf87fac5dc0ebc3f16f105e1973baf309f66e22dd108b21c731e0292",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-10T19:53:37.920Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-adaptation-dev-baseline-20260910",
+    "change_id": "chg-e2e-adaptation-dev-g0-01",
+    "created_at": "2026-09-10T19:53:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "unknown",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/skill-adaptation-experiment.md"
+    },
+    "goal": "Execute and assess exactly one approved current-skill development baseline without retries or further paid phases.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-approval",
+        "statement": "Verify exact current manifest and scoped human approval before the paid attempt.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "id": "ac-run",
+        "statement": "Complete one bounded baseline attempt and retain separate execution and business outcomes.",
+        "result": "passed",
+        "evidence": [
+          "ev-summary"
+        ]
+      },
+      {
+        "id": "ac-assessment",
+        "statement": "Assess evidence and report the actual failure without manufacturing an adaptation opportunity or making further paid calls.",
+        "result": "passed",
+        "evidence": [
+          "ev-assessment",
+          "ev-diagnosis"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "One authorized baseline completed: harness succeeded, two of three business checks passed. Unknown-effect recovery succeeded. The failed refund check is an exact reason-code mismatch against an unspecified hidden expected code, not evidence for the selected recovery-failure hypothesis. No proposal, retry or further paid evaluation executed.",
+      "exception": null
+    },
+    "what_worked": [
+      "Current manifest matched the approved digest and the approval verified before credential loading.",
+      "The agent resolved the unknown effect by status query and the refund succeeded.",
+      "Receipt validation accepted the observed business failure without claiming adaptation gain."
+    ],
+    "what_failed": [
+      "The hidden goal requires an exact reason code that the visible task, policy, skill and tool schema do not specify.",
+      "The baseline assessor reports business-failure eligibility but does not establish a causal skill defect; manual evidence review prevented an unjustified proposal.",
+      "The initial approval record encoded the scope hash incorrectly and was rejected before execution; the encoding was corrected and verification passed without changing the authorized scope."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "approval verify and manifest-digest",
+        "purpose": "Verify the exact authorized action.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "run-e2e live",
+        "purpose": "Execute the single approved development attempt.",
+        "outcome": "succeeded",
+        "duration_ms": 17229,
+        "evidence": [
+          "ev-summary"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "skill-adaptation baseline assessment",
+        "purpose": "Validate evidence and review the failed business check.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-assessment",
+          "ev-diagnosis"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-approval",
+        "kind": "test",
+        "uri": "repo://.dal/check/dec-adaptation-dev-g0-20260910.json",
+        "summary": "Explicit user approval recorded and verified against the unchanged prepared manifest before execution.",
+        "sha256": null,
+        "observed_at": "2026-09-10T19:49:54.000Z"
+      },
+      {
+        "id": "ev-summary",
+        "kind": "test",
+        "uri": "repo://.dal/check/e2e-summary-adaptation-dev-g0-01.json",
+        "summary": "Single attempt: execution succeeded, business score two of three; six tool calls, 36915 input tokens and 206 output tokens. Cumulative OpenAI reservation allocation reached 5143852 microUSD against the unchanged 6000000 cap; allocations are not provider bills.",
+        "sha256": null,
+        "observed_at": "2026-09-10T19:50:11.863Z"
+      },
+      {
+        "id": "ev-assessment",
+        "kind": "test",
+        "uri": "repo://.dal/check/adaptation-dev-g0-01-assessment.json",
+        "summary": "Local receipt and digest checks passed; status eligible_for_proposal denotes business failure only and grants no external-transfer or promotion authority.",
+        "sha256": null,
+        "observed_at": "2026-09-10T19:53:00.000Z"
+      },
+      {
+        "id": "ev-diagnosis",
+        "kind": "test",
+        "uri": "repo://.dal/check/e2e-receipts/rcp-task-004-partial-refund-31377847.json",
+        "summary": "Receipt-bound journal records unknown effect followed by successful status resolution. Comparison with the task goal and visible policy/tool contract isolates an unspecified exact reason-code requirement. No raw payload is included in this feedback.",
+        "sha256": "fcf97c2b0527078a52de1333bd685c445a6c8e52c7315be743db16139e14674e",
+        "observed_at": "2026-09-10T19:53:00.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Benchmark owner should resolve the visible reason-code contract versus hidden exact-match requirement before treating this failure as an optimization target. No evaluator or policy changes were made. Any subsequent paid scope requires fresh approval."
+      ],
+      "approval_refs": [
+        "dec-adaptation-dev-g0-20260910"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

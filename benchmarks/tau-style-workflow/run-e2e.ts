@@ -9,6 +9,7 @@ import { verifyApprovalFile } from "../../src/approval.js";
 import { GATEWAY_ROUTES, validateSpendPolicy, validateGatewayFailure, type GatewayFailure, type E2eSpendPolicy } from "../../src/e2e-model-gateway.js";
 import { OPENAI_TEXT_REPLAY_PROFILE } from "../../src/e2e-openai-text-replay.js";
 import { canonicalJson, sha256 } from "../../src/json.js";
+import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "../../src/privacy.js";
 import { ingestRunRecord } from "../../src/runs.js";
 import { buildGatewayCompositionPatch, promptFor } from "./e2e-prompt.js";
 import { compareGate, readSummary, type E2eSummary, type TaskSummary } from "./e2e-summary.js";
@@ -60,6 +61,22 @@ const repoRoot = resolve(workspace, "..", "..");
 const DEFAULT_IMAGE = "dsh-adaptive-loop/dsh:0.1.1-rc.2-benchmark-v2";
 const POLICY_PATH = join(workspace, "tasks", "policy.md");
 const SKILL_PATH = join(workspace, ".agents", "skills", "refund-workflow", "SKILL.md");
+
+/** Select only a bounded, real repository-local Markdown artifact, never a live-file mutation. */
+export async function selectedSkillArtifact(args: Map<string, string>) {
+  const path = resolve(repoRoot, args.get("skill") ?? SKILL_PATH);
+  const rel = relative(repoRoot, path);
+  if (!rel || rel.startsWith("../") || rel === ".." || !path.endsWith(".md")) throw new Error("Skill must be repository-local Markdown");
+  if (await realpath(path) !== path) throw new Error("Skill path must not traverse symlinks");
+  const info = await lstat(path);
+  if (!info.isFile() || info.nlink !== 1 || info.size > 65536) throw new Error("Skill must be a bounded regular file");
+  const bytes = await readFile(path);
+  if (bytes.byteLength > 65536) throw new Error("Skill exceeds the byte limit");
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  assertNoSecrets(scanSecrets({ skill: text }, text));
+  assertNoPii(scanPii({ skill: text }, text));
+  return { path, uri: `repo://${rel.split("\\").join("/")}`, sha256: sha256(bytes), size_bytes: bytes.byteLength };
+}
 
 export function executionMode(args: Map<string, string>): "rehearsal" | "live" {
   const mode = args.get("mode");
@@ -164,6 +181,7 @@ export interface TransmissionManifest extends Record<string, unknown> {
   benchmark_context_sha256: string;
   generation: "g0" | "g1" | null;
   skill_sha256: string;
+  skill_source_uri?: string;
   workflow_tools_sha256: string;
   evaluator_tasks: Array<{ task_id: string; sha256: string }>;
 }
@@ -310,7 +328,8 @@ export async function transmissionManifest(
   if (imageDigest === null || !/^[a-f0-9]{64}$/.test(imageDigest)) throw new Error("Pinned Docker image unavailable");
   const imageReference = `sha256:${imageDigest}`;
   const policyDigest = sha256(await readFile(POLICY_PATH, "utf8"));
-  const skillDigest = sha256(await readFile(SKILL_PATH, "utf8"));
+  const skill = await selectedSkillArtifact(args);
+  const skillDigest = skill.sha256;
   const workflowToolsDigest = await containerDirDigest(imageReference, "/opt/dal/plugins/dal-workflow-tools");
   if (workflowToolsDigest === null) {
     throw new Error(`Unable to inspect workflow tools in ${imageReference}; refusing an incomplete transmission manifest`);
@@ -367,6 +386,8 @@ export async function transmissionManifest(
     container_image_sha256: imageDigest,
     policy_sha256: policyDigest,
     skill_sha256: skillDigest,
+    skill_source_uri: skill.uri,
+    skill_size_bytes: skill.size_bytes,
     workflow_tools_sha256: workflowToolsDigest,
     agent_tasks: agentTasks,
     evaluator_tasks: evaluatorTasks,
@@ -675,7 +696,7 @@ async function runTask(
     taskId,
     agentTask: agentVisibleTask(task),
     compositionPatch,
-    skillPath: SKILL_PATH,
+    skillPath: (await selectedSkillArtifact(args)).path,
     policyPath: POLICY_PATH,
   });
   const graderRoot = join(workspace, ".dal", "benchmark", "e2e", "grader", attemptId);
@@ -684,7 +705,7 @@ async function runTask(
   await writeFile(graderTaskPath, `${JSON.stringify(task, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
 
   const currentManifest = await assertTransmissionManifestCurrent(args, approvedImageDigest, approvedManifestDigest);
-  const stagedSkillDigest = sha256(await readFile(join(stageRoot, ".agents", "skills", "refund-workflow", "SKILL.md"), "utf8"));
+  const stagedSkillDigest = sha256(await readFile(join(stageRoot, ".agents", "skills", "refund-workflow", "SKILL.md")));
   if (stagedSkillDigest !== currentManifest.skill_sha256) {
     throw new Error("Staged candidate skill does not match the approved transmission manifest");
   }
@@ -934,7 +955,7 @@ async function main(): Promise<void> {
   const mode = executionMode(args);
   const approval = args.get("approval");
   if (mode === "live" && approval === undefined && args.get("prepare") !== "true" && args.get("manifest") === undefined) {
-    throw new Error("Usage: run-e2e.ts --approval <decision-file> [--runner docker] [--tasks a.json,b.json] [--batch <id>] [--store <dir>] [--attempts N] [--compare <summary-file>] [--faults issue_refund=unknown,...] [--resolutions issue_refund=success,...] [--generation g0|g1] [--provider <p>] [--model <m>]");
+    throw new Error("Usage: run-e2e.ts --approval <decision-file> [--runner docker] [--tasks a.json,b.json] [--batch <id>] [--store <dir>] [--attempts N] [--compare <summary-file>] [--faults issue_refund=unknown,...] [--resolutions issue_refund=success,...] [--generation g0|g1] [--skill <repo-local.md>] [--provider <p>] [--model <m>]");
   }
   const tasks = await taskIds(args);
   const manifest = await transmissionManifest(args);
@@ -1012,7 +1033,7 @@ async function main(): Promise<void> {
           harness_pins: [
             {
               surface: "skills",
-              uri: "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
+              uri: manifest.skill_source_uri ?? "repo://benchmarks/tau-style-workflow/.agents/skills/refund-workflow/SKILL.md",
               sha256: skillDigest,
             },
             {

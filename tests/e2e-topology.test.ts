@@ -103,6 +103,20 @@ describe("tau-style three-container topology", () => {
       expect(manifest.attempts_per_task).toBe(1);
       expect(manifest.benchmark_context_sha256).toMatch(/^[0-9a-f]{64}$/);
       expect(manifest.container_image_sha256).toMatch(/^[0-9a-f]{64}$/);
+      const skillRoot = await mkdtemp(join(repoRoot, ".dal/check/manifest-skill-"));
+      try {
+        const skillPath = join(skillRoot, "candidate.md");
+        await writeFile(skillPath, "# Candidate\r\nQuery unknown effect status.\r\n");
+        const candidateArgs = new Map(manifestArgs).set("skill", skillPath);
+        const candidate = await transmissionManifest(candidateArgs);
+        expect(candidate.skill_sha256).not.toBe(manifest.skill_sha256);
+        expect(candidate.benchmark_context_sha256).toBe(manifest.benchmark_context_sha256);
+        await expect(assertTransmissionManifestCurrent(candidateArgs, manifest.container_image_sha256!, sha256(canonicalJson(manifest)))).rejects.toThrow("drifted");
+        await writeFile(skillPath, "# Changed candidate\n");
+        await expect(assertTransmissionManifestCurrent(candidateArgs, candidate.container_image_sha256!, sha256(canonicalJson(candidate)))).rejects.toThrow("drifted");
+      } finally {
+        await rm(skillRoot, { recursive: true, force: true });
+      }
       expect(manifest.mode).toBe("rehearsal");
       expect(manifest.gateway_policies).toEqual([{ task_id: "task-001-refund.json", attempt: 1, policy: expect.objectContaining({ campaign_id: "test-campaign", provider_limit_microusd: 6000000, max_output_tokens: 1024 }) }]);
       for (const [key, value] of [["campaign", "another-campaign"], ["provider-cap-microusd", "5000000"], ["batch", "another-batch"]]) {
