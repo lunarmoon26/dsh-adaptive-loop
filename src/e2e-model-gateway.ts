@@ -102,7 +102,8 @@ function admit(body: unknown, p: E2eSpendPolicy): asserts body is ObjectValue {
         ["user", "assistant", "system", "developer"].includes(String(item.role)) && content(item.content, "openai");
     })), "GATEWAY_OPENAI_INPUT");
   } else {
-    assert(keys(body, ["model", "messages", "system", "max_tokens", "stream", "tools", "tool_choice", "temperature", "top_p", "stop_sequences"]), "unknown_fields");
+    assert(keys(body, ["model", "messages", "system", "max_tokens", "stream", "tools", "tool_choice", "temperature", "top_p", "stop_sequences", "thinking"]), "unknown_fields");
+    assert(object(body.thinking) && Object.keys(body.thinking).length === 1 && body.thinking.type === "disabled", "reasoning_denied");
     assert(body.system === undefined || text(body.system) || (Array.isArray(body.system) && body.system.every(c => object(c) && keys(c, ["type", "text"]) && c.type === "text" && text(c.text))), "system_shape");
     assert(Array.isArray(body.messages) && body.messages.length > 0 && body.messages.every(m => object(m) && keys(m, ["role", "content"]) && ["user", "assistant"].includes(String(m.role)) && content(m.content, "anthropic")), "messages_shape");
     assert(body.stop_sequences === undefined || (Array.isArray(body.stop_sequences) && body.stop_sequences.every(text)), "stop_sequences");

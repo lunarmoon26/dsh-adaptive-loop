@@ -107,7 +107,13 @@ describe("gateway runner preflight without credentials or containers", () => {
     expect(patch).toContain("contextWindow: 139000");
     expect(patch).toContain("maxRetries: 0");
     expect(patch).toContain("apiKeyEnv: DAL_GATEWAY_TOKEN");
-    expect(patch).toContain("reasoningEfforts: false");
+    if (provider === "anthropic") {
+      expect(patch).toContain("reasoning: off");
+      expect(patch).not.toContain("reasoningEfforts: false");
+    } else {
+      expect(patch).toContain("reasoningEfforts: false");
+      expect(patch).not.toContain("reasoning: off");
+    }
     expect(patch).not.toContain("reasoning: false");
     expect(patch).toContain("- id: session-title-llm\n  disabled: true");
     expect(patch).toContain("- insert:\n    - id: dal-workflow-tools");

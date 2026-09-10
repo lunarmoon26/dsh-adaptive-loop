@@ -1,5 +1,153 @@
 # Requirement Evidence
 
+## CI process mock repair (2026-09-10)
+
+Change: `chg-ci-process-mock-20260910`. CI run `34426075224` reported repeated
+`process.nextTick is not a function` worker IPC exceptions while transport tests
+replaced the entire global process object with an environment-only object.
+The test helper now delegates Node APIs and unrelated runtime environment reads
+to the real process while observing credential reads. A regression schedules
+`nextTick` and `setImmediate` under that mock and verifies IPC method preservation.
+
+Focused fork-pool proof: 250 tests passed. Full `pnpm run check`: 778 tests passed,
+seven opt-in skips; typecheck/build, capsules, policy and both offline scorecards
+passed. Production code, schemas, paid evidence and budget ledgers are unchanged.
+Feedback: `.dal/store/fb-ci-process-mock-20260910.json`.
+
+## Anthropic baseline passed with updated key (2026-09-10)
+
+Change: `chg-dal-anthropic-baseline-success-20260910`.
+Status: completed. The single approved full Sonnet 5 Off attempt passed all three
+independent refund-workflow goals. It completed six gateway responses, seven tool
+calls and the task in 18251 ms, with captured usage of 84253 input and 781 output
+tokens. There were zero gateway failures or rejections in this attempt.
+
+Manifest `4896c330b7d22065b508d9879505d83107159ad8219dae753b3697dd6f981a05`
+verified before operation-time approval. Run
+`run-e2e-2a85a605607b5120d1f2a5f8234a7b6d1831ad254263a25e` and execution receipt
+`rcp-task-001-refund-1eac5500` retain the exact source/image, task, candidate and
+grader evidence. Summary: `.dal/check/e2e-summary-anthropic-updated-key-01.json`.
+
+This attempt reserved 2243576 microUSD; cumulative Anthropic reservations are
+3350024, leaving 1649976 of the original five USD allocation. Reservations are
+not measured provider charges or account credits. All prior failed-attempt and
+diagnostic reservations remain charged; no refund or reset occurred.
+
+Both providers now have one passing baseline task, under their recorded runtime
+configurations. This is not a paired candidate comparison, adaptation gain, or
+general reliability claim. No additional run, OpenAI call, proposal generation,
+or candidate activation occurred. Owned containers and networks are cleaned up.
+
+Result: `.dal/check/paid-anthropic-updated-key-20260910-result.json`.
+Feedback: `.dal/store/fb-dal-anthropic-baseline-success-20260910.json`.
+
+## Updated Anthropic key access check (2026-09-09)
+
+Change: `chg-dal-anthropic-key-access-20260909`.
+Status: completed — one approved minimal direct request returned HTTP 200 and
+the expected `OK` answer on `claude-sonnet-5` with thinking disabled.
+Usage was 15 input tokens, four output tokens, and zero cache read/write tokens.
+The call used no DSH, DAL gateway, tools or workspace data and did not rerun the
+full benchmark. Its successful result after the user changed the key strongly
+supports the prior credential/access diagnosis, without certifying the complete
+workflow payload or assigning a cause to every historical failure.
+
+The existing campaign ledger reserved 44072 microUSD before credential access.
+Anthropic cumulative reservations are 1106448 microUSD; remaining allocation is
+3893552. These are not measured provider charges or account balances. No original
+reservation or failure evidence was reset, and no second diagnostic or other
+provider call followed.
+
+Result: `.dal/check/anthropic-updated-key-check.result.json`.
+Validated feedback: `.dal/store/fb-dal-anthropic-key-access-20260909.json`.
+Any full-workflow retry still requires its own exact approval.
+
+## Minimal Anthropic diagnostic (2026-09-09)
+
+Change: `chg-dal-anthropic-minimal-diagnostic-20260909`.
+Status: diagnostic completed; provider access remains unresolved.
+
+The user accepted one minimal tool-free diagnostic. Its exact short-lived
+data-transfer approval validated before the existing campaign ledger reserved
+44072 microUSD and before credential access. The request went directly to the
+Messages endpoint, with Sonnet 5, explicit disabled thinking, a static response
+probe and a 16-token output limit. It used neither DSH/pi-ai nor the DAL gateway,
+tools or workspace data.
+
+The provider returned HTTP 400 `invalid_request_error`. A fixed local classifier
+of the bounded error message reported `credential_or_authentication_restriction`;
+raw provider text was not retained. Local checks reported a regular Anthropic
+API-key format, not OAuth, and no inherited environment override of `.env`.
+No key values were displayed. This demonstrates rejection independently of the
+DSH/pi-ai and DAL gateway/tool layers and points to key/account-use restrictions;
+it does not prove which restriction or exclude coexisting full-payload defects.
+
+The earlier wrong reasoning capability override and coarse error masking were
+DAL issues, not evidence that DSH cannot use Anthropic. The remaining step is
+checking the key's funded organization/workspace and model/client restrictions,
+not another blind full benchmark or a speculative DSH patch.
+
+Result and analysis remain private under `.dal/check/anthropic-minimal-diagnostic.*`.
+Anthropic cumulative reservations are 1062376 microUSD, with 3937624 remaining;
+these are allocations rather than measured charges or account credits. Exactly
+one diagnostic request occurred and no subsequent provider call or activation.
+Feedback: `.dal/store/fb-dal-anthropic-minimal-diagnostic-20260909.json`.
+
+## Approved Anthropic Off attempt (2026-09-09)
+
+Change: `chg-dal-paid-anthropic-off-20260910`.
+Status: blocked — the single approved explicit-Off attempt received upstream
+HTTP 400 `invalid_request_error`, without a specific provider code, response
+body or task result. Exact manifest and short-lived approval verified before
+execution. The gateway admitted the required disabled-thinking body, so explicit
+Off is not sufficient to resolve the provider rejection; the exact cause remains
+unclassified. No further retry or proposal call occurred and OpenAI was untouched.
+
+The attempt reserved 339600 microUSD. Anthropic campaign reservations now total
+1018304, leaving 3981696 of the original five USD allocation. These are not actual
+provider charges or an account balance. Reservations were retained, not refunded.
+Owned containers and networks are cleaned up. No model-quality score is assigned.
+
+Result: `.dal/check/paid-anthropic-off-20260910-result.json`.
+Feedback: `.dal/store/fb-dal-paid-anthropic-off-20260910.json` (blocked).
+Further work should isolate a minimal provider/account diagnostic and preserve
+a privacy-safe reason classification rather than repeat the full workflow blindly.
+
+## Explicit Anthropic Off (2026-09-09)
+
+Change: `chg-dal-anthropic-off-20260910`.
+Status: completed locally; no paid retry performed.
+
+The Anthropic DSH profile now selects `reasoning: off` and preserves the native
+Sonnet reasoning capability instead of setting `reasoningEfforts: false`.
+The gateway requires exactly `thinking: {type: "disabled"}` before reservation;
+omission, adaptive/manual thinking, extra fields and signed-thinking replay remain
+denied. Direct and metered Anthropic proposals send the explicit disable as well.
+New direct Anthropic envelopes use v3; frozen v1/v2 schemas remain unchanged and
+OpenAI/DeepSeek request-byte regression checks pass.
+
+Focused verification: 422 tests passed across transport, proposal, metered handoff,
+gateway and runner suites. Full `pnpm run check`: all 43 test files pass, 777 tests
+pass, seven opt-in tests skip; typecheck/build, capsules, policy and both offline
+scorecards pass. Review reports no findings. Source pins are synchronized to
+capsule version 1.7.5 without extending freshness bounds or changing other pins.
+
+Actual keyless DSH rehearsal completed two Anthropic requests under a gateway
+that now rejects missing or non-disabled thinking. It performed `get_order` then
+`DONE`, with zero owned resources remaining. The no-op refund oracle intentionally
+failed; this verifies wire mode and protocol, not real provider capability.
+Image: `sha256:e42107c7e86349a199f29a987988d39795454955d8ab2410a6eb042b41042f1a`.
+Summary: `.dal/check/rehearsal-runs/anthropic-off-20260910/summaries/e2e-summary-off-wire-01.json`.
+
+A fresh, unapproved Anthropic retry manifest is prepared under the original
+campaign cap and ledger:
+`.dal/check/paid-adaptive-20260908-anthropic-off.manifest.json`, digest
+`90aeeba2383f63d77aaaf29da7789771fa5f513df24b0d438d63769dc8c20238`.
+The historical HTTP 400 cause remains unproven; explicit Off fixes the confirmed
+mode defect, not a retrospectively invented cause. Old paid records and
+reservations are untouched. No provider calls, keys read, activation, commit or
+push occurred. Feedback: `.dal/store/fb-dal-anthropic-off-20260910.json`.
+
 ## Approved repaired baseline retries (2026-09-09)
 
 Change: `chg-dal-paid-retry-20260909`.

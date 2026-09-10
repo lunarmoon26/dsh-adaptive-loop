@@ -1,0 +1,166 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-anthropic-key-access-20260909",
+  "ingested_at": "2026-09-09T23:59:45.587Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-anthropic-key-access-20260909.json",
+    "sha256": "7d5919bfa9bb38f15379b002e941783c58aab72e63d06766a146f7a3660872b3"
+  },
+  "feedback_sha256": "e24f7d0bbfa270e157deab47e0149177d090abf75a434b97f603752c358cd259",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-09T23:59:45.587Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-anthropic-key-access-20260909",
+    "change_id": "chg-dal-anthropic-key-access-20260909",
+    "created_at": "2026-09-09T23:58:32Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-anthropic-key-access"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": "repo://.dal/check/anthropic-updated-key-check.manifest.json"
+    },
+    "goal": "Verify the updated key with exactly one approved minimal Sonnet 5 Off request, without tools, workspace data or additional attempts.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-approval-budget",
+        "statement": "Verify an exact short-lived decision and reserve under the existing cumulative cap before sending.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval",
+          "ev-result"
+        ]
+      },
+      {
+        "id": "ac-access",
+        "statement": "Receive a complete text-only success response matching the static diagnostic instruction.",
+        "result": "passed",
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "id": "ac-scope",
+        "statement": "Make only one request and expose neither key values nor unrelated data; preserve existing records and reservations.",
+        "result": "passed",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The updated key succeeds: HTTP200 with the expected answer, 15 input and four output tokens. No full-workflow or additional provider request occurred.",
+      "exception": null
+    },
+    "what_worked": [
+      "The updated credential can access the requested model with thinking disabled.",
+      "Approval and durable reservation precede credential access and the single request.",
+      "Only status, categorical answer validation and usage counters were reported."
+    ],
+    "what_failed": [],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "prepare-and-verify-key-check",
+        "purpose": "Bind and validate the exact user-approved minimal check.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "updated-key-minimal-request",
+        "purpose": "Verify model access once without DSH, tools or workspace data.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-approval",
+        "kind": "file",
+        "uri": "repo://.dal/check/anthropic-updated-key-check.decision.json",
+        "summary": "Exact short-lived approval binds model, disabled thinking, static prompt, sixteen-output-token ceiling, one attempt, limits and diagnostic source. It validated before reservation and sending.",
+        "sha256": null,
+        "observed_at": "2026-09-09T23:58:32Z"
+      },
+      {
+        "id": "ev-result",
+        "kind": "file",
+        "uri": "repo://.dal/check/anthropic-updated-key-check.result.json",
+        "summary": "HTTP200 and exact expected answer, input15/output4 tokens, cache read/write zero. One direct call, no DSH/gateway/tools. Reserved44072 microUSD; cumulative1106448 and remaining3893552 are allocations, not billing. No extra requests or activation.",
+        "sha256": null,
+        "observed_at": "2026-09-09T23:58:32Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-full-workflow",
+        "statement": "Minimal access success does not prove the full workflow payload or adaptive improvement.",
+        "level": "medium",
+        "resolution": "Prepare and approve a separate full-workflow attempt before executing it.",
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "id": "un-billing",
+        "statement": "Actual account charges are not measured by reservation totals.",
+        "level": "low",
+        "resolution": "Keep provider billing and local reservation accounting separate.",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-09T23:54:22Z",
+      "notes": [
+        "The user explicitly approved the minimal updated-key check with no automatic retry. Timestamp records acknowledgment. No further benchmark, proposal or activation authority is inferred."
+      ],
+      "approval_refs": [
+        "dec-anthropic-updated-key-check-20260909"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

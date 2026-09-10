@@ -3,8 +3,10 @@
 Status: Implemented; live-provider execution not verified
 Change: `chg-dal-multiprovider-proposals-20260907`
 Scope: DAL-015 proposal generation only, not rollout or end-to-end budget confinement.
-Exact machine owner: [`../schemas/proposer-request.v2.schema.json`](../schemas/proposer-request.v2.schema.json).
-The v1 schema remains unchanged for historical records; v1 approvals do not authorize v2 sends.
+Machine owners: [v2](../schemas/proposer-request.v2.schema.json) for OpenAI/DeepSeek
+and [v3](../schemas/proposer-request.v3.schema.json) for explicit Anthropic Off.
+V1/v2 schemas remain unchanged for historical records. Old Anthropic approvals
+do not authorize newly generated v3 requests; see [Off semantics](anthropic-off.md).
 
 ## Contract
 
@@ -25,12 +27,13 @@ validation alone does not prove a reservation exists or authorize sending.
 
 No provider or model fallback exists. OpenAI uses Responses system/user text input,
 JSON-object text format, `max_output_tokens: 2048`, `store: false`, and no tools.
-Anthropic uses system plus user text, `max_tokens: 2048`, and approved nonsecret
+Anthropic uses system plus user text, explicit `thinking: {type: "disabled"}`,
+`max_tokens: 2048`, and approved nonsecret
 `headers: { "anthropic-version": "2023-06-01" }` metadata. Other routes have empty
 protocol headers. OpenAI/DeepSeek use Bearer authorization; Anthropic uses x-api-key.
 DeepSeek retains its text-only JSON chat-completions body and explicit model.
 
-The canonical v2 envelope binds schema/version, provider, endpoint, method, content
+The canonical provider-versioned envelope binds schema/version, provider, endpoint, method, content
 type, credential designation, protocol headers, budget, body and limits. Send
 reconstructs the entire envelope and fails closed on drift before credential access.
 Only the selected environment key is read at send; credentials must be nonempty
@@ -103,6 +106,7 @@ account-dollar ceiling. This increment does not spend or validate account credit
 `tests/propose.test.ts`, and `tests/propose-automatic.test.ts` exercise wire
 formats, approval ordering, ledger integrity, and complete proposal generation
 with mocked providers. V1 remains unchanged and registered for historical data;
-new sends use v2. Concrete gate results are in `docs/requirement-evidence.md`.
+new sends use v2 for OpenAI/DeepSeek and v3 for Anthropic. Concrete gate results
+are in `docs/requirement-evidence.md`.
 The output is a falsifiable proposal draft, not an applied skill/plugin or an
 independently measured improvement. No live-provider or paid e2e proof is claimed.

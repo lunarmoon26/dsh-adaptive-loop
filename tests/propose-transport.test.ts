@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
+import realProcess from "node:process";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canonicalJson, sha256 } from "../src/json.js";
 import {
-  ANTHROPIC_ENDPOINT, DEEPSEEK_ENDPOINT, OPENAI_ENDPOINT, PROPOSER_REQUEST_SCHEMA,
+  ANTHROPIC_ENDPOINT, ANTHROPIC_PROPOSER_REQUEST_SCHEMA, DEEPSEEK_ENDPOINT, OPENAI_ENDPOINT, PROPOSER_REQUEST_SCHEMA,
   prepareChatRequest, getRequestPayload, requestModel, REQUEST_LIMIT, RESPONSE_LIMIT,
   sendChatRequest, TIMEOUT_MS, type ChatRequest, type ProposalBudget,
 } from "../src/propose-transport.js";
@@ -16,10 +17,12 @@ const routes = [
   { provider: "deepseek-official", model: "deepseek-v4-flash", endpoint: DEEPSEEK_ENDPOINT, key: "DEEPSEEK_API_KEY" },
 ];
 const ajv = new Ajv2020({ strict: true, allErrors: true });
-for (const version of ["v1", "v2"]) {
+for (const version of ["v1", "v2", "v3"]) {
   ajv.addSchema(JSON.parse(await readFile(new URL(`../schemas/proposer-request.${version}.schema.json`, import.meta.url), "utf8")));
+  ajv.getSchema(`https://recursive-dev-loop.dev/schemas/proposer-request.${version}.schema.json`);
 }
-const validate = ajv.getSchema(PROPOSER_REQUEST_SCHEMA)!;
+const validate = (request: ChatRequest) => ajv.getSchema(request.provider === "anthropic" ?
+  ANTHROPIC_PROPOSER_REQUEST_SCHEMA : PROPOSER_REQUEST_SCHEMA)!(request);
 const reply = (provider: string) => provider === "openai" ? {
   status: "completed", output: [{ type: "message", role: "assistant", status: "completed", content: [{ type: "output_text", text: "{}" }] }],
 } : provider === "anthropic" ? {
@@ -32,13 +35,36 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); });
 
-describe.each(routes)("$provider v2 transport", (route) => {
+// Worker IPC still uses process.nextTick while a transport assertion is awaiting.
+// Observe credential reads without replacing Node's process APIs or runtime env.
+function stubCredentialReads(read: (key: string) => string | undefined): void {
+  const env = new Proxy(realProcess.env, { get: (target, key) =>
+    typeof key === "string" && key.endsWith("_API_KEY") ? read(key) : Reflect.get(target, key) });
+  vi.stubGlobal("process", new Proxy(realProcess, { get: (target, key) =>
+    key === "env" ? env : Reflect.get(target, key, target) }));
+}
+
+it("preserves Node scheduling APIs while observing credential reads", async () => {
+  const reads = vi.fn(() => undefined);
+  stubCredentialReads(reads);
+  expect(process.nextTick).toBe(realProcess.nextTick);
+  expect(process.send).toBe(realProcess.send);
+  expect(process.env.PATH).toBe(realProcess.env.PATH);
+  await new Promise<void>(resolve => process.nextTick(resolve));
+  await new Promise<void>(resolve => setImmediate(resolve));
+  expect(reads).not.toHaveBeenCalled();
+});
+
+describe.each(routes)("$provider transport", (route) => {
   const prepared = () => prepareChatRequest(payload, route, budget);
 
   it("validates and canonically binds the complete envelope and route-neutral inputs", () => {
     const a = prepared();
     expect(validate(a.request)).toBe(true);
-    expect(a.request).toMatchObject({ $schema: PROPOSER_REQUEST_SCHEMA, schema_version: "2.0.0", budget });
+    expect(a.request).toMatchObject({
+      $schema: route.provider === "anthropic" ? ANTHROPIC_PROPOSER_REQUEST_SCHEMA : PROPOSER_REQUEST_SCHEMA,
+      schema_version: route.provider === "anthropic" ? "3.0.0" : "2.0.0", budget,
+    });
     expect(a).toEqual(prepared());
     expect(a.requestDigest).toBe(sha256(canonicalJson(a.request)));
     expect(getRequestPayload(a.request)).toEqual(payload);
@@ -54,11 +80,11 @@ describe.each(routes)("$provider v2 transport", (route) => {
   it("sends one exact text-only POST and reads only the selected environment key", async () => {
     const a = prepared();
     const reads: string[] = [];
-    vi.stubGlobal("process", { env: new Proxy({}, { get: (_, key) => {
-      reads.push(String(key));
+    stubCredentialReads(key => {
+      reads.push(key);
       if (key !== route.key) throw new Error("Unexpected environment read");
       return "offline-test-key";
-    } }) });
+    });
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(reply(route.provider))));
     vi.stubGlobal("fetch", mock);
     const result = await sendChatRequest(a.request);
@@ -78,7 +104,7 @@ describe.each(routes)("$provider v2 transport", (route) => {
     expect(JSON.parse(mock.mock.calls[0]![1].body)).toEqual(route.provider === "openai" ? {
       model: route.model, input: messages, stream: false, max_output_tokens: 2048, store: false, text: { format: { type: "json_object" } },
     } : route.provider === "anthropic" ? {
-      model: route.model, system, messages: [messages[1]], stream: false, max_tokens: 2048,
+      model: route.model, system, messages: [messages[1]], stream: false, max_tokens: 2048, thinking: { type: "disabled" },
     } : { model: route.model, messages, stream: false, max_tokens: 2048, temperature: 0, response_format: { type: "json_object" } });
   });
 
@@ -116,17 +142,23 @@ describe.each(routes)("$provider v2 transport", (route) => {
     const request = prepared().request;
     mutate(request);
     expect(validate(request)).toBe(false);
+    const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
+    stubCredentialReads(reads);
     await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
+    expect(reads).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it("rejects noncanonical payload encoding and over-limit reservation during reconstruction", async () => {
     const request = prepared().request;
+    const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
+    stubCredentialReads(reads);
     (request.body.input ?? request.body.messages)!.at(-1)!.content = JSON.stringify(payload, null, 2);
     await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
     const other = prepared().request;
     other.budget.reservation_microusd = budget.provider_limit_microusd + 1;
     await expect(sendChatRequest(other)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
+    expect(reads).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -196,6 +228,67 @@ describe.each(routes)("$provider v2 transport", (route) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(new Uint8Array([0xff]))));
     await expect(sendChatRequest(prepared().request)).rejects.toMatchObject({ code: "PROPOSE_TRANSPORT_FAILED" });
   });
+});
+
+describe("Anthropic thinking-off version boundary", () => {
+  it.each([
+    [0, "c01fff25144c4ffee48ad2655c0d4a4a128b8beb7d52c041c6025ca3d8eefdc1"],
+    [2, "7621da42db974073c90d31bfb76c4a9a227050ce70f7044d5cdf13ca810533ad"],
+  ] as const)("preserves pre-change v2 canonical request bytes for route %s", (index, digest) => {
+    // Captured from the unchanged builder before chg-dal-anthropic-off-20260910.
+    const a = prepareChatRequest(payload, routes[index]!, budget);
+    expect(a.requestDigest).toBe(digest);
+    expect(sha256(a.requestJson)).toBe(digest);
+    expect(a.request.body).not.toHaveProperty("thinking");
+    expect(ajv.getSchema(PROPOSER_REQUEST_SCHEMA)!(a.request)).toBe(true);
+    const upgraded = { ...a.request, $schema: ANTHROPIC_PROPOSER_REQUEST_SCHEMA, schema_version: "3.0.0" };
+    expect(ajv.getSchema(ANTHROPIC_PROPOSER_REQUEST_SCHEMA)!(upgraded)).toBe(false);
+  });
+
+  it("keeps historical Anthropic v2 readable but rejects it for new sends before credential access", async () => {
+    const current = prepareChatRequest(payload, routes[1]!, budget);
+    const legacy = structuredClone(current.request);
+    legacy.$schema = PROPOSER_REQUEST_SCHEMA;
+    legacy.schema_version = "2.0.0";
+    Reflect.deleteProperty(legacy.body, "thinking");
+    // Counterfactual proves that only thinking and schema/version changed from the baseline.
+    expect(sha256(canonicalJson(legacy))).toBe("a5b8255ab4c18ca3e0476019494692827222826ee5f57a6372c4bd95cecf27f4");
+    expect(current.requestDigest).not.toBe(sha256(canonicalJson(legacy)));
+    expect(ajv.getSchema(PROPOSER_REQUEST_SCHEMA)!(legacy)).toBe(true);
+    expect(getRequestPayload(legacy)).toEqual(payload);
+    expect(requestModel(legacy)).toEqual({ provider: "anthropic", model: "claude-sonnet-5" });
+    expect(ajv.getSchema(PROPOSER_REQUEST_SCHEMA)!(current.request)).toBe(false);
+    const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
+    stubCredentialReads(reads);
+    await expect(sendChatRequest(legacy)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
+    Object.assign(legacy.body, { thinking: { type: "disabled" } });
+    await expect(sendChatRequest(legacy)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
+    expect(reads).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    undefined, null, false, "disabled", [], {}, { type: "adaptive" }, { type: "enabled" },
+    { type: "enabled", budget_tokens: 1024 }, { type: "disabled", budget_tokens: 1024 },
+    { type: "disabled", extra: true }, { type: ["disabled"] }, { type: null },
+  ])("rejects absent or non-exact thinking (%#) before credential access without fallback", async thinking => {
+    const request = prepareChatRequest(payload, routes[1]!, budget).request;
+    if (thinking === undefined) Reflect.deleteProperty(request.body, "thinking");
+    else Object.assign(request.body, { thinking });
+    expect(validate(request)).toBe(false);
+    const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
+    stubCredentialReads(reads);
+    await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
+    expect(reads).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it.each(["$schema", "schema_version", "endpoint", "provider", "method", "content_type", "credential_env", "headers", "budget", "limits", "body"])(
+    "requires v3 envelope metadata %s", key => {
+      const request = prepareChatRequest(payload, routes[1]!, budget).request;
+      Reflect.deleteProperty(request, key);
+      expect(ajv.getSchema(ANTHROPIC_PROPOSER_REQUEST_SCHEMA)!(request)).toBe(false);
+    });
 });
 
 describe("model and budget validation", () => {

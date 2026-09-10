@@ -1,0 +1,206 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-anthropic-off-20260910",
+  "ingested_at": "2026-09-09T22:29:59.486Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-anthropic-off-20260910.json",
+    "sha256": "5b690f60e02de6391bc2782b57a829a5d24c760026aeceae39834cbfbd51e2c1"
+  },
+  "feedback_sha256": "01a9769e585ae1dd3637d9a53810bb0bd2b84918f16d75069d863e5ba7224f85",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-09T22:29:59.486Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-anthropic-off-20260910",
+    "change_id": "chg-dal-anthropic-off-20260910",
+    "created_at": "2026-09-09T22:27:35Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-anthropic-off"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": "repo://docs/anthropic-off.md"
+    },
+    "goal": "Implement native Anthropic Off selection across DSH, proposer requests and gateway admission without enabling thinking or spending credits.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-native-off",
+        "statement": "Select DSH reasoning off while retaining native capability and verify explicit disabled thinking on the wire.",
+        "result": "passed",
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "id": "ac-gateway",
+        "statement": "Require exact disabled thinking and reject omission, adaptive/manual modes and extra fields before reservation or transport.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-proposals",
+        "statement": "Emit explicit disabled thinking in Anthropic v3 while preserving historical schemas and other providers' request bytes.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-contract"
+        ]
+      },
+      {
+        "id": "ac-full-gate",
+        "statement": "Pass focused, full local and keyless DSH checks, with synchronized source pins and no paid execution.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-native",
+          "ev-manifest"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Anthropic Off is explicit across the DSH and proposal paths, gateway-enforced and keyless-runtime verified. No paid retry occurred; historical HTTP 400 causality remains unknown.",
+      "exception": null
+    },
+    "what_worked": [
+      "The native DSH mode selector produces disabled thinking without deleting model capability metadata.",
+      "Gateway and proposal tests enforce explicit Off and reject unsafe mode drift before sending.",
+      "Historical schemas and OpenAI/DeepSeek request identities remain unchanged."
+    ],
+    "what_failed": [
+      "The first automatic-proposal test still validated every provider as v2; it was corrected to assert Anthropic v3 and the explicit disabled wire field."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "focused-verification",
+        "purpose": "Verify native configuration, proposal versions and strict gateway Off admission.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "keyless-dsh-rehearsal",
+        "purpose": "Verify actual Anthropic wire mode through the strict gateway without a provider key or egress.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the complete local gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "prepare-off-manifest",
+        "purpose": "Prepare a fresh exact retry scope without authorizing or performing it.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-manifest"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-native",
+        "kind": "file",
+        "uri": "repo://.dal/check/rehearsal-runs/anthropic-off-20260910/summaries/e2e-summary-off-wire-01.json",
+        "summary": "Actual keyless DSH completed two gateway requests and get_order then DONE. Admission requires exact disabled thinking, verifying native serialization. Business failure is the intentional no-op fixture, not provider capability evidence. Owned resources were cleaned.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:27:35Z"
+      },
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "Focused 422 tests passed. Full gate: 777 tests passed and seven opt-in skipped across 43 files; typecheck/build, all capsules, policy and both offline scorecards passed. Final review and diff whitespace checks passed.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:27:35Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/anthropic-off.md",
+        "summary": "Native Off retains Sonnet capability; new Anthropic v3 requests include exact disabled thinking. V1/v2 remain historical, old Anthropic scopes cannot authorize v3, and OpenAI/DeepSeek byte identities are preserved.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:27:35Z"
+      },
+      {
+        "id": "ev-manifest",
+        "kind": "file",
+        "uri": "repo://.dal/check/paid-adaptive-20260908-anthropic-off.manifest.json",
+        "summary": "Fresh manifest digest 90aeeba2383f63d77aaaf29da7789771fa5f513df24b0d438d63769dc8c20238 binds the rebuilt image and original cumulative campaign cap. No paid decision, provider request, ledger reset, activation, commit or push occurred.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:27:35Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-historical-cause",
+        "statement": "The historical Anthropic HTTP 400 is not conclusively attributed to the mode-selection defect.",
+        "level": "medium",
+        "resolution": "Require a new exact approval before a live Off retry; report provider response independently of keyless proof.",
+        "evidence": [
+          "ev-native",
+          "ev-manifest"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-09T22:27:35Z",
+      "notes": [
+        "The user requested implementing Off after the native DSH investigation. Timestamp records acknowledgment, not the unavailable message timestamp. Source/contract/capsule synchronization is local; no paid retry or publication is inferred."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

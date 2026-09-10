@@ -4,6 +4,17 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ## Next decision points
 
+### Explicit Anthropic Off (2026-09-09)
+
+`chg-dal-anthropic-off-20260910` corrects the text-mode configuration: keep
+Sonnet's native reasoning capability, select DSH `reasoning: off`, and require
+exactly `thinking: {type: "disabled"}` at the gateway. Direct Anthropic proposals
+use a new v3 envelope; v1/v2 historical schemas and OpenAI/DeepSeek request bytes
+are unchanged. Keyless DSH and proposal tests verify explicit wire behavior.
+This is a proven mode-selection fix, not a claim that the historical HTTP 400
+cause is resolved. Thinking-enabled gateway/replay support and paid retries
+remain separate reviewed operations. See [the contract](docs/anthropic-off.md).
+
 ### First live-run repair (2026-09-08)
 
 `chg-dal-live-gateway-repair-20260908` closes the reproduced OpenAI opaque-replay
