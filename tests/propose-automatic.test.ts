@@ -90,7 +90,7 @@ function watchCredentials() {
 describe.each(providers)("automatic $provider $model proposer", (provider) => {
   it("runs fixture ingestion through native provider transport to a validated persisted draft", async () => {
     const { prepared, options } = await setup(provider);
-    await assertSchema(SCHEMA_IDS.proposerRequestV2, prepared.request, "Prepared v2 request");
+    await assertSchema(provider.provider === "anthropic" ? SCHEMA_IDS.proposerRequestV3 : SCHEMA_IDS.proposerRequestV2, prepared.request, "Prepared provider request");
     expect(prepared.requestDigest).toBe(sha256(canonicalJson(prepared.request)));
     expect(prepared.payload.clusters[0]?.representative_failure).toContain("return label");
     const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
@@ -101,7 +101,10 @@ describe.each(providers)("automatic $provider $model proposer", (provider) => {
       const headers = new Headers(init.headers);
       expect(headers.get(provider.provider === "openai" ? "authorization" : "x-api-key"))
         .toBe(provider.provider === "openai" ? "Bearer offline-test-key" : "offline-test-key");
-      if (provider.provider === "anthropic") expect(headers.get("anthropic-version")).toBe("2023-06-01");
+      if (provider.provider === "anthropic") {
+        expect(headers.get("anthropic-version")).toBe("2023-06-01");
+        expect(JSON.parse(init.body as string).thinking).toEqual({ type: "disabled" });
+      }
       expect(JSON.parse(init.body as string).model).toBe(provider.model);
       return new Response(JSON.stringify(wire(provider.provider)));
     });

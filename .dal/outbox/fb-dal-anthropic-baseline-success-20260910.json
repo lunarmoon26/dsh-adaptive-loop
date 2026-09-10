@@ -1,0 +1,40 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-anthropic-baseline-success-20260910",
+  "change_id": "chg-dal-anthropic-baseline-success-20260910",
+  "created_at": "2026-09-10T01:19:19Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode-anthropic-baseline" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": "repo://.dal/check/paid-anthropic-updated-key-20260910.manifest.json"
+  },
+  "goal": "Execute the approved single Anthropic baseline with the updated key and explicit Off under the existing cumulative cap.",
+  "acceptance_criteria": [
+    { "id": "ac-scope", "statement": "Verify the exact manifest and approved, unexpired decision before execution.", "result": "passed", "evidence": ["ev-approval"] },
+    { "id": "ac-baseline", "statement": "Complete the refund workflow with independent goal verification.", "result": "passed", "evidence": ["ev-result"] },
+    { "id": "ac-budget", "statement": "Keep cumulative reservations within the existing cap and retain prior allocations without refund.", "result": "passed", "evidence": ["ev-result"] },
+    { "id": "ac-cleanup", "statement": "Clean owned resources and make no additional runs, other-provider calls, proposals or activations.", "result": "passed", "evidence": ["ev-result"] }
+  ],
+  "outcome": { "status": "completed", "summary": "Sonnet 5 with explicit Off passed all three refund-workflow goals using the updated key. Six model responses and seven tool calls completed without gateway errors. No additional attempts occurred.", "exception": null },
+  "what_worked": ["The updated key supports the full DSH workflow, not just the minimal API probe.", "Independent grading confirms all task goals.", "Existing cumulative budget enforcement and cleanup remained effective."],
+  "what_failed": [],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "prepare-and-verify-approved-scope", "purpose": "Bind the fresh single-attempt scope and verify the user's short-lived decision.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-approval"] },
+    { "sequence": 2, "kind": "tool", "name": "anthropic-full-baseline", "purpose": "Execute the approved refund-workflow attempt once.", "outcome": "succeeded", "duration_ms": 18251, "evidence": ["ev-result"] },
+    { "sequence": 3, "kind": "tool", "name": "result-and-cleanup-inspection", "purpose": "Inspect goal, usage, budget and cleanup evidence without further calls.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-result"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-approval", "kind": "file", "uri": "repo://.dal/check/paid-anthropic-updated-key-20260910.decision.json", "summary": "The user approved one full Anthropic retry with the updated key. Exact manifest4896c330b7d22065b508d9879505d83107159ad8219dae753b3697dd6f981a05 and short-lived decision validated before execution under the original cumulative five USD cap.", "sha256": null, "observed_at": "2026-09-10T01:19:19Z" },
+    { "id": "ev-result", "kind": "file", "uri": "repo://.dal/check/paid-anthropic-updated-key-20260910-result.json", "summary": "Three of three goals passed; six model responses, seven tools, duration18251ms; input84253/output781 tokens captured. This attempt reserved2243576 microUSD, cumulative3350024 and remaining1649976. These are allocations, not billing. No owned containers/networks remain, and no further calls or activation occurred.", "sha256": null, "observed_at": "2026-09-10T01:19:19Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-generalization", "statement": "One successful baseline is not evidence of adaptive improvement or broad reliability.", "level": "medium", "resolution": "Use separately approved candidate comparisons and held-out cases before making improvement claims.", "evidence": ["ev-result"] },
+    { "id": "un-billing", "statement": "Provider charges and remaining account credits are not measured by the reservation ledger.", "level": "low", "resolution": "Report reservations separately from provider billing.", "evidence": ["ev-result"] }
+  ],
+  "human_review": { "status": "approved", "reviewer": "project-maintainer", "reviewed_at": "2026-09-10T01:15:01Z", "notes": ["The user explicitly approved this single full Anthropic retry. Timestamp records acknowledgment. No additional provider, proposal, activation, commit or push authority is inferred."], "approval_refs": ["dec-paid-anthropic-updated-key-20260910"] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

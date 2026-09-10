@@ -6,6 +6,7 @@ export const DEEPSEEK_ENDPOINT = "https://api.deepseek.com/chat/completions";
 export const OPENAI_ENDPOINT = "https://api.openai.com/v1/responses";
 export const ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
 export const PROPOSER_REQUEST_SCHEMA = "https://recursive-dev-loop.dev/schemas/proposer-request.v2.schema.json";
+export const ANTHROPIC_PROPOSER_REQUEST_SCHEMA = "https://recursive-dev-loop.dev/schemas/proposer-request.v3.schema.json";
 export const REQUEST_LIMIT = 64 * 1024;
 export const RESPONSE_LIMIT = 128 * 1024;
 export const TIMEOUT_MS = 30_000;
@@ -37,12 +38,13 @@ export function prepareChatRequest(payload: unknown, model: { provider: string; 
     text: { format: { type: "json_object" } },
   } : model.provider === "anthropic" ? {
     model: model.model, system: instructions, messages: [messages[1]!], stream: false, max_tokens: 2048,
+    thinking: { type: "disabled" },
   } : {
     model: model.model, messages, stream: false, max_tokens: 2048, temperature: 0, response_format: { type: "json_object" },
   };
   const request = {
-    $schema: PROPOSER_REQUEST_SCHEMA,
-    schema_version: "2.0.0",
+    $schema: model.provider === "anthropic" ? ANTHROPIC_PROPOSER_REQUEST_SCHEMA : PROPOSER_REQUEST_SCHEMA,
+    schema_version: model.provider === "anthropic" ? "3.0.0" : "2.0.0",
     endpoint: model.provider === "openai" ? OPENAI_ENDPOINT : model.provider === "anthropic" ? ANTHROPIC_ENDPOINT : DEEPSEEK_ENDPOINT,
     provider: model.provider,
     method: "POST",

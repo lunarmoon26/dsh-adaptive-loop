@@ -120,5 +120,7 @@ export function buildGatewayCompositionPatch(provider: string, model: string, se
     throw new Error("Gateway requires the exact reviewed provider/model pair");
   }
   const base = `http://dal-model-gateway:8787${provider === "openai" ? "/v1" : ""}`;
-  return `${buildModelPatch(provider, model)}- id: session-title-llm\n  disabled: true\n- id: llm-pi-ai\n  config:\n    providers:\n      ${provider}:\n        apiKeyEnv: DAL_GATEWAY_TOKEN\n        baseURL: ${base}\n        api: ${provider === "openai" ? "openai-responses" : "anthropic-messages"}\n        cacheRetention: none\n        retryPolicy:\n          mode: normal\n          maxRetries: 0\n        models:\n          - id: ${model}\n            contextWindow: 139000\n            maxTokens: 1024\n            reasoningEfforts: false\n            input: [text]\n${buildToolsRow(serviceUrl)}`;
+  const profileReasoning = provider === "anthropic" ? "        reasoning: off\n" : "";
+  const modelReasoning = provider === "openai" ? "            reasoningEfforts: false\n" : "";
+  return `${buildModelPatch(provider, model)}- id: session-title-llm\n  disabled: true\n- id: llm-pi-ai\n  config:\n    providers:\n      ${provider}:\n        apiKeyEnv: DAL_GATEWAY_TOKEN\n        baseURL: ${base}\n        api: ${provider === "openai" ? "openai-responses" : "anthropic-messages"}\n${profileReasoning}        cacheRetention: none\n        retryPolicy:\n          mode: normal\n          maxRetries: 0\n        models:\n          - id: ${model}\n            contextWindow: 139000\n            maxTokens: 1024\n${modelReasoning}            input: [text]\n${buildToolsRow(serviceUrl)}`;
 }

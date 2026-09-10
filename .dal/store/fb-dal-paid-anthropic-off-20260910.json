@@ -1,0 +1,194 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-paid-anthropic-off-20260910",
+  "ingested_at": "2026-09-09T22:55:33.573Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-paid-anthropic-off-20260910.json",
+    "sha256": "f00c5cc87265d54963751658ecc5d38bbd3d4a4ff3f9ee2e11614d09f0bfb307"
+  },
+  "feedback_sha256": "9c766b476b89f6e8b2754fd4a6d696f6195b30c4eb985a64fef051e323924347",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-09T22:55:33.573Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-paid-anthropic-off-20260910",
+    "change_id": "chg-dal-paid-anthropic-off-20260910",
+    "created_at": "2026-09-09T22:53:53Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-dal-anthropic-off-run"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": "repo://.dal/check/paid-adaptive-20260908-anthropic-off.manifest.json"
+    },
+    "goal": "Execute the single approved Anthropic Off attempt under the existing cumulative campaign cap and retain its outcome without further calls.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-scope",
+        "statement": "Verify exact manifest and short-lived user approval before sending.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "id": "ac-baseline",
+        "statement": "Obtain a completed Anthropic task baseline with explicit thinking disabled.",
+        "result": "failed",
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "id": "ac-budget-cleanup",
+        "statement": "Preserve cumulative reservations, make no additional attempts or other-provider calls, and clean owned resources.",
+        "result": "passed",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "The gateway admitted explicit disabled thinking but Anthropic returned HTTP 400 invalid_request_error. No task result was produced. No additional attempts occurred.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "The remaining upstream invalid-request cause cannot be determined from the retained error class alone.",
+        "owner": "evaluator-maintainer",
+        "next_action": "Isolate a minimal provider/account diagnostic with privacy-safe reason classification and obtain exact approval before further provider requests; do not repeat the full workflow blindly."
+      }
+    },
+    "what_worked": [
+      "Exact approval, explicit Off admission, cumulative budget accounting and resource cleanup held.",
+      "No OpenAI calls, proposal generation, candidate activation or additional retry occurred."
+    ],
+    "what_failed": [
+      "Explicit thinking disable did not resolve Anthropic's upstream HTTP 400. The specific rejected parameter or account condition remains unknown."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "scope-and-approval-verification",
+        "purpose": "Reverify the prepared Off manifest and current user decision.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "anthropic-off-baseline",
+        "purpose": "Execute exactly one approved explicit-Off baseline attempt.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "receipt-and-cleanup-inspection",
+        "purpose": "Inspect safe diagnostics and confirm resource cleanup without further calls.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-upstream-rejection",
+        "category": "verification",
+        "summary": "A full workflow request still fails upstream; the retained classification is not specific enough to identify its cause.",
+        "impact": "high",
+        "recoverable": true,
+        "suggested_action": "Use a minimal separately approved diagnostic rather than another full benchmark retry.",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-approval",
+        "kind": "file",
+        "uri": "repo://.dal/check/paid-anthropic-off-20260910.decision.json",
+        "summary": "The user authorized one Anthropic-only retry. Manifest digest 90aeeba2383f63d77aaaf29da7789771fa5f513df24b0d438d63769dc8c20238 verified unchanged; the exact unexpired decision validated at CLI and execution boundaries.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:53:53Z"
+      },
+      {
+        "id": "ev-result",
+        "kind": "file",
+        "uri": "repo://.dal/check/paid-anthropic-off-20260910-result.json",
+        "summary": "One admitted operation failed upstream with status400 and invalid_request_error; zero response bytes, no token usage or task score. This attempt reserved339600 microUSD; cumulative1018304 and remaining3981696 are allocations, not billed amounts. Owned container/network inventories are empty; no extra attempts or activation.",
+        "sha256": null,
+        "observed_at": "2026-09-09T22:53:53Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-provider-cause",
+        "statement": "The precise reason for the upstream HTTP 400 is not retained in the safe error class.",
+        "level": "high",
+        "resolution": "Investigate a minimal diagnostic and account/model conditions without assuming a specific cause.",
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "id": "un-billing",
+        "statement": "Actual provider charges and remaining account credits are unmeasured.",
+        "level": "medium",
+        "resolution": "Keep the reservation charged and consult provider billing separately.",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-09T22:51:11Z",
+      "notes": [
+        "The user approved the exact single Anthropic Off retry under the existing cumulative five USD cap. Timestamp records acknowledgment. No approval is inferred for any further diagnostic/model request or activation."
+      ],
+      "approval_refs": [
+        "dec-paid-anthropic-off-20260910"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

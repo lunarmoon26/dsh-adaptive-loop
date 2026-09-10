@@ -1,0 +1,195 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-anthropic-minimal-diagnostic-20260909",
+  "ingested_at": "2026-09-09T23:22:39.329Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-anthropic-minimal-diagnostic-20260909.json",
+    "sha256": "2a5529ee9d18043d092f5962d80033d096d0e5e810f16f244b816cd657db9c36"
+  },
+  "feedback_sha256": "12f81e7256aa146da674d5e8d9f39ca46b9df08ca7cf8b4b42101cb30004b844",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-09T23:22:39.329Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-anthropic-minimal-diagnostic-20260909",
+    "change_id": "chg-dal-anthropic-minimal-diagnostic-20260909",
+    "created_at": "2026-09-09T23:20:42Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-anthropic-diagnostic"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": "repo://.dal/check/anthropic-minimal-diagnostic.manifest.json"
+    },
+    "goal": "Isolate Anthropic rejection from DSH/pi-ai and DAL tool/gateway behavior with one approved minimal diagnostic and safe classification.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-scope",
+        "statement": "Approve the exact minimal request and reserve against the existing campaign before credential access and sending.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval",
+          "ev-result"
+        ]
+      },
+      {
+        "id": "ac-isolation",
+        "statement": "Exclude DSH/pi-ai, DAL gateway, tools and workspace data while retaining the requested model and explicit Off.",
+        "result": "passed",
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "id": "ac-classification",
+        "statement": "Report a bounded reason classification and credential-format checks without exposing provider text or keys or overstating certainty.",
+        "result": "passed",
+        "evidence": [
+          "ev-analysis"
+        ]
+      },
+      {
+        "id": "ac-stop",
+        "statement": "Make no further provider calls, refunds, activation or speculative production fixes.",
+        "result": "passed",
+        "evidence": [
+          "ev-analysis"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Minimal direct Anthropic request also returns HTTP400. Safe message classification points to credential/authentication restriction independent of DSH/pi-ai and DAL gateway/tool execution. Exact account restriction remains unknown; no additional calls occurred.",
+      "exception": null
+    },
+    "what_worked": [
+      "The minimal direct control removed DSH, plugins, tools and workspace data from the request.",
+      "The same durable campaign ledger limited the diagnostic and retained its allocation.",
+      "Only categorical provider and credential-format information was emitted."
+    ],
+    "what_failed": [
+      "Anthropic still rejected the minimal request; provider access remains unresolved."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "prepare-and-verify-diagnostic",
+        "purpose": "Bind and validate the user-approved minimal request.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-approval"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "direct-anthropic-diagnostic",
+        "purpose": "Observe the provider response with no harness or tool payload.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-result"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "local-credential-format-check",
+        "purpose": "Check only credential kind and inherited-variable presence, without disclosing values.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-analysis"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-approval",
+        "kind": "file",
+        "uri": "repo://.dal/check/anthropic-minimal-diagnostic.decision.json",
+        "summary": "Exact diagnostic scope verified before the single request; the manifest pins static text, explicit Off, sixteen output tokens, fixed endpoint, limits and diagnostic code identity.",
+        "sha256": null,
+        "observed_at": "2026-09-09T23:20:42Z"
+      },
+      {
+        "id": "ev-result",
+        "kind": "file",
+        "uri": "repo://.dal/check/anthropic-minimal-diagnostic.result.json",
+        "summary": "Direct request without DSH/pi-ai or DAL gateway/tools returned400 invalid_request_error and local classification credential_or_authentication_restriction. Reserved44072 microUSD, cumulative1062376 and remaining3937624; not measured billing. No captured token usage.",
+        "sha256": null,
+        "observed_at": "2026-09-09T23:20:42Z"
+      },
+      {
+        "id": "ev-analysis",
+        "kind": "file",
+        "uri": "repo://.dal/check/anthropic-minimal-diagnostic.analysis.json",
+        "summary": "Credential has regular Anthropic API-key format, not OAuth; no inherited environment variable overrides the file. Values and raw provider text were not disclosed. The failure is reproduced outside DSH/DAL request layers, pointing to provider key/account restrictions without proving a specific setting.",
+        "sha256": null,
+        "observed_at": "2026-09-09T23:20:42Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-account-restriction",
+        "statement": "The exact account/key restriction is not identified by the retained categorical diagnostic.",
+        "level": "medium",
+        "resolution": "Review the API key's organization/workspace billing and model/client restrictions in Anthropic Console; do not spoof client identity or blindly retry the full workflow.",
+        "evidence": [
+          "ev-analysis"
+        ]
+      },
+      {
+        "id": "un-billing",
+        "statement": "Reserved allocation does not establish actual provider charges or remaining account credits.",
+        "level": "medium",
+        "resolution": "Keep reservation accounting separate from provider billing.",
+        "evidence": [
+          "ev-result"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "approved",
+      "reviewer": "project-maintainer",
+      "reviewed_at": "2026-09-09T23:15:40Z",
+      "notes": [
+        "The user accepted the proposed single minimal tool-free diagnostic to isolate the failure. Timestamp records acknowledgment. No further model calls or production changes are authorized by this receipt."
+      ],
+      "approval_refs": [
+        "dec-anthropic-minimal-diagnostic-20260909"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

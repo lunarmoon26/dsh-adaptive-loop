@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/proposer-request.v3.schema.json",
+  "title": "Budget-bound text-only Anthropic proposer request v3 with thinking disabled",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "endpoint", "provider", "method", "content_type", "credential_env", "headers", "budget", "limits", "body"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/proposer-request.v3.schema.json" },
+    "schema_version": { "const": "3.0.0" },
+    "endpoint": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/endpoint" },
+    "provider": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/provider" },
+    "method": { "$ref": "proposer-request.v2.schema.json#/properties/method" },
+    "content_type": { "$ref": "proposer-request.v2.schema.json#/properties/content_type" },
+    "credential_env": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/credential_env" },
+    "headers": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/headers" },
+    "budget": { "$ref": "proposer-request.v2.schema.json#/properties/budget" },
+    "limits": { "$ref": "proposer-request.v2.schema.json#/properties/limits" },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "system", "messages", "stream", "max_tokens", "thinking"],
+      "properties": {
+        "model": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/body/properties/model" },
+        "system": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/body/properties/system" },
+        "messages": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/body/properties/messages" },
+        "stream": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/body/properties/stream" },
+        "max_tokens": { "$ref": "proposer-request.v2.schema.json#/oneOf/2/properties/body/properties/max_tokens" },
+        "thinking": { "const": { "type": "disabled" } }
+      }
+    }
+  }
+}

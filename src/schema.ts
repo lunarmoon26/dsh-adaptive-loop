@@ -42,6 +42,7 @@ export const SCHEMA_IDS = {
   proposalDraft: "https://recursive-dev-loop.dev/schemas/proposal-draft.v1.schema.json",
   proposerRequest: "https://recursive-dev-loop.dev/schemas/proposer-request.v1.schema.json",
   proposerRequestV2: "https://recursive-dev-loop.dev/schemas/proposer-request.v2.schema.json",
+  proposerRequestV3: "https://recursive-dev-loop.dev/schemas/proposer-request.v3.schema.json",
   proposalBudget: "https://recursive-dev-loop.dev/schemas/proposal-budget.v1.schema.json",
   resetReceipt: "https://recursive-dev-loop.dev/schemas/reset-receipt.v1.schema.json",
   runRecord: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",

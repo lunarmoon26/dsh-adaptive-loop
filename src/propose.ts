@@ -230,7 +230,7 @@ export async function prepareProposeRequest(options: {
 }) {
   const prepared = await prepareProposePayload(options);
   const chat = prepareChatRequest(prepared.payload, options.model, options.budget);
-  await assertSchema(SCHEMA_IDS.proposerRequestV2, chat.request, "Proposer request");
+  await assertSchema(chat.request.$schema, chat.request, "Proposer request");
   return { ...prepared, ...chat };
 }
 

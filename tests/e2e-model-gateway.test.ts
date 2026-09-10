@@ -13,7 +13,7 @@ const policy = (provider: "openai" | "anthropic" = "openai"): E2eSpendPolicy => 
   pricing_profile: "reviewed-text-upper-rates-20260907-v1", token_bound_profile: "json-bytes-times-two-plus-8192-v1",
   input_microusd_per_token: provider === "openai" ? 5 : 4, output_microusd_per_token: provider === "openai" ? 18 : 10,
 });
-const body = (p = policy(), stream = false) => p.provider === "openai" ? { model: p.model, input: "hello", max_output_tokens: 1024, stream, store: false } : { model: p.model, messages: [{ role: "user", content: "hello" }], max_tokens: 1024, stream };
+const body = (p = policy(), stream = false) => p.provider === "openai" ? { model: p.model, input: "hello", max_output_tokens: 1024, stream, store: false } : { model: p.model, messages: [{ role: "user", content: "hello" }], thinking: { type: "disabled" }, max_tokens: 1024, stream };
 let root: string;
 let gateways: Awaited<ReturnType<typeof startGateway>>[];
 beforeEach(async () => { root = await mkdtemp(join(await realpath(tmpdir()), "dal-gateway-")); gateways = []; });
@@ -127,6 +127,21 @@ describe("chg-dal-live-gateway-repair-20260908 diagnostics", () => {
 });
 
 describe("chg-dal-paid-e2e-preflight-20260907 model gateway", () => {
+  it.each([undefined, null, {}, { type: "adaptive" }, { type: "enabled", budget_tokens: 1024 }, { type: "disabled", display: "omitted" }])("requires explicit Anthropic disabled thinking before reservation", async thinking => {
+    const transport = vi.fn(ok); const p = policy("anthropic"); const g = await start(p, transport);
+    expect((await post(g.address, { ...body(p), thinking }, "/v1/messages")).status).toBe(400);
+    expect(transport).not.toHaveBeenCalled();
+    expect((await receipt(g.address)).reservations).toBe(0);
+  });
+  it("forwards explicit Anthropic off unchanged", async () => {
+    const transport = vi.fn(async (_url: string, init: RequestInit) => {
+      expect(JSON.parse(String(init.body)).thinking).toEqual({ type: "disabled" });
+      return Response.json({ type: "message", stop_reason: "end_turn" });
+    });
+    const p = policy("anthropic"); const g = await start(p, transport);
+    expect((await post(g.address, body(p), "/v1/messages")).status).toBe(200);
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
   it("rejects compact numeric schemas that expand beyond the charged-byte ceiling", async () => {
     const transport = vi.fn(ok); const g = await start(policy(), transport);
     const wire = JSON.stringify(body()).slice(0, -1) + ',"tools":[{"type":"function","name":"numeric","parameters":{"enum":[' + Array(4000).fill("1e20").join(",") + ']}}]}';

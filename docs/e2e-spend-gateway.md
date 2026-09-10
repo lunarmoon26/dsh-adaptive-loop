@@ -26,6 +26,14 @@ Change: `chg-dal-live-gateway-repair-20260908`. Accepted before implementation.
 
 ## Trust Boundary
 
+Anthropic text-mode admission requires exactly `thinking: {type: "disabled"}`.
+Omission is not accepted because Sonnet 5 defaults to adaptive thinking at the
+API. The DSH profile selects `reasoning: off` while retaining the native model
+capability; it does not set `reasoningEfforts: false`. Adaptive/manual thinking,
+extra thinking fields and signed thinking replay remain outside this gateway
+profile. This admission change and direct proposal v3 require fresh exact
+approvals; see [explicit Anthropic Off](anthropic-off.md).
+
 The trusted launcher verifies the exact unexpired external-transfer approval and its manifest immediately before launch. It binds the complete policy, candidate/proposer execution identity, provider/model, image and gateway source digest, task/proposal identity, composition and network topology. **A policy file or `approval_id` is not approval verification.** The gateway accepts this launcher-owned policy and never accepts policy overrides through HTTP.
 
 One gateway serves one launcher-authorized `run_id` and one provider. Its random per-run capability authenticates that identity; the HTTP client cannot choose another run or campaign. The launcher must not reuse capabilities between attempts or expose one attempt's endpoint to another. The manifest maps `run_id` to the exact execution/task or proposer request; there are no additional client-selectable identity headers.
