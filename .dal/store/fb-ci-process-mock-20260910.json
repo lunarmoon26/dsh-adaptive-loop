@@ -1,0 +1,138 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-ci-process-mock-20260910",
+  "ingested_at": "2026-09-10T02:03:54.437Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-ci-process-mock-20260910.json",
+    "sha256": "ec08d5effb7b3461cfe6ed71d7fb9a061942134bf254885f4411f3f98d1da561"
+  },
+  "feedback_sha256": "66996a2a9b87df4484c5b0d1f0dbd4e2f1490323770b2f13a431eea450a2edf2",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-10T02:03:54.437Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-ci-process-mock-20260910",
+    "change_id": "chg-ci-process-mock-20260910",
+    "created_at": "2026-09-10T02:02:44Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-ci-repair"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": "fix/anthropic-explicit-off",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/actions/runs/34426075224"
+    },
+    "goal": "Repair the transport-test process mock so asynchronous worker IPC remains functional without changing production behavior.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-process",
+        "statement": "Preserve Node scheduling and IPC APIs while observing selected credential reads.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-gate",
+        "statement": "Pass focused fork-pool tests and the complete local gate.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused",
+          "ev-full"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "All five environment-only process stubs were replaced with a delegating test helper. Scheduling regression and full local checks pass; production behavior is unchanged.",
+      "exception": null
+    },
+    "what_worked": [
+      "CI logs identified a missing Node process API rather than a provider or production failure.",
+      "The regression preserves nextTick and IPC while credential assertions remain active."
+    ],
+    "what_failed": [
+      "The prior environment-only mock removed process.nextTick and caused asynchronous worker IPC exceptions in CI despite successful individual assertions."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest-fork-pool",
+        "purpose": "Run the repaired transport tests with fork workers.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the full local gate.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-full"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-focused",
+        "kind": "test",
+        "uri": "repo://tests/propose-transport.test.ts",
+        "summary": "250 transport tests passed using the fork pool with two workers, including nextTick/setImmediate scheduling and process.send preservation under credential observation.",
+        "sha256": null,
+        "observed_at": "2026-09-10T02:02:44Z"
+      },
+      {
+        "id": "ev-full",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "778 tests passed with seven opt-in skips. Typecheck/build, all capsules, policy and both offline scorecards passed. No production code, schema, paid ledger or trial evidence changed; no provider calls were made.",
+        "sha256": null,
+        "observed_at": "2026-09-10T02:02:44Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Test-only correction for the reported PR CI failure. Cleanup, rebaseline and merge remain paused."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import realProcess from "node:process";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canonicalJson, sha256 } from "../src/json.js";
@@ -34,6 +35,26 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); });
 
+// Worker IPC still uses process.nextTick while a transport assertion is awaiting.
+// Observe credential reads without replacing Node's process APIs or runtime env.
+function stubCredentialReads(read: (key: string) => string | undefined): void {
+  const env = new Proxy(realProcess.env, { get: (target, key) =>
+    typeof key === "string" && key.endsWith("_API_KEY") ? read(key) : Reflect.get(target, key) });
+  vi.stubGlobal("process", new Proxy(realProcess, { get: (target, key) =>
+    key === "env" ? env : Reflect.get(target, key, target) }));
+}
+
+it("preserves Node scheduling APIs while observing credential reads", async () => {
+  const reads = vi.fn(() => undefined);
+  stubCredentialReads(reads);
+  expect(process.nextTick).toBe(realProcess.nextTick);
+  expect(process.send).toBe(realProcess.send);
+  expect(process.env.PATH).toBe(realProcess.env.PATH);
+  await new Promise<void>(resolve => process.nextTick(resolve));
+  await new Promise<void>(resolve => setImmediate(resolve));
+  expect(reads).not.toHaveBeenCalled();
+});
+
 describe.each(routes)("$provider transport", (route) => {
   const prepared = () => prepareChatRequest(payload, route, budget);
 
@@ -59,11 +80,11 @@ describe.each(routes)("$provider transport", (route) => {
   it("sends one exact text-only POST and reads only the selected environment key", async () => {
     const a = prepared();
     const reads: string[] = [];
-    vi.stubGlobal("process", { env: new Proxy({}, { get: (_, key) => {
-      reads.push(String(key));
+    stubCredentialReads(key => {
+      reads.push(key);
       if (key !== route.key) throw new Error("Unexpected environment read");
       return "offline-test-key";
-    } }) });
+    });
     const mock = vi.fn().mockResolvedValue(new Response(JSON.stringify(reply(route.provider))));
     vi.stubGlobal("fetch", mock);
     const result = await sendChatRequest(a.request);
@@ -122,7 +143,7 @@ describe.each(routes)("$provider transport", (route) => {
     mutate(request);
     expect(validate(request)).toBe(false);
     const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
-    vi.stubGlobal("process", { env: new Proxy({}, { get: reads }) });
+    stubCredentialReads(reads);
     await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
     expect(reads).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();
@@ -131,7 +152,7 @@ describe.each(routes)("$provider transport", (route) => {
   it("rejects noncanonical payload encoding and over-limit reservation during reconstruction", async () => {
     const request = prepared().request;
     const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
-    vi.stubGlobal("process", { env: new Proxy({}, { get: reads }) });
+    stubCredentialReads(reads);
     (request.body.input ?? request.body.messages)!.at(-1)!.content = JSON.stringify(payload, null, 2);
     await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
     const other = prepared().request;
@@ -238,7 +259,7 @@ describe("Anthropic thinking-off version boundary", () => {
     expect(requestModel(legacy)).toEqual({ provider: "anthropic", model: "claude-sonnet-5" });
     expect(ajv.getSchema(PROPOSER_REQUEST_SCHEMA)!(current.request)).toBe(false);
     const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
-    vi.stubGlobal("process", { env: new Proxy({}, { get: reads }) });
+    stubCredentialReads(reads);
     await expect(sendChatRequest(legacy)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
     Object.assign(legacy.body, { thinking: { type: "disabled" } });
     await expect(sendChatRequest(legacy)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
@@ -256,7 +277,7 @@ describe("Anthropic thinking-off version boundary", () => {
     else Object.assign(request.body, { thinking });
     expect(validate(request)).toBe(false);
     const reads = vi.fn(() => { throw new Error("Must not access credentials"); });
-    vi.stubGlobal("process", { env: new Proxy({}, { get: reads }) });
+    stubCredentialReads(reads);
     await expect(sendChatRequest(request)).rejects.toMatchObject({ code: "PROPOSE_REQUEST_INVALID" });
     expect(reads).not.toHaveBeenCalled();
     expect(fetch).not.toHaveBeenCalled();

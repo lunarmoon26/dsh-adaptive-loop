@@ -1,5 +1,19 @@
 # Requirement Evidence
 
+## CI process mock repair (2026-09-10)
+
+Change: `chg-ci-process-mock-20260910`. CI run `34426075224` reported repeated
+`process.nextTick is not a function` worker IPC exceptions while transport tests
+replaced the entire global process object with an environment-only object.
+The test helper now delegates Node APIs and unrelated runtime environment reads
+to the real process while observing credential reads. A regression schedules
+`nextTick` and `setImmediate` under that mock and verifies IPC method preservation.
+
+Focused fork-pool proof: 250 tests passed. Full `pnpm run check`: 778 tests passed,
+seven opt-in skips; typecheck/build, capsules, policy and both offline scorecards
+passed. Production code, schemas, paid evidence and budget ledgers are unchanged.
+Feedback: `.dal/store/fb-ci-process-mock-20260910.json`.
+
 ## Anthropic baseline passed with updated key (2026-09-10)
 
 Change: `chg-dal-anthropic-baseline-success-20260910`.
