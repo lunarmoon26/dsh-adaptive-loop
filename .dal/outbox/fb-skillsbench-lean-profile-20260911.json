@@ -1,0 +1,39 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-skillsbench-lean-profile-20260911",
+  "change_id": "chg-dal-skillsbench-lean-profile-20260911",
+  "created_at": "2026-09-11T00:26:14.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "agent-local" },
+    "harness": { "name": "opencode", "version": "unknown", "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": "f94b23aaa7467e6b38ae6682ecd557b463bab82e", "branch": "main", "dirty": true },
+    "task_ref": "repo://benchmarks/skillsbench-pilot/README.md"
+  },
+  "goal": "Add an opt-in pilot-local lean tool profile without changing task, skill, grader, model, budget or shared-profile behavior.",
+  "acceptance_criteria": [
+    { "id": "ac-catalog", "statement": "The native lean catalog exposes exactly the eight retained filesystem, shell, search and skill tools, with goal/todo and unrelated orchestration absent.", "result": "passed", "evidence": ["ev-lean", "ev-tests"] },
+    { "id": "ac-preservation", "statement": "The standard profile remains the default with identical patch bytes; security and model services remain unchanged.", "result": "passed", "evidence": ["ev-standard", "ev-tests"] },
+    { "id": "ac-binding", "statement": "Profile source and rendered patch are bound to approval and comparison identities, with observed catalogs validated in new receipts.", "result": "passed", "evidence": ["ev-tests"] },
+    { "id": "ac-native", "statement": "Actual headless DSH completes the keyless shell and selected-skill-byte probe under both profiles without provider calls.", "result": "passed", "evidence": ["ev-lean", "ev-standard"] }
+  ],
+  "outcome": { "status": "completed", "summary": "Lean profile implemented and verified. Native tool count falls from twenty-five to eight; logged tool-definition bytes fall from 26686 to 7969. This is catalog and protocol evidence, not measured task improvement or provider-cost savings. No paid run or paid-ledger change.", "exception": null },
+  "what_worked": ["Used inspected row IDs from the pinned installed DSH composition rather than changing DSH core.", "Disabled the bash background option alongside job-management tools while preserving filesystem and sandbox services.", "Native request headers matched the complete expected catalogs on both profiles.", "Full repository gate passed with 1097 tests passing and 7 opt-in tests skipped."],
+  "what_failed": ["An initial context-digest test fixture omitted required context fields and failed closed; the fixture was completed without weakening validation."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "native composition inspection", "purpose": "Identify actual installed tool-provider row IDs.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-tests"] },
+    { "sequence": 2, "kind": "tool", "name": "lean keyless rehearsal", "purpose": "Verify native catalog, shell execution and selected Markdown identity.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-lean"] },
+    { "sequence": 3, "kind": "tool", "name": "standard keyless rehearsal", "purpose": "Verify the preserved control profile on the same image.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-standard"] },
+    { "sequence": 4, "kind": "tool", "name": "pnpm run check", "purpose": "Verify focused profile behavior and repository preservation.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-tests"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-tests", "kind": "test", "uri": "command://pnpm-run-check", "summary": "148 focused tests passed. Full typecheck, build, 51 test files, capsule, policy, offline evaluation and whitespace gates passed; 1097 tests passed and 7 were skipped.", "sha256": null, "observed_at": "2026-09-11T00:26:14.000Z" },
+    { "id": "ev-lean", "kind": "test", "uri": "repo://.dal/check/skillsbench-pilot/rehearse-Yy8Gji/report.json", "summary": "Native lean catalog: eight tools, 7969 logged tool-definition bytes, 1560 system-field bytes. Shell marker and selected-skill digest passed.", "sha256": null, "observed_at": "2026-09-11T00:26:14.000Z" },
+    { "id": "ev-standard", "kind": "test", "uri": "repo://.dal/check/skillsbench-pilot/rehearse-NVPE7m/report.json", "summary": "Native standard catalog: twenty-five tools, 26686 logged tool-definition bytes, 4148 system-field bytes. Same image, task and skill; shell marker and skill digest passed.", "sha256": null, "observed_at": "2026-09-11T00:26:14.000Z" }
+  ],
+  "uncertainty": [],
+  "human_review": { "status": "pending", "reviewer": null, "reviewed_at": null, "notes": ["Paid effectiveness remains unmeasured. A lean trial needs a fresh exact approval and sufficient allocation; a cross-profile comparison cannot be labeled skill-only improvement."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

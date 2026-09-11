@@ -481,7 +481,7 @@ const SERVICE_ROOT = ".dal/benchmark/service";
  * session id and the raw event-log head digest, or nulls when no session
  * log was written.
  */
-async function captureSession(homeRoot: string): Promise<{ sessionId: string | null; eventLogHead: string | null; observation?: ReturnType<typeof sessionObservation> }> {
+export async function captureSession(homeRoot: string): Promise<{ sessionId: string | null; eventLogHead: string | null; observation?: ReturnType<typeof sessionObservation> }> {
   const candidates: { mtimeMs: number; path: string }[] = [];
   try {
     const sessionsRoot = join(homeRoot, "sessions");

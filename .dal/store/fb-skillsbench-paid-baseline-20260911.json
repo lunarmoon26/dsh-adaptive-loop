@@ -1,0 +1,204 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-skillsbench-paid-baseline-20260911",
+  "ingested_at": "2026-09-11T00:05:59.611Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-skillsbench-paid-baseline-20260911.json",
+    "sha256": "efe1919801547e67afa1d74a9b617c7640ddc644beda44676dfa1f9fbbbef932"
+  },
+  "feedback_sha256": "c5591e00580400ce2d6cb6dc3da432687b9f7a00c7366a5953a04cdaf9a0ad81",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-11T00:05:59.611Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-skillsbench-paid-baseline-20260911",
+    "change_id": "chg-dal-skillsbench-paid-pilot-20260911",
+    "created_at": "2026-09-11T00:05:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "unknown",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "f94b23aaa7467e6b38ae6682ecd557b463bab82e",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/skillsbench-paid-pilot.md"
+    },
+    "goal": "Apply the exact approved append-only budget extension, execute one paid SkillsBench development baseline, and assess whether valid failure evidence justifies adaptation.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-extension",
+        "statement": "Verify the exact approved head-bound extension and preserve historical cap and reservation records.",
+        "result": "passed",
+        "evidence": [
+          "ev-extension"
+        ]
+      },
+      {
+        "id": "ac-attempt",
+        "statement": "Execute only the exact approved single baseline and preserve its receipt without automatic retry.",
+        "result": "passed",
+        "evidence": [
+          "ev-live"
+        ]
+      },
+      {
+        "id": "ac-valid-baseline",
+        "statement": "Obtain a completed baseline eligible for the adaptation decision.",
+        "result": "failed",
+        "evidence": [
+          "ev-live",
+          "ev-gateway"
+        ]
+      },
+      {
+        "id": "ac-honest-diagnostic",
+        "statement": "Keep offline artifact diagnosis separate from the failed trial and make no improvement claim or further paid call.",
+        "result": "passed",
+        "evidence": [
+          "ev-diagnostic"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "The approved paid attempt ran and produced an OBJ that passes all three upstream verifier checks. The run itself failed after the gateway exhausted conservative reservation capacity; it is not an eligible completed business outcome. No candidate proposal or additional paid trial executed.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "After twelve completed provider responses, the next request exceeded the remaining approved reservation capacity. The immutable run receipt records harness failure and cannot support adaptation eligibility.",
+        "owner": "workspace-maintainer",
+        "next_action": "Review reservation accounting and remaining actual account balance before proposing any new scope. Preserve the extension, reservations and failed receipt; do not retry, refund or relabel the diagnostic as a completed baseline."
+      }
+    },
+    "what_worked": [
+      "The exact manifest was regenerated unchanged and the approved extension appended at sequence twelve without rewriting prior records.",
+      "Twelve model responses completed and DSH made fifteen tool calls.",
+      "The generated artifact passed the existing offline verifier after the failed run, in a separate non-authorizing diagnostic.",
+      "The assessor rejected the failed receipt rather than treating it as a valid skill failure."
+    ],
+    "what_failed": [
+      "The attempt exhausted the conservative reservation allowance before a clean harness completion.",
+      "The first offline diagnostic launcher used CommonJS tsx evaluation and was rejected before grading; the ESM launcher then completed the offline diagnostic."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "budget extension apply",
+        "purpose": "Apply the separately approved cumulative cap extension.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-extension"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "live pilot baseline",
+        "purpose": "Execute the one approved development attempt.",
+        "outcome": "failed",
+        "duration_ms": 33297,
+        "evidence": [
+          "ev-live",
+          "ev-gateway"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "offline artifact verifier",
+        "purpose": "Diagnose the produced artifact without another model call or modification to the original receipt.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-diagnostic"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "live baseline assessment",
+        "purpose": "Check scientific eligibility of the original receipt.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-extension",
+        "kind": "test",
+        "uri": "repo://.dal/check/spend/paid-adaptive-20260908/openai/reservations/0000000000000012-b64f82fbfe6060bef00db3bcb3d62ce1d17d69fdc5400e7622389fca53e3c511.json",
+        "summary": "Zero-spend extension preserves 5143852 microUSD history and raises the cumulative ceiling to 12123852 microUSD under the exact approved scope.",
+        "sha256": null,
+        "observed_at": "2026-09-11T00:02:04.864Z"
+      },
+      {
+        "id": "ev-live",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/live/skillsbench-dev-g0-01/receipt.json",
+        "summary": "Live receipt records harness failure with no admitted business grade; session observation counts fifteen tool calls, 120180 input tokens and 1744 output tokens. Assessor rejects it as not a completed live business outcome.",
+        "sha256": null,
+        "observed_at": "2026-09-11T00:02:04.864Z"
+      },
+      {
+        "id": "ev-gateway",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/live/skillsbench-dev-g0-01/gateway.json",
+        "summary": "Twelve completed responses, zero upstream failures, one pre-forwarding budget rejection. Cumulative reserved allocation 11836626 microUSD; this attempt used 6692774 and leaves 287226 under the cap. Allocations are not provider billing or current account balance.",
+        "sha256": null,
+        "observed_at": "2026-09-11T00:02:04.864Z"
+      },
+      {
+        "id": "ev-diagnostic",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/live/skillsbench-dev-g0-01/diagnostic/report.json",
+        "summary": "Separate post-failure offline diagnostic passed all three upstream checks for the produced OBJ. The report explicitly sets valid_completed_trial and promotion_authorized false.",
+        "sha256": null,
+        "observed_at": "2026-09-11T00:05:00.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "No further paid scope is authorized. The successful geometry artifact does not establish a skill defect; the observed blocker is reservation capacity and clean completion."
+      ],
+      "approval_refs": [
+        "dec-skillsbench-budget-extension-20260911",
+        "dec-skillsbench-dev-g0-20260911"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

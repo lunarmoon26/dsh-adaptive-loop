@@ -179,8 +179,16 @@ export function createRehearsalUpstream(): GatewayUpstream {
         });
       }
     }
-    const tool = anthropic ? { type: "tool_use", id: "call_rehearsal", name: "get_order", input: { order_id: "o-1001" } } :
-      { type: "function_call", id: "fc_rehearsal", call_id: "call_rehearsal", name: "get_order", arguments: '{"order_id":"o-1001"}', status: "completed" };
+    const names = Array.isArray(body.tools) ? body.tools.filter(object).map(t => t.name) : [];
+    const shellProbe = names.includes("bash") && !names.includes("get_order");
+    const toolName = shellProbe ? "bash" : "get_order";
+    const toolInput = shellProbe ? {
+      command: "printf '%s' pilot-shell-ok > /root/output/protocol.txt; sha256sum /root/.agents/skills/obj-exporter/SKILL.md > /root/output/skill.sha256",
+      description: "Verify isolated shell and selected skill bytes",
+    } : { order_id: "o-1001" };
+    const toolArguments = JSON.stringify(toolInput);
+    const tool = anthropic ? { type: "tool_use", id: "call_rehearsal", name: toolName, input: toolInput } :
+      { type: "function_call", id: "fc_rehearsal", call_id: "call_rehearsal", name: toolName, arguments: toolArguments, status: "completed" };
     const answer = anthropic ? { type: "text", text: "DONE" } : { type: "message", id: "msg_rehearsal", role: "assistant", status: "completed", content: [{ type: "output_text", text: "DONE", annotations: [] }] };
     const item = first ? tool : answer;
     // Regression fixture for the paid run: empty-visible encrypted reasoning
@@ -193,7 +201,7 @@ export function createRehearsalUpstream(): GatewayUpstream {
     const events: ObjectValue[] = anthropic ? [
       { type: "message_start", message: { ...response, content: [], stop_reason: null, usage: { input_tokens: 1, output_tokens: 0 } } },
       { type: "content_block_start", index: 0, content_block: first ? { ...tool, input: {} } : { type: "text", text: "" } },
-      { type: "content_block_delta", index: 0, delta: first ? { type: "input_json_delta", partial_json: '{"order_id":"o-1001"}' } : { type: "text_delta", text: "DONE" } },
+      { type: "content_block_delta", index: 0, delta: first ? { type: "input_json_delta", partial_json: toolArguments } : { type: "text_delta", text: "DONE" } },
       { type: "content_block_stop", index: 0 },
       { type: "message_delta", delta: { stop_reason: first ? "tool_use" : "end_turn", stop_sequence: null }, usage: { output_tokens: 1 } },
       { type: "message_stop" },
@@ -205,8 +213,8 @@ export function createRehearsalUpstream(): GatewayUpstream {
       ] : []),
       { type: "response.output_item.added", output_index: toolIndex, item: first ? { ...tool, arguments: "", status: "in_progress" } : { ...answer, content: [], status: "in_progress" } },
       ...(first ? [
-        { type: "response.function_call_arguments.delta", item_id: "fc_rehearsal", output_index: toolIndex, delta: '{"order_id":"o-1001"}' },
-        { type: "response.function_call_arguments.done", item_id: "fc_rehearsal", output_index: toolIndex, arguments: '{"order_id":"o-1001"}' },
+        { type: "response.function_call_arguments.delta", item_id: "fc_rehearsal", output_index: toolIndex, delta: toolArguments },
+        { type: "response.function_call_arguments.done", item_id: "fc_rehearsal", output_index: toolIndex, arguments: toolArguments },
       ] : [
         { type: "response.content_part.added", item_id: "msg_rehearsal", output_index: 0, content_index: 0, part: { type: "output_text", text: "", annotations: [] } },
         { type: "response.output_text.delta", item_id: "msg_rehearsal", output_index: 0, content_index: 0, delta: "DONE" },
@@ -229,19 +237,6 @@ async function ledgerReceipt(root: string, p: E2eSpendPolicy): Promise<{ reserva
     if (dirname(path) !== path) await checkDirectory(dirname(path));
     assert((await lstat(path)).isDirectory());
   };
-  const read = async (path: string): Promise<ObjectValue> => {
-    const stat = await lstat(path);
-    assert(stat.isFile() && stat.nlink === 1 && stat.size <= 4096);
-    const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-    try {
-      const opened = await handle.stat();
-      assert(stat.ino === opened.ino && stat.dev === opened.dev);
-      const raw = await handle.readFile("utf8");
-      const value: unknown = JSON.parse(raw);
-      assert(validateReservation(value) && object(value) && raw === `${canonicalJson(value)}\n`);
-      return value;
-    } finally { await handle.close(); }
-  };
   // A missing, uninitialized ledger is zero. Missing entries within an existing ledger are corruption.
   for (const path of [root, join(root, p.budget_id), directory]) {
     try { await checkDirectory(path); }
@@ -250,26 +245,10 @@ async function ledgerReceipt(root: string, p: E2eSpendPolicy): Promise<{ reserva
       throw e;
     }
   }
-  assert((await readdir(directory)).sort().join(",") === "cap.json,reservations");
-  await checkDirectory(join(directory, "reservations"));
-  const cap = await read(join(directory, "cap.json"));
-  assert(cap.kind === "cap" && cap.budget_id === p.budget_id && cap.provider === p.provider && cap.provider_limit_microusd === p.provider_limit_microusd);
-  let previous = sha256(canonicalJson(cap));
-  let total = 0;
-  const seen = new Set<string>();
-  const names = (await readdir(join(directory, "reservations"))).sort();
-  for (const [i, name] of names.entries()) {
-    assert(/^\d{16}-[a-f0-9]{64}\.json$/.test(name));
-    const record = await read(join(directory, "reservations", name));
-    const digest = sha256(canonicalJson(record));
-    assert(record.kind === "reservation" && record.budget_id === p.budget_id && record.provider === p.provider && record.provider_limit_microusd === p.provider_limit_microusd && record.sequence === i + 1 && record.previous_sha256 === previous && name === `${String(i + 1).padStart(16, "0")}-${digest}.json` && !seen.has(String(record.request_digest)));
-    const amount = Number(record.reservation_microusd);
-    assert(amount <= p.provider_limit_microusd - total);
-    total += amount;
-    seen.add(String(record.request_digest));
-    previous = digest;
-  }
-  return { reservations: names.length, reserved_microusd: total };
+  const { readProposalBudgetSnapshot } = await import("./proposal-budget.js");
+  const snapshot = await readProposalBudgetSnapshot({ store: root, budgetId: p.budget_id, provider: p.provider });
+  assert(snapshot.provider_limit_microusd === p.provider_limit_microusd);
+  return { reservations: snapshot.reservations, reserved_microusd: snapshot.reserved_microusd };
 }
 
 export async function startGateway(options: {
