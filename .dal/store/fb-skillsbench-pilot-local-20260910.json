@@ -1,0 +1,198 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-skillsbench-pilot-local-20260910",
+  "ingested_at": "2026-09-10T22:41:45.030Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-skillsbench-pilot-local-20260910.json",
+    "sha256": "3d3a401e48ef6e5b27b7a567246d4d1ddfa6407f2f3e08a4f451c13c88bc3d7d"
+  },
+  "feedback_sha256": "2baae0d37fedf14853084fe33eaee32bc625dae26e29873838279911006cc7ad",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-10T22:41:45.030Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-skillsbench-pilot-local-20260910",
+    "change_id": "chg-dal-skillsbench-pilot-20260910",
+    "created_at": "2026-09-10T22:40:13.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "unknown",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "f94b23aaa7467e6b38ae6682ecd557b463bab82e",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": "repo://benchmarks/skillsbench-pilot/README.md"
+    },
+    "goal": "Implement the local qualification and keyless DSH stage of a pinned SkillsBench geometry pilot without enabling paid execution.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-source",
+        "statement": "Lock and verify selected upstream files, preserve private verifier separation, and reject source drift and unsafe paths.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-qualification",
+        "statement": "Both selected oracle solutions pass and no-op controls fail ordinary assertions in offline containers; setup errors and skips cannot qualify a task.",
+        "result": "passed",
+        "evidence": [
+          "ev-qualification",
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-dsh",
+        "statement": "Actual headless DSH executes the keyless shell probe with exact selected skill bytes and no provider key.",
+        "result": "passed",
+        "evidence": [
+          "ev-rehearsal"
+        ]
+      },
+      {
+        "id": "ac-limits",
+        "statement": "Reject paid options, retain existing paid budgets, bound outputs and document the remaining live integration without claiming improvement.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-contract"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Local qualification and keyless DSH stage implemented and verified. The broader paid adaptation pilot is not complete: live manifest/receipt wiring, budget extension and non-tau adaptation eligibility remain. No paid model call or improvement claim.",
+      "exception": null
+    },
+    "what_worked": [
+      "Selected a CPU-only geometry export development/transfer pair after excluding tasks with visible grading defects.",
+      "Both upstream oracle and no-op controls produced the expected independent outcomes.",
+      "Reused the existing native gateway and headless DSH runtime for shell and skill-byte protocol proof.",
+      "Full verification passed with 928 tests passing and 7 opt-in tests skipped."
+    ],
+    "what_failed": [
+      "A raw local image ID was not a usable Docker FROM reference; the builder now resolves it through a digest-derived tag and verifies its identity.",
+      "Review found verifier setup errors could count as no-op failure; qualification now requires the complete three-test JUnit report with no errors or skips.",
+      "An existing gateway timeout-status test failed once under concurrent load, then passed alone and in a complete rerun without edits; timing sensitivity remains.",
+      "Fresh dependency builds are not guaranteed byte-identical; subsequent trials use a pinned built image."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "pilot fetch and build",
+        "purpose": "Verify pinned public task sources and build the isolated local runtime.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-contract"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pilot qualify",
+        "purpose": "Run separate offline oracle and no-op controls for both selected tasks.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-qualification"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "pilot rehearse",
+        "purpose": "Prove native DSH shell execution and selected skill identity without a model provider.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-rehearsal"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "pnpm run check",
+        "purpose": "Verify focused changes and repository gates.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "132 focused tests passed. Full typecheck, build, 48 test files, capsule, policy and offline evaluation gates passed on final run; diff whitespace validation passed.",
+        "sha256": null,
+        "observed_at": "2026-09-10T22:40:13.000Z"
+      },
+      {
+        "id": "ev-qualification",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/qualify-8NWSCz/report.json",
+        "summary": "Both geometry tasks: oracle passed, no-op failed, exactly three tests, no verifier setup errors or skips. Not a model evaluation.",
+        "sha256": null,
+        "observed_at": "2026-09-10T22:40:13.000Z"
+      },
+      {
+        "id": "ev-rehearsal",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/rehearse-uEATbl/report.json",
+        "summary": "Headless DSH completed the fixed shell probe and matched selected Markdown bytes; supporting skills were read-only. No task solution or adaptive gain claimed.",
+        "sha256": null,
+        "observed_at": "2026-09-10T22:40:13.000Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "test",
+        "uri": "repo://benchmarks/skillsbench-pilot/README.md",
+        "summary": "Documents immutable upstream selection, local-runtime differences, audit exclusions, limitations and remaining paid integration. Raw upstream files and runtime artifacts stay local.",
+        "sha256": null,
+        "observed_at": "2026-09-10T22:40:13.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Review local implementation before adding exact paid task manifests and extending the budget. No new paid approval or production activation is implied."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

@@ -55,6 +55,15 @@ synthetic failure or unavailable receipt does not qualify. The validated
 summary's provider/model must match the proposal gateway, and its candidate
 digest must equal the exchange's actual base skill digest.
 
+The same flag also accepts a `skillsbench-live-receipt.v1` development receipt
+from the [geometry pilot](skillsbench-paid-pilot.md). That branch validates live
+gateway, output, JUnit and mounted-skill evidence, requires a failed development
+g0 outcome, and regenerates the exact sanitized run projection from its bound
+DSH session. `--runs` must contain exactly that projection; clusters may contain
+only its run ID. Model and base digest must match. Passing outcomes, transfer
+tasks, g1 receipts, substituted records and missing session evidence fail closed.
+This adds no generic arbitrary-task bypass to the original tau enrollment gate.
+
 The supplied run IDs must equal the complete set of summary attempts, and each
 exact file digest must match its attempt. Every cluster member and
 representative, including clusters beyond the payload's projection cap, must

@@ -55,6 +55,27 @@ async function developmentBaseline(args: Map<string, string>, baseDigest: string
   const path = resolve(root, args.get("development-baseline")!);
   if (relative(root, path).startsWith("..") || /(^|\/)\.env(?:[./]|$)/.test(path) || await realpath(path) !== path || !(await lstat(path)).isFile()) throw new Error("Development baseline must be a real root-local non-env summary");
   const raw = await readFile(path);
+  if (JSON.parse(raw.toString("utf8")).version === "skillsbench-live-receipt.v1") {
+    const { readLiveReceipt, pilotRunRecord } = await import("../skillsbench-pilot/live.js");
+    const evidence = await readLiveReceipt(path);
+    const record = await pilotRunRecord(path);
+    if (record.business_outcome?.status !== "failed" || evidence.manifest.model !== args.get("model") || evidence.manifest.provider !== args.get("provider") || evidence.manifest.skill.sha256 !== baseDigest) throw new Error("SkillsBench development failure/model/base mismatch");
+    const expected = sha256(`${JSON.stringify(record, null, 2)}\n`);
+    if (runs.files.length !== 1) throw new Error("SkillsBench requires exactly its enrolled development run");
+    const runPath = join(runs.path, runs.files[0]!.name);
+    if (sha256(await readFile(runPath)) !== expected || runs.files[0]!.sha256 !== expected) throw new Error("SkillsBench development projection drift");
+    for (const file of clusters.files) {
+      const clusterRaw = await readFile(join(clusters.path, file.name));
+      const cluster = JSON.parse(clusterRaw.toString("utf8")) as ClusterRecord;
+      await assertSchema(SCHEMA_IDS.clusterRecord, cluster, "SkillsBench development cluster");
+      if (sha256(clusterRaw) !== file.sha256 || [...cluster.members, cluster.representative].some(member => member.run_id !== record.run_id)) throw new Error("SkillsBench proposal contains nondevelopment evidence");
+    }
+    const dir = dirname(path);
+    const paths = [path, resolve(root, evidence.receipt.manifest_path), runPath, join(dir, "gateway.json"), join(dir, "verification/junit.xml"), join(dir, "verifier.log")];
+    const files = await Promise.all(paths.map(async name => ({ path: relative(root, name), sha256: sha256(await readFile(name)) })));
+    if (sha256(await readFile(path)) !== sha256(raw)) throw new Error("SkillsBench baseline changed during assessment");
+    return { path, sha256: sha256(raw), evidence: [{ manifest_path: evidence.receipt.manifest_path, attempts: [{ receipt_path: relative(root, path), run_record_path: relative(root, runPath) }] }], files };
+  }
   const summary = await readSummary(path);
   const report = await assessDevelopmentBaseline(path, root);
   if (!report.eligible) throw new Error("Development baseline is not eligible for a skill proposal");
@@ -120,7 +141,8 @@ export async function prepareMeteredProposal(args: Map<string, string>) {
     "src/e2e-model-gateway.ts", "src/propose.ts", "src/propose-transport.ts", "src/proposal-budget.ts",
     "src/schema.ts", "src/json.ts", "src/privacy.ts", "src/approval.ts", "src/types.ts", "src/errors.ts",
     ...(skill ? ["src/skill-proposal.ts", "src/optimizer.ts", "src/optimizer-adapter.ts"] : []),
-    ...(baseline ? ["benchmarks/tau-style-workflow/skill-adaptation.ts", "benchmarks/tau-style-workflow/e2e-summary.ts", "src/execution-receipt.ts", "src/runs.ts"] : []),
+    ...(baseline ? ["benchmarks/tau-style-workflow/skill-adaptation.ts", "benchmarks/tau-style-workflow/e2e-summary.ts", "src/execution-receipt.ts", "src/runs.ts",
+      "benchmarks/skillsbench-pilot/live.ts", "benchmarks/skillsbench-pilot/source.ts", "benchmarks/skillsbench-pilot/run.ts", "benchmarks/skillsbench-pilot/profile.ts"] : []),
     ...(await readdir(join(root, "schemas"))).filter(n => n.endsWith(".json")).sort().map(n => `schemas/${n}`),
   ];
   const sources = await Promise.all(sourcePaths.map(async path => ({ path, sha256: sha256(await readFile(join(root, path))) })));

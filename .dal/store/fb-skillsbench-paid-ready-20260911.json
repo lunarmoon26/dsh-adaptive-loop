@@ -1,0 +1,194 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-skillsbench-paid-ready-20260911",
+  "ingested_at": "2026-09-10T23:43:24.872Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-skillsbench-paid-ready-20260911.json",
+    "sha256": "cb86f0baa74df1b95f89b5a5149b79711e51eac67c786e9e9cfcfc4cfda6bb8f"
+  },
+  "feedback_sha256": "27c1340dc58ef2af6a994d027f7f7a7cd82f3bc53916236ba63d938a00fa4a7b",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-10T23:43:24.872Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-skillsbench-paid-ready-20260911",
+    "change_id": "chg-dal-skillsbench-paid-pilot-20260911",
+    "created_at": "2026-09-10T23:41:49.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "agent-local"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "unknown",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "f94b23aaa7467e6b38ae6682ecd557b463bab82e",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/skillsbench-paid-pilot.md"
+    },
+    "goal": "Connect the qualified SkillsBench tasks through governed paid execution, preserved budgets and verified development adaptation, then run the approved baseline.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-live",
+        "statement": "Implement exact-manifest live execution, independent output receipts, task assessment and comparable g0/g1 reports.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-manifest"
+        ]
+      },
+      {
+        "id": "ac-proposal",
+        "statement": "Permit only verified failed development projections to reach the existing bounded skill proposer, excluding transfer or fabricated evidence.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-budget",
+        "statement": "Support exact-approved append-only cap extensions without changing historical cap or reservation bytes.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-extension"
+        ]
+      },
+      {
+        "id": "ac-paid-observation",
+        "statement": "Execute and assess the exact approved paid baseline under the extended cap.",
+        "result": "not_run",
+        "evidence": [
+          "ev-manifest",
+          "ev-extension"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "Implementation, local qualification and repository verification passed. Exact budget-extension and live-baseline scopes are prepared. No cap extension or paid call executed while their exact human approvals remain pending.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "Repository policy requires separate exact, unexpired approvals for the prepared extension and model transmission scopes.",
+        "owner": "workspace-user",
+        "next_action": "Approve the presented extension scope and single development-baseline manifest; verify both at their operations, apply the extension, then execute and assess the one baseline without an automatic retry."
+      }
+    },
+    "what_worked": [
+      "The new ledger reader preserves existing records and excludes zero-spend extensions from request counts.",
+      "The paid pilot validates mounted skill bytes, gateway counters, output inventories and the complete verifier report.",
+      "SkillsBench development records regenerate from bound session evidence before proposer preparation; passing, transfer and substituted inputs are rejected.",
+      "Both oracle/no-op pairs and native DSH rehearsal passed on the rebuilt image.",
+      "Full repository gate passed with 1082 tests passing and 7 skipped."
+    ],
+    "what_failed": [
+      "Review found approval identity could disagree with the gateway policy despite matching scope; the operation now requires the decision ID to match.",
+      "Review found g1 accepted arbitrary changed Markdown; preparation now reconstructs the bounded candidate and binds exchange and candidate evidence.",
+      "A projected grader version initially violated the run-record semver contract; corrected before the proposal enrollment tests passed."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "pnpm run check",
+        "purpose": "Verify live pilot, budget migration, proposer enrollment and preserved repository behavior.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pilot qualification and rehearsal",
+        "purpose": "Verify both controls and native DSH with the rebuilt extension-aware image without a model provider.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-local"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "budget and live prepare",
+        "purpose": "Prepare exact scopes without modifying the paid ledger or reading credentials.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-extension",
+          "ev-manifest"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "command://pnpm-run-check",
+        "summary": "All 50 test files passed: 1082 passing tests, 7 opt-in skips; typecheck, build, capsule, policy, offline evaluations and whitespace checks passed.",
+        "sha256": null,
+        "observed_at": "2026-09-10T23:41:49.000Z"
+      },
+      {
+        "id": "ev-local",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/qualify-K4Yi9t/report.json",
+        "summary": "Both pinned tasks: oracle passed and no-op failed. Adjacent rehearse-9WtSVe report verifies native headless shell and skill-byte protocol on the same image, not task improvement.",
+        "sha256": null,
+        "observed_at": "2026-09-10T23:41:49.000Z"
+      },
+      {
+        "id": "ev-extension",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/extension-30ed1d4e182f3cd2e5ce75d413264dce35af6e6b533adccca831da0221b43e97.json",
+        "summary": "Read-only preparation preserves 5143852 microUSD historical allocations and proposes an absolute 12123852 microUSD ceiling, leaving 6980000 additional reservation units. Not provider billing or an applied extension.",
+        "sha256": null,
+        "observed_at": "2026-09-10T23:41:49.000Z"
+      },
+      {
+        "id": "ev-manifest",
+        "kind": "test",
+        "uri": "repo://.dal/check/skillsbench-pilot/manifests/e22a96a9b5e580ca9ec030478f5c36561c33fb6388980cc69e3abacb268e4768.json",
+        "summary": "Prepared one unchanged-skill development baseline with the exact OpenAI model, qualified image, source closure, gateway policy and no-retry batch. No live transmission performed.",
+        "sha256": null,
+        "observed_at": "2026-09-10T23:41:49.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The remaining blocker is approval of the two exact prepared scopes, not another implementation milestone. Later proposal and candidate evaluation phases require their own artifact-specific approval if justified by the real baseline."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

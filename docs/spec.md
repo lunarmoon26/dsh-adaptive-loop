@@ -162,6 +162,18 @@ The optimizer exchange ships as a deterministic, prepare/evaluate-only adapter b
 
 ### DAL-022 — Benchmark measurement integrity
 
+The [SkillsBench paid pilot](skillsbench-paid-pilot.md) adds an explicitly scoped
+geometry-task path after offline oracle/no-op qualification. Its live runner
+binds exact task/image/source/skill bytes, keeps the candidate off the outbound
+network, and grades bounded outputs independently after candidate termination.
+Verified development receipts can be projected into sanitized run records for
+the existing metered proposer; transfer inputs and passing baselines are not
+eligible. Paired reports distinguish gain, equality and regression without
+granting promotion authority. An approved budget extension appends a zero-spend
+`cap_extension` to the existing chain; it never rewrites the original cap or
+reservations. The new reader validates sequence-effective caps and old readers
+fail closed. Extension approval and live transmission approval are distinct.
+
 The bounded skill-adaptation path connects metered generation to the existing
 optimizer validator and isolated runner. Live skill proposals require a verified
 failed development baseline, matching model/base identity and enrolled development
