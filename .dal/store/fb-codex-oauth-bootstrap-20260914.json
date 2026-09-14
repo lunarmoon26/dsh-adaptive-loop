@@ -1,0 +1,180 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-codex-oauth-bootstrap-20260914",
+  "ingested_at": "2026-09-14T01:17:17.573Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-codex-oauth-bootstrap-20260914.json",
+    "sha256": "dec59633a78d67fcfa2b254cfc318dadd1fd1063f514ad773146c9ac693a366a"
+  },
+  "feedback_sha256": "54fdd45ca899f2acad5aa26958b7d4c20181b457a705e3cfc385a8bc9b425229",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-14T01:17:17.573Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-codex-oauth-bootstrap-20260914",
+    "change_id": "chg-codex-oauth-bootstrap-20260913",
+    "created_at": "2026-09-14T01:13:20Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-supervisor"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "1.18.30",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "26511119a86ac6bbe7af54100202718d2642ac13",
+        "branch": "codex-subscription-benchmark",
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Provide an explicitly approved terminal surface for native DSH Codex subscription OAuth without model calls or credential copying.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-native-oauth-only",
+        "statement": "Only the native Codex credential key and OAuth method are invoked; missing and API-key-only flows fail closed.",
+        "result": "passed",
+        "evidence": [
+          "ev-bootstrap-tests"
+        ]
+      },
+      {
+        "id": "ac-private-interaction",
+        "statement": "Login requires a terminal, hides entered responses, suppresses provider error details and handles cancellation without credential-file access.",
+        "result": "passed",
+        "evidence": [
+          "ev-bootstrap-tests"
+        ]
+      },
+      {
+        "id": "ac-operation-approval",
+        "statement": "Login verifies current package hashes and the exact DAL external-operation approval before authorization begins.",
+        "result": "passed",
+        "evidence": [
+          "ev-approval-tests"
+        ]
+      },
+      {
+        "id": "ac-native-composition",
+        "statement": "The approved native DSH composition exposes the OAuth flow through a keyless check without starting model work.",
+        "result": "passed",
+        "evidence": [
+          "ev-integration-summary"
+        ]
+      },
+      {
+        "id": "ac-repository-check",
+        "statement": "The full repository gate passes without weakening capsule, privacy or approval checks.",
+        "result": "passed",
+        "evidence": [
+          "ev-full-check"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The OAuth bootstrap is implemented and integrated into build and type checks. Focused tests, the full repository gate and the earlier keyless native composition check passed. Interactive authorization was separately reported successful by the operator; this is not an automated browser-authentication or research-improvement claim.",
+      "exception": null
+    },
+    "what_worked": [
+      "Native DSH authorization remains the single grant writer; the bootstrap only supplies terminal interaction and bounded approval verification.",
+      "The focused suite passed one hundred eight tests, and the full suite passed one thousand two hundred five tests with seven environment-dependent skips.",
+      "A dedicated startup-only profile avoids changing other profiles or enabling HMR."
+    ],
+    "what_failed": [
+      "The initial full gate found an overly broad Buffer type in a synthetic file-reader fixture; narrowing the fixture resolved the type error without a runtime change.",
+      "Feature feedback was not finalized at the initial handoff; this new record closes that gap using current verification rather than backdating evidence."
+    ],
+    "calls": [],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-late-feedback-closure",
+        "category": "process",
+        "summary": "The initial feature handoff lacked the required final feedback receipt.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Finalize privacy-safe feedback validation and ingestion before future completion handoffs.",
+        "evidence": [
+          "ev-full-check",
+          "ev-integration-summary"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-bootstrap-tests",
+        "kind": "test",
+        "uri": "repo://tests/codex-oauth-bootstrap.test.ts",
+        "summary": "Eighty-one synthetic tests passed for interaction, fixed routing, lifecycle and approval-before-login behavior.",
+        "sha256": null,
+        "observed_at": "2026-09-14T01:13:20Z"
+      },
+      {
+        "id": "ev-approval-tests",
+        "kind": "test",
+        "uri": "repo://tests/codex-oauth-approval.test.ts",
+        "summary": "Twenty-seven synthetic tests passed for scoped verification, inventory drift and fixed verifier invocation.",
+        "sha256": null,
+        "observed_at": "2026-09-14T01:13:20Z"
+      },
+      {
+        "id": "ev-full-check",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Type checking, build, tests, capsule validation and offline guardrail and benchmark gates passed.",
+        "sha256": null,
+        "observed_at": "2026-09-14T01:13:20Z"
+      },
+      {
+        "id": "ev-integration-summary",
+        "kind": "file",
+        "uri": "repo://docs/codex-oauth-bootstrap.md",
+        "summary": "The contract separates the observed native flow check, operator-reported authorization and subsequent authenticated research from unproven improvement claims.",
+        "sha256": null,
+        "observed_at": "2026-09-14T01:13:20Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-live-browser-coverage",
+        "statement": "Browser authorization and refresh are native provider operations, not covered by the synthetic automated suite.",
+        "level": "medium",
+        "resolution": "Use separately approved operator-driven integration checks when provider behavior or runtime versions change.",
+        "evidence": [
+          "ev-integration-summary"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The supervisor requested publication. Code review and future sensitive-action approvals remain separate."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "public",
+      "retention": "team",
+      "tags": [
+        "no-secrets",
+        "source-summary"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@lunarmoon26/dal-codex-oauth",
+  "version": "0.1.0",
+  "description": "Opt-in terminal surface for DSH-native Codex subscription OAuth; no LLM or credential copying.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": ["lib", "bootstrap.patch.yml", "README.md"],
+  "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+  "license": "MIT",
+  "peerDependencies": {"@deepseek-ai/cordis": "^4.0.1"},
+  "peerDependenciesMeta": {"@deepseek-ai/cordis": {"optional": true}},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git",
+    "directory": "plugins/dal-codex-oauth"
+  }
+}
