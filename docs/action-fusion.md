@@ -10,6 +10,33 @@ It grants no runtime, transfer, plugin-mount, or candidate-application approval.
 
 ## Inactive prototype slice
 
+### Inactive native-adapter slice
+
+Change: `chg-action-fusion-native-adapter-20260914`. Scope: concrete binding to
+the already installed native tools API, without plugin registration, activation,
+dependency upgrades or upstream source edits. Acceptance criteria:
+
+- AC-N1: Bind native `ToolRuntime.execute` and `ToolRunContext` directly, retaining
+  agent/root/parent identity, cancellation, result details and context receivers.
+- AC-N2: Constrain child targets and reject identity substitution; never invoke
+  filesystem/shell handlers directly or introduce a tool-dispatch callback API.
+- AC-N3: Default disabled; explicit enable remains blocked before side effects
+  until a supported durable private child-event path and native qualification exist.
+- AC-N4: Compile against DAL's exact installed tools dependency, test the bridge
+  with synthetic service doubles, and distinguish that from native integration.
+- AC-N5: Preserve all existing gates and report the missing durability primitive
+  as a blocker, not a successful adapter activation or performance result.
+
+The implemented slice is **dispatch-only**. See the
+[adapter boundary](../prototypes/action-fusion/native-adapter.md). A working
+end-to-end native adapter remains blocked: source inspection found no public
+append option for the session event envelope's `ignorable` marker, and flush
+participation alone cannot establish exact-session durable ownership. No second
+session writer, event-catalog mutation or independent archive is introduced to
+bypass those constraints.
+
+### Initial core slice
+
 Change: `chg-action-fusion-prototype-20260914`. The approved implementation slice
 is an unregistered orchestration core with injected dispatcher and private evidence
 ports, synthetic tests, and a local unreviewed Crunch handoff. Native DSH binding,

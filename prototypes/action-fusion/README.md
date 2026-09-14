@@ -6,13 +6,19 @@ treatment. Nothing imports it in production; the test suite imports it for local
 synthetic verification. Its design is [the proposed contract](../../docs/action-fusion.md).
 Implementation change: `chg-action-fusion-prototype-20260914`.
 
+A subsequent [native dispatch binding](native-adapter.md) compiles against the
+installed tools types. Its guarded adapter remains blocked on durable child
+evidence, even when explicitly enabled; it is not a mounted or qualified tool.
+
 ## Implemented boundary
 
 `createFusionPrototype(ports, options).run(input, context)` is disabled by default.
 An explicit local `enabled: true` exercises the core; it is not an approval or
 qualification assertion. The required ports are readiness checking, authoritative
 child dispatch, and private evidence acceptance. No concrete implementations of
-those ports ship in this slice. No direct filesystem, shell, network or model
+those ports ship in the original core slice. The subsequent native binding only
+implements dispatch; readiness and durable recording remain blocked.
+No direct filesystem, shell, network or model
 operation occurs in the core.
 
 The input contains one `mutation` (`name: edit|write`, `arguments`) and one
