@@ -47,9 +47,9 @@ export interface Evidence {
   result?: DispatchResult;
 }
 export interface Ports {
-  /** Future adapter verifies exact runtime, mounted policies and evidence readiness. */
+  /** Adapter verifies its evidence capabilities; this port is not runtime attestation. */
   assertReady(signal: AbortSignal): Promise<void>;
-  /** Future adapter MUST delegate to ctx.tools.execute, never a handler body. */
+  /** Native adapters MUST delegate to ctx.tools.execute, never a handler body. */
   dispatch(call: ChildCall): Promise<DispatchResult>;
   /** Resolves only after durable acceptance. This core does not implement that guarantee. */
   record(event: Readonly<Evidence>): Promise<string>;

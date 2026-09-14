@@ -1,7 +1,7 @@
 # Action Fusion: opportunity screen and proposed contract
 
-Status: **Inactive orchestration prototype implemented; native integration and
-activation remain proposed.** Mode: optimization/design, not model research.
+Status: **Default-disabled source adapter implemented; deployed qualification and
+activation remain proposed.** Mode: engineering, not model research.
 Design change: `chg-action-fusion-design-20260914`.
 Work item: [issue #14](https://github.com/lunarmoon26/dsh-adaptive-loop/issues/14).
 This document owns the proposed behavior; current capabilities remain governed by
@@ -12,7 +12,19 @@ It grants no runtime, transfer, plugin-mount, or candidate-application approval.
 
 ### Inactive native-adapter slice
 
-Change: `chg-action-fusion-native-adapter-20260914`. Scope: concrete binding to
+Current change: `chg-action-fusion-native-checkpoint-20260914`. Acceptance criteria:
+
+- AC-C1: Default disabled and unregistered; old runtimes fail before live-log writes.
+- AC-C2: Probe the supplied actual Session class on a detached disposable instance;
+  verify class/instance correspondence and the actual ignorable envelope.
+- AC-C3: Preflight the exact parent with native checkpoint, retain writer identity,
+  and verify exact session/sequence/writer acknowledgements for every child event.
+- AC-C4: Preserve native dispatch results, contexts, cancellation and partial effects;
+  evidence failure prevents advancement and started dispatch is awaited.
+- AC-C5: Focused failure tests and real keyless source-component integration cover
+  recording/reopen and native pre/post-policy denial without a Loader profile.
+
+Original change: `chg-action-fusion-native-adapter-20260914`. Scope: concrete binding to
 the already installed native tools API, without plugin registration, activation,
 dependency upgrades or upstream source edits. Acceptance criteria:
 
@@ -27,13 +39,10 @@ dependency upgrades or upstream source edits. Acceptance criteria:
 - AC-N5: Preserve all existing gates and report the missing durability primitive
   as a blocker, not a successful adapter activation or performance result.
 
-The implemented slice is **dispatch-only**. See the
-[adapter boundary](../prototypes/action-fusion/native-adapter.md). A working
-end-to-end native adapter remains blocked: source inspection found no public
-append option for the session event envelope's `ignorable` marker, and flush
-participation alone cannot establish exact-session durable ownership. No second
-session writer, event-catalog mutation or independent archive is introduced to
-bypass those constraints.
+The current adapter uses the patched source's append options and exact live-writer
+checkpoint service. See the [adapter boundary](../prototypes/action-fusion/native-adapter.md).
+The original installed packages remain unsupported; source-component evidence does
+not qualify a deployed Loader profile. No second writer or archive is introduced.
 
 ### Initial core slice
 
@@ -246,7 +255,8 @@ The bounded inactive orchestration prototype is implemented after contract revie
 no full SoL-Pi port, observation archive, reducer model, compactor, swarm, or
 controller increment is included.
 The immediate unresolved items are reviewed lean opportunity counts, the deployed
-DSH seam/version match, and the durable child-evidence design. Native integration
-and live treatment each retain their separate approvals. Missing headroom, invalid
+DSH seam/version match, and production leaf-policy/sandbox qualification. The patched
+source adapter implements the durable child-evidence design with ephemeral native
+component tests. Deployed integration and live treatment retain their separate approvals. Missing headroom, invalid
 evidence, or insufficient capacity stops advancement. No improvement or deployment
 claim follows from this design slice.

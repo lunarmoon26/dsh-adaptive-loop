@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import { ToolRuntime, type ToolExecutionInput, type ToolExecutionResult, type ToolRunContext } from "@deepseek-ai/dsh-tools";
 import { bindNativeDispatch, createNativeFusionAdapter, NATIVE_ADAPTER_BLOCKERS,
-  NATIVE_ADAPTER_TARGET } from "../prototypes/action-fusion/native-adapter.js";
+  NATIVE_ADAPTER_TARGET, NATIVE_CHILD_EVENT, type NativeEnvelope, type NativeEvidenceServices
+} from "../prototypes/action-fusion/native-adapter.js";
 import type { ChildCall } from "../prototypes/action-fusion/core.js";
 
 const id = "01234567-89ab-4cde-8fab-0123456789ab";
@@ -50,7 +53,7 @@ describe("inactive native binding: real exported types, synthetic services, no m
     });
     expect(f.execute).not.toHaveBeenCalled();
   });
-  it("explicit enable cannot bypass native evidence blockers", async () => {
+  it("explicit enable without native services cannot bypass evidence checks", async () => {
     const f = fixture();
     const adapter = createNativeFusionAdapter(f.tools, { enabled: true });
     expect(await adapter.run(request(), f.parent)).toMatchObject({
@@ -154,6 +157,170 @@ describe("inactive native binding: real exported types, synthetic services, no m
     const f = fixture();
     f.execute.mockRejectedValueOnce(new Error("synthetic transport failure"));
     await expect(bindNativeDispatch(f.tools, f.parent).dispatch(f.call())).rejects.toThrow("synthetic transport failure");
+    expect(f.execute).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Fault injection only; the external DSH spec owns real native source evidence.
+function checkpointFixture() {
+  const f = fixture();
+  const faults = { probe: false, append: 0, marker: false };
+  class Session {
+    seq = 0;
+    events: NativeEnvelope[] = [];
+    constructor(readonly id: string) {}
+    static create(id: string) { return new Session(id); }
+    append(type: string, data: unknown, options: { ignorable: true }) {
+      if (this === live && faults.append === this.seq + 1) throw new Error("append failed");
+      const event = Object.freeze({ type, data, seq: this.seq++,
+        ...((this !== live && faults.probe) || (this === live && faults.marker) ? {} : options) });
+      this.events.push(event);
+      return event;
+    }
+  }
+  const live = new Session("synthetic-live");
+  f.parentFixture.agent.session = live;
+  const checkpoint = vi.fn(async (session: never, seq: never, _options?: { signal?: AbortSignal }) => {
+    expect(session).toBe(live);
+    return { sessionId: live.id, throughSeq: seq as number, writerId: "writer-a" };
+  });
+  const native: NativeEvidenceServices = { Session, persistence: { bindLiveWriter: vi.fn(), checkpoint } };
+  f.execute.mockImplementation(async () => ({ isError: false, content: [], value: {
+    exitCode: 0, signal: null, aborted: false, timedOut: false, sandbox: { mode: "workspace-write", denied: false },
+    stdout: { text: "bounded", truncated: true, spillPath: "private-ref" },
+  } }));
+  const adapter = createNativeFusionAdapter(f.tools, { enabled: true, native });
+  return { ...f, faults, live, native, checkpoint, adapter };
+}
+
+describe("native checkpoint adapter faults (service doubles)", () => {
+  it("rejects the actual installed legacy Session append on a disposable probe without polluting the parent", async () => {
+    const require = createRequire(import.meta.url);
+    const toolsRequire = createRequire(require.resolve("@deepseek-ai/dsh-tools"));
+    const installed = await import(pathToFileURL(toolsRequire.resolve("@deepseek-ai/dsh-session")).href);
+    const Session = installed.Session as NativeEvidenceServices["Session"];
+    const f = checkpointFixture();
+    const legacy = Session.create("legacy-parent" as never);
+    f.parentFixture.agent.session = legacy;
+    f.native.Session = Session;
+    const before = legacy.seq;
+    expect(await f.adapter.run(request(), f.parent)).toMatchObject({ status: "blocked", effects: "none_dispatched" });
+    expect(legacy.seq).toBe(before);
+    expect(f.checkpoint).not.toHaveBeenCalled();
+    expect(f.execute).not.toHaveBeenCalled();
+  });
+  it("does not probe or checkpoint supplied native services when disabled", async () => {
+    const f = checkpointFixture();
+    const probe = vi.spyOn(f.native.Session, "create");
+    expect((await createNativeFusionAdapter(f.tools, { native: f.native }).run(request(), f.parent)).status).toBe("disabled");
+    expect(probe).not.toHaveBeenCalled();
+    expect(f.checkpoint).not.toHaveBeenCalled();
+    expect(f.live.seq).toBe(0);
+  });
+  it("checkpoints exact parent prefix and each namespaced child envelope before advancing", async () => {
+    const f = checkpointFixture();
+    f.execute.mockImplementation(async input => {
+      expect(f.checkpoint).toHaveBeenCalledTimes(input.name === "bash" ? 4 : 2);
+      return { isError: false, content: [], value: { exitCode: 0, signal: null, aborted: false,
+        timedOut: false, sandbox: { mode: "workspace-write", denied: false }, stdout: { spillPath: "private-ref" } } };
+    });
+    const result = await f.adapter.run(request(), f.parent);
+    expect(result.status).toBe("succeeded");
+    expect(result.evidenceRefs).toHaveLength(4);
+    expect(f.checkpoint.mock.calls.map(call => call[1])).toEqual([-1, 0, 1, 2, 3]);
+    expect(f.live.events.every(event => event.ignorable === true && event.type === NATIVE_CHILD_EVENT)).toBe(true);
+    expect(f.native.persistence.bindLiveWriter).not.toHaveBeenCalled();
+  });
+  it.each(["old-abi", "probe", "foreign-class", "missing-writer"])("blocks %s without live-log pollution", async mode => {
+    const f = checkpointFixture();
+    if (mode === "old-abi") f.native.persistence.checkpoint = undefined as never;
+    if (mode === "probe") f.faults.probe = true;
+    if (mode === "foreign-class") f.native.Session = class Other {} as never;
+    if (mode === "missing-writer") f.checkpoint.mockRejectedValue(new Error("missing live writer"));
+    expect(await f.adapter.run(request(), f.parent)).toMatchObject({ status: "blocked", effects: "none_dispatched" });
+    expect(f.live.events).toEqual([]);
+    expect(f.execute).not.toHaveBeenCalled();
+  });
+  it.each(["session", "seq", "writer"])("rejects incorrect preflight %s acknowledgement", async field => {
+    const f = checkpointFixture();
+    f.checkpoint.mockResolvedValueOnce({ sessionId: field === "session" ? "other" : f.live.id,
+      throughSeq: field === "seq" ? 0 : -1, writerId: field === "writer" ? "" : "writer-a" });
+    expect((await f.adapter.run(request(), f.parent)).status).toBe("blocked");
+    expect(f.live.events).toEqual([]);
+  });
+  it.each(["session", "seq", "writer"])("rejects changed settle %s acknowledgement and skips dispatching command", async field => {
+    const f = checkpointFixture();
+    f.checkpoint.mockImplementation(async (_session, seq) => ({
+      sessionId: seq === 1 && field === "session" ? "other" : f.live.id,
+      throughSeq: seq === 1 && field === "seq" ? 2 : seq,
+      writerId: seq === 1 && field === "writer" ? "writer-b" : "writer-a",
+    }));
+    const result = await f.adapter.run(request(), f.parent);
+    expect(result).toMatchObject({ status: "incomplete", effects: "possible" });
+    expect(result.mutation).toBeDefined();
+    expect(f.execute).toHaveBeenCalledTimes(1);
+    expect(result.evidenceRefs).toHaveLength(1);
+  });
+  it.each([1, 2, 3, 4])("append failure at event %s prevents further dispatch", async event => {
+    const f = checkpointFixture();
+    f.faults.append = event;
+    expect((await f.adapter.run(request(), f.parent)).status).toBe("incomplete");
+    expect(f.execute).toHaveBeenCalledTimes(Math.floor(event / 2));
+  });
+  it.each([0, 1, 2, 3])("checkpoint failure at event %s prevents further dispatch", async event => {
+    const f = checkpointFixture();
+    f.checkpoint.mockImplementation(async (_session, seq) => {
+      if (seq === event) throw new Error("checkpoint failed");
+      return { sessionId: f.live.id, throughSeq: seq, writerId: "writer-a" };
+    });
+    expect((await f.adapter.run(request(), f.parent)).status).toBe("incomplete");
+    expect(f.execute).toHaveBeenCalledTimes(Math.floor((event + 1) / 2));
+  });
+  it("does not trust a live envelope missing its marker", async () => {
+    const f = checkpointFixture();
+    f.faults.marker = true;
+    expect((await f.adapter.run(request(), f.parent)).status).toBe("incomplete");
+    expect(f.execute).not.toHaveBeenCalled();
+    expect(f.checkpoint).toHaveBeenCalledTimes(1);
+  });
+  it("retains native denial info and contexts in settle evidence and records skipped command", async () => {
+    const f = checkpointFixture();
+    const denial = { isError: true, content: [], error: { message: "denied", info: { code: "DENIED" } },
+      additionalContexts: [{ role: "user", content: [{ type: "text", text: "context" }] }] } as const;
+    f.execute.mockResolvedValueOnce(denial as unknown as ToolExecutionResult);
+    const result = await f.adapter.run(request(), f.parent);
+    expect(result.status).toBe("failed");
+    expect(result.mutation).toEqual(denial);
+    expect(f.live.events[1]!.data).toMatchObject({ phase: "settle", result: denial });
+    expect(f.live.events[2]!.data).toMatchObject({ phase: "skipped", operation: "bash" });
+    expect(f.parentFixture.contexts).toEqual(denial.additionalContexts);
+    expect(f.execute).toHaveBeenCalledTimes(1);
+  });
+  it("propagates cancellation and awaits already dispatched work even if durable settlement fails", async () => {
+    const f = checkpointFixture();
+    let release!: () => void;
+    let entered!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    const waiting = new Promise<void>(resolve => { release = resolve; });
+    f.execute.mockImplementationOnce(async input => {
+      entered();
+      await waiting;
+      expect(input.signal.aborted).toBe(true);
+      return { isError: true, content: [], error: { message: "cancelled", info: { name: "AbortError", code: "ABORTED" } } };
+    });
+    f.checkpoint.mockImplementation(async (_session, seq, options) => {
+      options?.signal?.throwIfAborted();
+      return { sessionId: f.live.id, throughSeq: seq, writerId: "writer-a" };
+    });
+    let settled = false;
+    const pending = f.adapter.run(request(), f.parent).then(result => { settled = true; return result; });
+    await started;
+    f.abort.abort();
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    expect((await f.adapter.run(request(), f.parent)).status).toBe("busy");
+    release();
+    expect(await pending).toMatchObject({ status: "incomplete", effects: "possible", mutation: { isError: true } });
     expect(f.execute).toHaveBeenCalledTimes(1);
   });
 });

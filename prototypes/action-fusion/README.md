@@ -6,9 +6,10 @@ treatment. Nothing imports it in production; the test suite imports it for local
 synthetic verification. Its design is [the proposed contract](../../docs/action-fusion.md).
 Implementation change: `chg-action-fusion-prototype-20260914`.
 
-A subsequent [native dispatch binding](native-adapter.md) compiles against the
-installed tools types. Its guarded adapter remains blocked on durable child
-evidence, even when explicitly enabled; it is not a mounted or qualified tool.
+A subsequent [native checkpoint adapter](native-adapter.md) compiles against the
+installed tools types and supplies a narrow structural extension for patched native
+source. It is default disabled, source-component tested and unregistered; the old
+installed runtime fails its detached probe without polluting the live log.
 
 ## Implemented boundary
 
@@ -16,8 +17,8 @@ evidence, even when explicitly enabled; it is not a mounted or qualified tool.
 An explicit local `enabled: true` exercises the core; it is not an approval or
 qualification assertion. The required ports are readiness checking, authoritative
 child dispatch, and private evidence acceptance. No concrete implementations of
-those ports ship in the original core slice. The subsequent native binding only
-implements dispatch; readiness and durable recording remain blocked.
+those ports ship in the original core slice. The subsequent native adapter implements
+dispatch, detached Session probing and exact live-writer checkpoints.
 No direct filesystem, shell, network or model
 operation occurs in the core.
 
@@ -53,7 +54,7 @@ results cannot count as successful validation.
 
 ## Evidence and future adapter obligations
 
-`Evidence` is a version-labelled **private in-process prototype DTO**, not an
+`Evidence` is a version-labelled **private native child-event payload**, not an
 approved persisted DAL schema. It links parent/root/child identity and phase,
 and can contain raw native output. **Never ingest it into DAL feedback or send it
 to an optimization provider.** The injected sink promises durable acceptance;
@@ -61,9 +62,9 @@ synthetic in-memory sinks test await/failure semantics, not durability. Only saf
 aggregate statuses/counts/digests belong in a future DAL projection. Unfinished
 evidence cannot authorize a completed-trial or efficiency claim.
 
-The future adapter needs version-pinned DSH bindings, verified policy/observation/
-sandbox composition, durable private child records and replay integration, native
-result/schema compatibility, renderer/output budgets, and exclusive scheduling.
+Live qualification needs version-pinned deployed bindings, verified policy/observation/
+sandbox composition, renderer/output budgets, and native subprocess cleanup evidence.
+The source adapter implements durable private child records and replay integration.
 `assertReady` is a port, not a boolean proof of those guarantees. Native dispatch
 must use `ctx.tools.execute` with re-entrant policy checks. Tests deliberately
 simulate CAS and policy rejection; they do not implement or verify native CAS.
@@ -78,6 +79,7 @@ pnpm run typecheck
 ```
 
 No shared profile, plugin composition, package dependencies, frozen schemas,
-comparison gate or budget policy is modified. Native integration requires a
-separately scoped approval, even when keyless. A subsequent live treatment also
+comparison gate or budget policy is modified. The authorized source-component spec
+uses an ephemeral unit composition; deployed Loader/profile integration requires a
+separately scoped approval. A subsequent live treatment also
 requires reviewed opportunity evidence, a valid control, and separate approval.
