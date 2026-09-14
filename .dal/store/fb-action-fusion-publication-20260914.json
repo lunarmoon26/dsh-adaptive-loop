@@ -1,0 +1,141 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-action-fusion-publication-20260914",
+  "ingested_at": "2026-09-14T08:49:44.728Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-action-fusion-publication-20260914.json",
+    "sha256": "9e772778a81120fd8a31e6896db968e3d3903b86a61031912a4018ff18299981"
+  },
+  "feedback_sha256": "677c79ac1d7c4a51267a41c08c09f661311817c6b5d2a407161730b4d0a48bc4",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-14T08:49:44.728Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-action-fusion-publication-20260914",
+    "change_id": "chg-action-fusion-prototype-20260914",
+    "created_at": "2026-09-14T08:48:49Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-supervisor"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "1.18.30",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "c2224f227f7e7be296c91c2aad93cd8a1c9d1c7d",
+        "branch": "optimization-improvement-loop",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/14"
+    },
+    "goal": "Prepare a public-safe verification summary for the supervisor-requested publication of the inactive Action Fusion prototype.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-inactive",
+        "statement": "Only the inactive core, tests and focused documentation are publication inputs; no live activation or new comparison gate is claimed.",
+        "result": "passed",
+        "evidence": [
+          "ev-boundary",
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-verification",
+        "statement": "Focused synthetic coverage and the full repository gate pass without weakening capsules or policy controls.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-check"
+        ]
+      },
+      {
+        "id": "ac-privacy",
+        "statement": "The publication summary contains no private handoff contents, personal checkout paths, credentials, traces or local approvals; earlier local-only receipts remain local.",
+        "result": "passed",
+        "evidence": [
+          "ev-boundary"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The inactive prototype is verified for source publication. Native dispatcher binding, durable evidence integration and any measured efficiency gain remain unqualified. This is not a deployment or promotion receipt.",
+      "exception": null
+    },
+    "what_worked": [
+      "Sixty-two synthetic prototype tests pass; the full suite reports one thousand two hundred sixty-seven passing tests and seven skips.",
+      "Final source review found no remaining issues within the inactive prototype scope."
+    ],
+    "what_failed": [],
+    "calls": [],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-boundary",
+        "kind": "file",
+        "uri": "repo://prototypes/action-fusion/README.md",
+        "summary": "Documents the injected ports, bounded private outputs, cooperative deadline and absent native deployment guarantees.",
+        "sha256": null,
+        "observed_at": "2026-09-14T08:48:49Z"
+      },
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/action-fusion-prototype.test.ts",
+        "summary": "Synthetic tests cover input bounds, sequencing, partial failures, evidence, cancellation and context forwarding.",
+        "sha256": null,
+        "observed_at": "2026-09-14T08:48:49Z"
+      },
+      {
+        "id": "ev-check",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Typecheck, build, full tests, capsules and offline guardrail and benchmark gates passed.",
+        "sha256": null,
+        "observed_at": "2026-09-14T08:48:49Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-native",
+        "statement": "Synthetic injected ports do not demonstrate native policy re-entrancy, process isolation, durable journal integration or model-round savings.",
+        "level": "high",
+        "resolution": "Retain the proposed contract's separate native qualification, opportunity screening and exact approval gates.",
+        "evidence": [
+          "ev-boundary"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The supervisor requested source publication, not activation or acceptance of an efficiency claim."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "public",
+      "retention": "team",
+      "tags": [
+        "no-secrets",
+        "publication-summary"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
