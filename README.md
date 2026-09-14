@@ -113,6 +113,12 @@ dal init                             # inside any workspace: stores, skill, inst
 
 ## Self-improvement boundary
 
+Codex subscription sign-in is separate from the API-key benchmark gateway. The
+opt-in [Codex OAuth bootstrap](docs/codex-oauth-bootstrap.md) provides a terminal
+surface over DSH's native authorization flow. It needs explicit mount/profile/
+external-operation approvals, invokes no LLM, and is not automatically enabled.
+`--oauth-check` checks only flow registration, not authentication.
+
 Improvement proposals may change only the editable surfaces (`prompt`, `tool_descriptions`, `skills`, `memory_policy`, `routing`, `stop_retry_logic`, `harness_code`) and must carry a falsifiable prediction from the `proposed` stage. The immutable anchors (`evaluator`, `sealed_holdout`, `permissions`, `maximum_budget`, `promotion_policy`, `audit_log`, `rollback_mechanism`) are never proposal targets. Run records, deterministic failure clustering, observation-only controller states, and disabled source candidates feed the loop; PI governance, response learning, predictive selection, model-based clustering, and autonomous candidate application remain future work.
 
 ## How it is meant to be used

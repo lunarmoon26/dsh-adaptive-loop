@@ -1,0 +1,112 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-codex-subscription-benchmark-20260913",
+  "ingested_at": "2026-09-13T16:25:09.144Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-codex-subscription-benchmark-20260913.json",
+    "sha256": "e6089435df2ad59daf377dc56de7c67acaffdbfa3c2ec16f66baefcbf3644efd"
+  },
+  "feedback_sha256": "1bb305636456450030d6f17d64ce39fc851199f28028620dc349d3cd24391718",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-13T16:25:09.144Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-codex-subscription-benchmark-20260913",
+    "change_id": "chg-codex-subscription-benchmark-20260913",
+    "created_at": "2026-09-13T16:00:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "cave-claude"
+      },
+      "harness": {
+        "name": "dsh",
+        "version": "0.1.1-rc.2",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "00d0afb",
+        "branch": "codex-subscription-benchmark",
+        "dirty": false
+      },
+      "task_ref": null
+    },
+    "goal": "Verify a Codex subscription-backed benchmark route without exposing credentials to the candidate.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-live-subscription-smoke",
+        "statement": "A governed benchmark smoke run completes through the Codex subscription route while the candidate has no subscription credential.",
+        "result": "not_run",
+        "evidence": [
+          "ev-external-approval-required"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "The local Codex login is available, but a live subscription-backed benchmark would send benchmark data externally and requires an exact approval before execution.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "No approved, unexpired send_data_externally decision was supplied for the Codex subscription-backed benchmark payload.",
+        "owner": "project-maintainer",
+        "next_action": "Provide an exact approved, unexpired send_data_externally decision for the rendered benchmark manifest, then run the isolated smoke test."
+      }
+    },
+    "what_worked": [
+      "Local Codex authentication was verified without disclosing credential material."
+    ],
+    "what_failed": [
+      "The externally sending smoke test was not authorized."
+    ],
+    "calls": [],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-external-approval-missing",
+        "category": "coordination",
+        "summary": "The benchmark's required external-transfer approval is absent.",
+        "impact": "high",
+        "recoverable": true,
+        "suggested_action": "Prepare and approve the exact transmission manifest before testing.",
+        "evidence": [
+          "ev-external-approval-required"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-external-approval-required",
+        "kind": "command",
+        "uri": "repo://AGENTS.md",
+        "summary": "Repository governance requires approval before externally sending benchmark data.",
+        "sha256": null,
+        "observed_at": "2026-09-13T16:00:00.000Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
