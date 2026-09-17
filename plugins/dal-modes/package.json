@@ -1,12 +1,18 @@
 {
   "name": "@lunarmoon26/dal-modes",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "description": "DSH Adaptive Loop plugin bundle: run recording on by default, with improvement tools, the HMR candidate coordinator, and the G2 guard shipped as disabled rows.",
   "license": "MIT",
   "files": [
     "cordis.patch.yml"
   ],
+  "dependencies": {
+    "@lunarmoon26/dal-run-record": "0.2.0",
+    "@lunarmoon26/dal-improve-tools": "0.2.0",
+    "@lunarmoon26/dal-hmr-candidate": "0.2.0",
+    "@lunarmoon26/dal-unknown-effect-guard": "0.2.0"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

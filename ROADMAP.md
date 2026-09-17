@@ -4,6 +4,60 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 ## Next decision points
 
+### Live text campaign implementation (2026-09-16)
+
+`chg-dal-live-text-loop-20260916` implements the bounded text-only portion of the
+autonomy plan: exact campaign grants, isolated native DSH/Codex host package,
+durable request allocations, autonomous development-based hypothesis/prompt
+generation, independent qualification, workspace-local active generations,
+post-activation probes, rollback and explicit revocation/recovery. See
+[live text loop](docs/live-text-loop.md) and dated native evidence in
+`docs/requirement-evidence.md`. Synthetic tests are not live evidence.
+
+The earlier blocked record remains historical. Its steps 1–3 and the prompt-only
+portion of step 5 below are now implemented for tool-free structured-output tasks.
+This does not authorize or implement executable-plugin evolution, arbitrary agent
+tools, shared-profile changes, DSH HMR, or general research-methodology promotion.
+Those wider surfaces still need independent containment and runtime evidence.
+The synthetic reporting pilot is distinct from a paired CrunchDAO research trial;
+adapting competition workflows and measuring real productivity remain follow-up.
+
+### Workspace-local autonomy (2026-09-16)
+
+`chg-dal-workspace-autonomy-20260916` implements portable release artifacts,
+tokenless workflow configuration, setup/doctor diagnostics, terminal-run identity
+and trace-attribution repairs, and a resumable non-authorizing campaign replay
+core. The release set is not yet published. See [target architecture](docs/workspace-autonomy.md),
+[replay contract](docs/campaign-replay.md), and [distribution](docs/distribution.md).
+
+The requested end-to-end live loop remains blocked on these implementation and
+integration steps, not merely on obtaining an API key:
+
+1. A versioned campaign authority contract with human-authored scope, expiry,
+   revocation, bounded allocations and per-operation enforcement. It explicitly
+   replaces per-candidate approval only within that scope; historical decisions
+   retain their semantics. Current AGENTS/governance constraints remain effective.
+2. A native DSH/Codex subscription executor with workspace-local launch state,
+   explicit dependency resolution and native credential-provider reuse. No copied
+   grants, API-key fallback, or unapproved profile setup. Pin the actual DSH version
+   and execute a fresh authorized integration test.
+3. Automatic goal operationalization and hypothesis/candidate construction through
+   that executor. Replay's declared hypotheses and candidate artifacts are inputs,
+   not evidence that a model discovered or executed them.
+4. Whole-process isolation of candidate execution from authority, evaluator,
+   audit and credential capabilities; awaited completion and authoritative runtime
+   identity. Same-user path separation is not enforcement.
+5. Cold-start skill/prompt generation activation, retained prior generation and
+   tested failed-boot/regression rollback. HMR quarantine is not bypassed.
+6. A CrunchDAO reporting-only replay grader and a matched live campaign using the
+   existing subscription route. Independent improvement evidence follows loop
+   execution proof; replay scores alone establish neither.
+
+Future skill/memory libraries retain applicability and contradiction evidence.
+Search strategy evolution happens between rounds and needs measured successor
+handoff before claiming recursive improvement. Sealed confirmation remains
+distinct from adaptive qualification feedback.
+
 ### Core skill adaptation experiment (2026-09-10)
 
 `chg-dal-skill-adaptation-slice-20260910` connects generated bounded skill edits,

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/campaign-replay-state.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "campaign_id", "plan_sha256", "previous_sha256", "evidence_kind", "step", "status", "evaluations_used", "baseline", "evaluated", "best_evaluated", "selected_eligible", "simulated_retained", "retained_generation", "activation_authorized", "blockers"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/campaign-replay-state.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "campaign_id": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" },
+    "plan_sha256": { "$ref": "campaign-replay.v1.schema.json#/$defs/digest" },
+    "previous_sha256": { "anyOf": [{ "$ref": "campaign-replay.v1.schema.json#/$defs/digest" }, { "type": "null" }] },
+    "evidence_kind": { "const": "replay" },
+    "step": { "type": "integer", "minimum": 0, "maximum": 32 },
+    "status": { "enum": ["prepared", "replaying", "complete"] },
+    "evaluations_used": { "type": "integer", "minimum": 2, "maximum": 2112 },
+    "baseline": { "$ref": "#/$defs/score" },
+    "evaluated": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/score" } },
+    "best_evaluated": { "anyOf": [{ "$ref": "campaign-replay.v1.schema.json#/$defs/id" }, { "type": "null" }] },
+    "selected_eligible": { "anyOf": [{ "$ref": "campaign-replay.v1.schema.json#/$defs/id" }, { "type": "null" }] },
+    "simulated_retained": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" },
+    "retained_generation": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" },
+    "activation_authorized": { "const": false },
+    "blockers": { "const": ["LIVE_CAMPAIGN_EXECUTOR_UNAVAILABLE", "LOCAL_ACTIVATION_UNAVAILABLE"] }
+  },
+  "$defs": {
+    "score": {
+      "type": "object", "additionalProperties": false,
+      "required": ["generation_id", "hypothesis_id", "development", "qualification", "raw_delta", "regressions", "eligible", "cases"],
+      "properties": {
+        "generation_id": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" },
+        "hypothesis_id": { "anyOf": [{ "$ref": "campaign-replay.v1.schema.json#/$defs/id" }, { "type": "null" }] },
+        "development": { "type": "number", "minimum": 0, "maximum": 1 },
+        "qualification": { "type": "number", "minimum": 0, "maximum": 1 },
+        "raw_delta": { "type": "number", "minimum": -1, "maximum": 1 },
+        "regressions": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" } },
+        "eligible": { "type": "boolean" },
+        "cases": {
+          "type": "array", "minItems": 2, "maxItems": 64,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "pass", "verdict_sha256"],
+            "properties": {
+              "id": { "$ref": "campaign-replay.v1.schema.json#/$defs/id" },
+              "pass": { "type": "boolean" },
+              "verdict_sha256": { "$ref": "campaign-replay.v1.schema.json#/$defs/digest" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

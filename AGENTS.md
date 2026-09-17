@@ -22,6 +22,15 @@ No v0 command runs GEPA, SkillOpt, another optimizer, or an LLM — except `dal 
 
 ## Context and verification
 
+The versioned `dal live` text-campaign path is separate from the historical v0
+commands above. It requires an exact human `campaign-grant.v1` for its frozen plan
+and a separate exact `install_or_mount_plugin` decision for the trusted native
+service host. Verify grants with `dal approval verify --plan ...`; the executor
+revalidates grant, revocation, runtime pins and allocations before every call or
+promotion. Only bounded prompt text under `.dal/live/<id>/` evolves. No candidate
+code, workspace tools, shared profile or HMR activation is authorized. Native DSH
+owns subscription credential refresh. See [`docs/live-text-loop.md`](docs/live-text-loop.md).
+
 Validate a knowledge capsule before using it: `pnpm dal capsule check <path-or-directory>`. If a source digest or freshness date fails, inspect the canonical source and update the capsule through human review; never bypass or silently refresh it.
 
 Run the smallest focused test first, then `pnpm run check` before closing a repository-wide change. Do not claim external-service, dsh runtime, optimizer, or sandbox proof unless that exact integration was executed.

@@ -1,6 +1,6 @@
 {
   "name": "@lunarmoon26/dal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local, human-governed feedback and improvement loop for DeepSeek Harness projects.",
   "license": "MIT",
   "type": "module",
@@ -11,18 +11,35 @@
   "bin": {
     "dal": "./dist/cli.js"
   },
+  "exports": {
+    "./cli": "./dist/cli.js",
+    "./install": "./dist/install.js"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p plugins/dal-hmr-candidate/tsconfig.json && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json && tsc -p plugins/dal-codex-oauth/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",
+    "build": "tsc -p plugins/dal-native-text/tsconfig.json && tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p plugins/dal-hmr-candidate/tsconfig.json && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json && tsc -p plugins/dal-codex-oauth/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",
     "typecheck": "tsc -p tsconfig.json && tsc -p plugins/dal-run-record/tsconfig.json --noEmit && tsc -p plugins/dal-improve-tools/tsconfig.json --noEmit && tsc -p plugins/dal-hmr-candidate/tsconfig.json --noEmit && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json --noEmit && tsc -p plugins/dal-codex-oauth/tsconfig.json --noEmit && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "dal": "tsx src/cli.ts",
+    "release:check": "node scripts/release.mjs check",
+    "release:pack": "pnpm run build && node scripts/release.mjs pack",
+    "release:smoke": "node scripts/release.mjs smoke",
+    "prepack": "tsc -p tsconfig.build.json",
     "benchmark:check": "pnpm run dal eval run benchmarks/tau-style-workflow/dal/suite.json --store .dal/check/benchmark-evaluations",
     "benchmark:e2e": "tsx benchmarks/tau-style-workflow/run-e2e.ts",
     "check": "pnpm run typecheck && pnpm run build && pnpm run test && pnpm run dal capsule check capsules && pnpm run dal policy check tests/fixtures/guardrail/allowed-read.json --store .dal/check/guardrail && pnpm run dal eval run tests/fixtures/evaluation/v0-suite.json --store .dal/check/evaluations && pnpm run benchmark:check"
   },
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/dsh-llm": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-attachment": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-invariants": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-scope": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-brand": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.1.1-rc.2",
+    "@lunarmoon26/dal-native-text": "0.2.0",
     "@deepseek-ai/dsh-sandbox": "0.1.1-rc.2",
     "@deepseek-ai/dsh-sandbox-local": "0.1.1-rc.2",
     "ajv": "^8.17.1",
@@ -39,9 +56,10 @@
   "files": [
     "dist",
     "schemas",
-    "config"
+    "config",
+    "docs/deployment/end-task-feedback-global-SKILL.md",
+    "docs/deployment/user-global-AGENTS.md"
   ],
-  "prepack": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && chmod +x dist/cli.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git"

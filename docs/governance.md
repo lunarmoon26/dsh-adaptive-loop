@@ -59,6 +59,30 @@ Headless/CI composition defaults to deterministic rejection when no approved ans
 
 v0 provides verification and transition recording plus narrowly scoped executors: user-global install writes only the fixed governed assets, while proposer and benchmark e2e send only their exact digest-bound projections. The HMR coordinator can stage but not apply. DAL deliberately provides no generic shared-config writer or external sender, plugin installer or mounter, optimizer runner, candidate applier, or automatic promotion path.
 
+## Explicit campaign delegation for the versioned live text loop
+
+`campaign-grant.v1` is a separate authority format, never an interpretation of a
+historical v0 decision. It binds the human reviewer, exact frozen plan digest,
+expiry and explicit `send_text`, `activate_prompt`, `rollback_prompt` capabilities.
+The plan fixes workspace, native runtime pins, Codex model and credential-store
+reference, complete task inputs, response contract, independent grading targets,
+candidate/request/time/output limits and promotion threshold. It authorizes only
+the dynamic prompt-text search and bounded transfers described by that plan.
+Expected outputs remain local; qualification inputs never enter the generator.
+
+One human campaign decision replaces per-candidate decisions only within this
+explicit text-only scope. The host independently verifies authority at each
+operation and records exact request/generation identities. The model has no tool
+dispatcher or filesystem capability. A separate exact legacy mount approval binds
+the native-service host to the same plan/runtime. Shared profiles, executable
+plugins, new tasks, expanded limits and different runtimes require new scope.
+Compensation may restore the exact prior retained prompt after in-flight failure
+or revocation; it cannot send data or install a new candidate. See [the contract](live-text-loop.md).
+
+These are local operator-owned approval files, not cryptographic proof against a
+malicious process with the same OS identity. The boundary isolates candidate text
+from controller capabilities; it is not an OS sandbox for arbitrary generated code.
+
 ## Data collection rules
 
 Allowed by default:

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import type { Context } from "@deepseek-ai/cordis";
 import { defineTool } from "@deepseek-ai/dsh-tools";
 
@@ -18,7 +18,7 @@ export const name = "dal-improve-tools";
 export const inject = ["tools"];
 
 export interface Config {
-  /** Override for the dal CLI invocation; default resolves the repo's compiled dist/cli.js. */
+  /** Override for development; default resolves the installed DAL package export. */
   cliCommand?: string[];
   /** Per-call budget in milliseconds; default 120000. */
   timeoutMs?: number;
@@ -28,8 +28,8 @@ const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_STORE = ".dal/runs";
 const DEFAULT_CLUSTERS = ".dal/clusters";
 
-function defaultCli(): string[] {
-  return ["node", fileURLToPath(new URL("../../../dist/cli.js", import.meta.url))];
+export function defaultCli(): string[] {
+  return [process.execPath, createRequire(import.meta.url).resolve("@lunarmoon26/dal/cli")];
 }
 
 async function runCli(

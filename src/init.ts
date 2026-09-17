@@ -151,7 +151,7 @@ export async function initWorkspace(options: { dir?: string; skillName?: string 
     next_steps: [
       "Track the evidence stores in VCS (commit .dal/outbox, .dal/store, .dal/runs, .dal/clusters, .dal/control-states, .dal/resets).",
       "If .gitignore already existed, append the .dal/ evidence-store rules from the dal template.",
-      "Agents now log end-of-task feedback and failure run records automatically; reconcile with `dal feedback summary` and `dal cluster run`.",
+      "Scaffolding is installed; automatic recording is not verified. Review existing AGENTS.md integration and run `dal doctor` before using recorded evidence.",
       "Optional user-global step (human-performed, approval-gated): copy this skill to ~/.agents/skills/ and the workspace instructions to the fixed user-global ~/.dsh/AGENTS.md so every workspace gets the workflow; install the dal CLI on PATH with `npm install -g @lunarmoon26/dal`.",
     ],
   };

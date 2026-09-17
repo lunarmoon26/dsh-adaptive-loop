@@ -1,5 +1,61 @@
 # Requirement Evidence
 
+## Native autonomous text loop (2026-09-17)
+
+Change: `chg-dal-live-text-loop-20260916`. Completed for bounded tool-free prompt
+evolution. [Native integration evidence](live-text-loop-evidence-20260917.md) binds
+the exact human grants, plan, runtime and generation identities. A real native
+DSH/Codex campaign generated a prompt, moved development and qualification from
+0/2 each to 2/2 each, automatically activated it, passed its canary, served a fresh
+active-generation request and then proved explicit rollback through another native
+request. Twelve requests completed; exhaustion and revocation prevented further
+dispatch. This used synthetic inputs and a deliberately weak seed, not the existing
+CrunchDAO researcher.
+
+Final repository gate: 1,239 passed and seven opt-in skips. Eight-package
+clean-consumer smoke passed. The earlier dependency export conflict and native
+credential-tag bug were corrected with focused tests. The first failed native
+attempt retains its consumed allocation and receipt; it was not silently retried.
+The capsule source refresh and the exact live operations were explicitly reviewed.
+After the pilot, a focused hardening rechecks authority after an in-flight canary
+before final retention; its revocation/compensation path is synthetically verified.
+The native pilot retains its exact pre-hardening runtime identity in the evidence.
+Feedback: `.dal/store/fb-dal-live-text-loop-20260917.json`.
+
+## Workspace autonomy foundation and portable release (2026-09-16)
+
+Change: `chg-dal-workspace-autonomy-20260916`.
+Overall requested live-autonomy outcome: **blocked / partial implementation**.
+
+| Requirement | Implemented evidence | Boundary |
+| --- | --- | --- |
+| Clone-free package consumption | `scripts/release.mjs`; all seven 0.2.0 tarballs install in a disposable consumer; CLI, schemas, templates, plugin imports and package-relative CLI resolution pass | Linux clean-consumer proof; no DSH mount |
+| Tokenless publishing | `.github/workflows/publish.yml`; tag/version/ancestry checks, full gate, tested artifacts, OIDC, no npm token | Workflow not dispatched; npm trust setup and publication pending |
+| Truthful onboarding | `tests/doctor.test.ts`; `setup` preserves existing instructions; `doctor` reports missing capabilities | Workspace scaffolding, not automatic profile/auth setup |
+| Terminal evidence | `tests/plugin-modes.test.ts`; distinct same-sequence stage identities, checkpoint exclusion, interleaved and ambiguous call-ID attribution | No new awaited-teardown or generation-attestation proof |
+| Bounded comparison core | `tests/campaign-replay.test.ts`; goal hypotheses, pinned inputs, budgets, resume, drift rejection, proxy-only gain and regression cases, incumbent retention | Supplied synthetic outputs; no candidate/model execution or activation |
+| Packaged end-to-end replay | Clean-consumer smoke executes prepare, replay and status using the installed CLI and checks simulated versus actual retention | Replay proof only |
+| Live autonomous campaign | See `ROADMAP.md` workspace-local autonomy section | Authority contract, native subscription adapter, automatic hypothesis/candidate generation and isolated activation/rollback remain unimplemented |
+
+Focused onboarding tests: 6 passed. Focused replay/recorder/doctor tests: 33 passed.
+Final `pnpm run check`: **1,217 passed, 7 opt-in skips**; typecheck, build, all
+capsules, policy decision and both offline scorecards passed. The first
+post-documentation gate caught a capsule test date and a second roadmap source pin;
+the reviewed source refresh and current review date corrected those failures.
+`pnpm run release:pack` and `pnpm run release:smoke` passed after the final build.
+Release artifact identities are in `.dal/release/0.2.0/manifest.json`.
+
+A read-only invocation of the built doctor against the requested CrunchDAO
+workspace observed three schema-valid final records and twelve checkpoints, no
+invalid records, and missing local scaffold components. Authentication, grader
+integration and runtime assurance were not probed or inferred. The workspace,
+shared profiles and credentials were not modified.
+
+The maintainer approved capsule refresh during this task; that review is not a
+live operation approval. No model call, plugin mount, candidate activation,
+publication, commit or push was performed. Feedback:
+`.dal/store/fb-dal-workspace-autonomy-20260916.json`.
+
 ## CI process mock repair (2026-09-10)
 
 Change: `chg-ci-process-mock-20260910`. CI run `34426075224` reported repeated

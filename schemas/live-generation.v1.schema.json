@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/live-generation.v1.schema.json",
+  "type": "object", "additionalProperties": false, "required": ["id", "prompt", "hypothesis"],
+  "properties": {
+    "id": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+    "prompt": { "$ref": "live-plan.v1.schema.json#/$defs/text" },
+    "hypothesis": { "anyOf": [{ "type": "null" }, {
+      "type": "object", "additionalProperties": false, "required": ["gap", "proxy", "mechanism"],
+      "properties": { "gap": { "$ref": "live-plan.v1.schema.json#/$defs/text" }, "proxy": { "$ref": "live-plan.v1.schema.json#/$defs/text" }, "mechanism": { "$ref": "live-plan.v1.schema.json#/$defs/text" } }
+    }] }
+  }
+}

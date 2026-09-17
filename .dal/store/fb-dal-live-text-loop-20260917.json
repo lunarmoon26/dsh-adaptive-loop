@@ -1,0 +1,302 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dal-live-text-loop-20260917",
+  "ingested_at": "2026-09-17T00:19:00.393Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dal-live-text-loop-20260917.json",
+    "sha256": "f07b6c07ee5f4704b76b784a534a0c1c450e2fb49c035c11cf8a2126a579074f"
+  },
+  "feedback_sha256": "cce673e898dabd6664a652a5e6b07756fec9bf2b14ddf3ed4c6a66c6a2a2be35",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-17T00:19:00.393Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dal-live-text-loop-20260917",
+    "change_id": "chg-dal-live-text-loop-20260916",
+    "created_at": "2026-09-17T00:16:57.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": "repo://docs/live-text-loop.md"
+    },
+    "goal": "Complete and exercise the bounded workspace-local autonomous prompt-text loop through native DSH Codex services, independent grading, activation and rollback.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-native-route",
+        "statement": "Native subscription calls use fixed tool-free DSH services with bounded outputs and usage receipts, without copied credentials or profile mutation.",
+        "result": "passed",
+        "evidence": [
+          "ev-native",
+          "ev-native-tests"
+        ]
+      },
+      {
+        "id": "ac-authority",
+        "statement": "Exact campaign authority and separate service-mount approval are enforced before native operations; expiry, scope, revocation, runtime drift and allocation denial stop execution.",
+        "result": "passed",
+        "evidence": [
+          "ev-loop-tests",
+          "ev-native"
+        ]
+      },
+      {
+        "id": "ac-autonomous-cycle",
+        "statement": "Baseline execution, native hypothesis and candidate generation, development and qualification evaluation, selection, activation and canary compose without per-candidate intervention.",
+        "result": "passed",
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "id": "ac-activation-rollback",
+        "statement": "A fresh request consumes the promoted prompt and a fresh post-rollback request consumes the prior prompt; automatic failed-canary compensation is covered separately.",
+        "result": "passed",
+        "evidence": [
+          "ev-native",
+          "ev-loop-tests"
+        ]
+      },
+      {
+        "id": "ac-recovery",
+        "statement": "Completed operations resume without duplicate sends, pending effects are not resent, concurrent supervisors are excluded and derived task scores are revalidated.",
+        "result": "passed",
+        "evidence": [
+          "ev-loop-tests"
+        ]
+      },
+      {
+        "id": "ac-data-boundary",
+        "statement": "Generated text has no execution or filesystem capability; expected results never reach the model and qualification inputs never reach the generator.",
+        "result": "passed",
+        "evidence": [
+          "ev-loop-tests",
+          "ev-contract"
+        ]
+      },
+      {
+        "id": "ac-repository-package",
+        "statement": "Focused tests, the complete repository gate, isolated dependency graphs and the eight-package consumer smoke pass.",
+        "result": "passed",
+        "evidence": [
+          "ev-verification",
+          "ev-packages"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The bounded native text loop is implemented and a separately approved pilot completed generation, grading, promotion, canary, active-generation consumption and explicit rollback. General executable-harness evolution is outside this scope.",
+      "exception": null
+    },
+    "what_worked": [
+      "The corrected native campaign completed twelve requests with no pending intents; its generated prompt passed all four development and qualification cases plus the canary.",
+      "Fresh native calls proved consumption of the promoted prompt and restoration of the prior prompt after rollback.",
+      "Budget exhaustion and revocation denied additional operations before native dispatch.",
+      "Separate native and legacy package graphs resolved their incompatible service versions without upgrading historical v0 behavior.",
+      "The final repository gate passed 1239 tests with seven explicit integration skips, and eight release tarballs passed clean-consumer verification."
+    ],
+    "what_failed": [
+      "An initial dependency layout selected an incompatible newer LLM service for legacy sandbox imports; isolated packages and explicit peer pins corrected it.",
+      "The first native attempt rejected the existing credential metadata because the adapter expected an oauth tag rather than the native grant tag. It stopped before model dispatch; its failed receipt and consumed allocation remain intact.",
+      "An existing CLI help assertion required preserving the confined-verifier boundary wording; the wording was restored before the final passing gate."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "approved-native-dependency-install",
+        "purpose": "Install the exact locally authorized native services and resolve isolated compatibility graphs.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-contract"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "harness",
+        "name": "initial-native-host-check",
+        "purpose": "Execute the first exact authorized campaign.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "harness",
+        "name": "native-text-campaign",
+        "purpose": "Execute the corrected authorized autonomous cycle and rollback checks.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "local-and-consumer-verification",
+        "purpose": "Verify contracts, guards, recovery and portable packages.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-verification",
+          "ev-packages"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-native-metadata",
+        "category": "harness",
+        "summary": "An incorrect native credential discriminant stopped the first campaign before model dispatch.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Use the native metadata types and preserve the regression test; never infer credential formats from naming.",
+        "evidence": [
+          "ev-native-tests",
+          "ev-native"
+        ]
+      },
+      {
+        "id": "fi-peer-isolation",
+        "category": "tooling",
+        "summary": "Mixing native and legacy DSH service versions broke an import boundary.",
+        "impact": "medium",
+        "recoverable": true,
+        "suggested_action": "Keep native service peers isolated and verify the clean-consumer dependency graph.",
+        "evidence": [
+          "ev-packages"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-native",
+        "kind": "file",
+        "uri": "repo://docs/live-text-loop-evidence-20260917.md",
+        "summary": "Version-pinned native pilot evidence records the failed first attempt, twelve successful requests, independent task outcomes, automatic activation, fresh active and restored generation calls, budget denial and revocation.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      },
+      {
+        "id": "ev-loop-tests",
+        "kind": "test",
+        "uri": "repo://tests/live-loop.test.ts",
+        "summary": "Fourteen synthetic-transport tests pass, including the post-pilot final-retention authority recheck and revocation compensation.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      },
+      {
+        "id": "ev-native-tests",
+        "kind": "test",
+        "uri": "repo://tests/native-text.test.ts",
+        "summary": "Eight native protocol and credential-metadata tests pass without real credentials or external calls.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/live-text-loop.md",
+        "summary": "The reviewed contract defines the text-only capability boundary, human campaign scope, separate native mount, bounded allocations and private artifact handling.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      },
+      {
+        "id": "ev-verification",
+        "kind": "file",
+        "uri": "repo://docs/requirement-evidence.md",
+        "summary": "The final gate passes 1239 tests, seven opt-in skips, typechecking, all builds, reviewed capsule pins, policy checks and both offline scorecards.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      },
+      {
+        "id": "ev-packages",
+        "kind": "file",
+        "uri": "repo://.dal/release/0.2.0/manifest.json",
+        "summary": "Eight built package artifacts passed clean-consumer imports, CLI runtime assets, package resolution and complete offline campaign replay. Registry publication was not performed.",
+        "sha256": null,
+        "observed_at": "2026-09-17T00:16:57.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-transfer",
+        "statement": "The pilot uses synthetic comparison tasks and a deliberately weak seed; it does not measure improvement of the existing research workspace.",
+        "level": "high",
+        "resolution": "Prepare a representative, separately authorized reporting or research-workflow campaign with independent qualification and transfer evaluation.",
+        "evidence": [
+          "ev-native"
+        ]
+      },
+      {
+        "id": "un-proof-version",
+        "statement": "The exact native pilot precedes an additive final-retention authorization recheck. That revocation edge is covered synthetically; no further native calls were made after the allocated pilot.",
+        "level": "low",
+        "resolution": "Use the recorded runtime identity for historical native claims; exercise the additional edge in a future separately scoped native campaign if needed.",
+        "evidence": [
+          "ev-native",
+          "ev-loop-tests"
+        ]
+      },
+      {
+        "id": "un-refresh-isolation",
+        "statement": "Forced OAuth-expiry refresh and arbitrary generated-code OS isolation were not exercised; neither is claimed by this text-only pilot.",
+        "level": "medium",
+        "resolution": "Test those integrations separately before expanding the supported execution surface.",
+        "evidence": [
+          "ev-contract"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The maintainer explicitly approved the exact installation, both native campaign attempts and host mounts, and the updated contract/capsule sources. Broader code review remains pending."
+      ],
+      "approval_refs": [
+        "dec-native-text-dependencies-20260916",
+        "dec-live-reporting-20260916",
+        "dec-live-native-mount-20260916",
+        "dec-live-reporting-20260917",
+        "dec-live-native-mount-20260917"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "safe-summary"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

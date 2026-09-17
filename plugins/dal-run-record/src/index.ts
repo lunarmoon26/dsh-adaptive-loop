@@ -104,6 +104,7 @@ interface SessionAccumulator {
   toolCalls: Map<string, number>;
   toolErrors: ToolErrorFact[];
   trace: Array<{ seq: number; turn: number; step: number; tool: string; outcome: "ok" | "failed" | "timeout" | "denied" | "unknown"; code: string | null }>;
+  traceCalls: Map<string, number | null>;
   currentTurn: number;
   currentStep: number;
   usage: { input: number; output: number; cacheRead: number; cacheWrite: number; reasoning: number };
@@ -125,6 +126,11 @@ interface SessionAccumulator {
 }
 
 const IDENTIFIER_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
+
+function traceCallKey(data: Record<string, unknown>, state: SessionAccumulator): string | null {
+  if (typeof data.callId !== "string" || data.callId.length === 0 || data.callId.length > 512) return null;
+  return sha256(JSON.stringify([data.turn ?? state.currentTurn, data.step ?? state.currentStep, data.callId]));
+}
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const SEMVER_PATTERN = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
 const URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\/\S+$/;
@@ -424,6 +430,7 @@ export class RunSessionRecorder {
       toolCalls: new Map(),
       toolErrors: [],
       trace: [],
+      traceCalls: new Map(),
       currentTurn: 0,
       currentStep: 0,
       usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
@@ -545,6 +552,19 @@ export class RunSessionRecorder {
             state.controllerContextMismatch = true;
           }
           state.toolCalls.set(toolName, (state.toolCalls.get(toolName) ?? 0) + 1);
+          const key = traceCallKey(data, state);
+          if (key !== null) {
+            const previous = state.traceCalls.get(key);
+            if (previous !== undefined) {
+              if (previous !== null) {
+                state.trace[previous]!.outcome = "unknown";
+                state.trace[previous]!.code = null;
+              }
+              state.traceCalls.set(key, null);
+            } else if (state.trace.length < 512) {
+              state.traceCalls.set(key, state.trace.length);
+            }
+          }
           if (state.trace.length < 512) {
             state.trace.push({
               seq: event.seq,
@@ -559,7 +579,7 @@ export class RunSessionRecorder {
         }
         case "tool/result": {
           const error = data.error as { name?: unknown; code?: unknown } | undefined;
-          if (error !== undefined && typeof error === "object") {
+          if (error !== undefined && error !== null && typeof error === "object") {
             if (state.toolErrors.length < this.config.maxErrorFacts) {
               state.toolErrors.push({
                 name: typeof error.name === "string" ? error.name : "unknown",
@@ -567,15 +587,12 @@ export class RunSessionRecorder {
               });
             }
           }
-          let pending: (typeof state.trace)[number] | undefined;
-          for (let index = state.trace.length - 1; index >= 0; index -= 1) {
-            if (state.trace[index]!.outcome === "unknown") {
-              pending = state.trace[index];
-              break;
-            }
-          }
-          if (pending !== undefined) {
-            const code = error !== undefined && typeof error.code === "string" ? error.code.slice(0, 128) : null;
+          const key = traceCallKey(data, state);
+          const index = key === null ? undefined : state.traceCalls.get(key);
+          const pending = typeof index === "number" ? state.trace[index] : undefined;
+          if (pending !== undefined && pending.outcome === "unknown") {
+            const failed = error !== undefined && error !== null;
+            const code = failed && typeof error.code === "string" ? error.code.slice(0, 128) : failed ? "UNKNOWN" : null;
             const upper = (code ?? "").toUpperCase();
             pending.outcome = code === null ? "ok" : upper.includes("TIMEOUT") ? "timeout" : upper.includes("DENIED") ? "denied" : "failed";
             pending.code = code;
@@ -683,7 +700,7 @@ export class RunSessionRecorder {
     const record = {
       $schema: "https://recursive-dev-loop.dev/schemas/run-record.v1.schema.json",
       schema_version: "1.0.0",
-      run_id: `run-${state.sessionId}-s${lastSeq}`,
+      run_id: `run-${state.sessionId}-s${lastSeq}${final ? "-final" : ""}`,
       task_id: basename(state.cwd),
       change_id: `chg-dsh-session-${state.sessionId}`,
       started_at: new Date(state.createdAt).toISOString(),
@@ -771,7 +788,8 @@ export class RunSessionRecorder {
       },
     };
     assertPrivacySafeMetadata(record, "record");
-    const destination = join(resolve(state.cwd, this.config.storeRoot), `${record.run_id}${final ? ".final" : ""}.json`);
+    // Keep existing filenames recognizable; persisted identities now distinguish stages.
+    const destination = join(resolve(state.cwd, this.config.storeRoot), `run-${state.sessionId}-s${lastSeq}${final ? ".final" : ""}.json`);
     await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
     const temporary = `${destination}.${process.pid}.tmp`;
     const handle = await open(temporary, "wx", 0o600);

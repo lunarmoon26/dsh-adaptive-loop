@@ -1,0 +1,29 @@
+{
+  "name": "@lunarmoon26/dal-native-text",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Tool-free native DSH Codex host for explicitly authorized DAL text campaigns.",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": ["lib"],
+  "scripts": { "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json" },
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-attachment": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-authorization": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-credentials": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-fs": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-invariants": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-launch-environment": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-sandbox": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-session": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-scope": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-settings": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.1.5-rc.2",
+    "@deepseek-ai/dsh-credentials-local": "0.1.5-rc.2"
+  },
+  "repository": { "type": "git", "url": "git+https://github.com/lunarmoon26/dsh-adaptive-loop.git", "directory": "plugins/dal-native-text" }
+}
