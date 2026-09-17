@@ -28,6 +28,7 @@
       "const": "1.0.0"
     },
     "run_id": {
+      "description": "Immutable record identity. New recorder final records use a -final suffix to distinguish them from same-sequence checkpoints; historical identities remain valid.",
       "type": "string",
       "minLength": 8,
       "maxLength": 100,

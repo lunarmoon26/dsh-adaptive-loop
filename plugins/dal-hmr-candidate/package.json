@@ -1,13 +1,13 @@
 {
   "name": "@lunarmoon26/dal-hmr-candidate",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib"
   ],
-  "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+  "scripts": { "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json" },
   "description": "Quarantined DSH workbench helper for staging fixed plugin candidates without permitting HMR application or admission.",
   "license": "MIT",
   "peerDependencies": {

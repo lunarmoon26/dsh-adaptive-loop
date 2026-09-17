@@ -6,7 +6,7 @@
 
 Version 0 validates structured task feedback, stores immutable local records, evaluates non-executing capability requests, runs pinned offline safety/regression suites, clusters failures deterministically, estimates observation-only run-to-run controller state, seals a holdout, produces governed model proposal drafts, searches candidate branches with UCB1, executes confined deterministic verifiers, stages plugin candidates without applying them, and records human-controlled proposal state.
 
-It does **not** invoke an LLM or optimizer outside the approval-bound proposer, execute a requested action unconfined, install a plugin, change dsh configuration without an approved decision, apply a plugin candidate, or promote a candidate. HMR staging is fixed to configured files in an isolated linked worktree and application is code-quarantined.
+Historical v0 commands do **not** invoke an LLM or optimizer outside the approval-bound proposer, execute a requested action unconfined, install a plugin, change dsh configuration without an approved decision, apply a plugin candidate, or promote a candidate. The separately authorized live text path is described below. HMR staging is fixed to configured files in an isolated linked worktree and application is code-quarantined.
 
 ## What it is for (and not for)
 
@@ -16,8 +16,28 @@ It does **not** invoke an LLM or optimizer outside the approval-bound proposer, 
 
 ## Requirements
 
-- Node.js 22 or newer
-- pnpm 10 or newer
+- Node.js `^22.19.0 || >=24.0.0`
+- pnpm 11.7.0 for source development; the published CLI does not require pnpm
+
+## Workspace onboarding and campaign refactor
+
+The 0.2.0 release set adds clone-free packaged CLI support, `dal setup` and read-only
+`dal doctor` diagnostics. Setup preserves existing instructions; it reports missing
+runtime capabilities rather than claiming automatic recording is installed.
+See [distribution and tokenless publishing](docs/distribution.md) for release and
+clean-consumer verification. This version is prepared locally; publication is a
+separate release operation.
+
+The [workspace-autonomy direction](docs/workspace-autonomy.md) uses the corrected
+Aspire paper on vague-goal self-evolution. Its first executable comparison component
+is [resumable campaign replay](docs/campaign-replay.md), separating development
+proxies, qualification, best evaluated, eligible selection and simulated retention.
+Replay executes the deterministic grader on supplied artifacts, not the candidate
+or a model. The separate [live text loop](docs/live-text-loop.md) supplies native
+DSH/Codex subscription calls, automatic bounded prompt generation, qualification,
+local activation, canary checks and rollback under one exact campaign grant plus
+a native service-mount decision. It is tool-free: arbitrary executable harness
+evolution and shared-profile changes remain outside that grant.
 
 ## Quick start
 
@@ -40,6 +60,14 @@ Expected results: the feedback, local-read policy decision, capsules, and evalua
 
 | Command | Behavior |
 | --- | --- |
+| `dal live demo / prepare` | Prepare synthetic inputs or freeze a bounded text-campaign plan; no model call |
+| `dal live run` | Execute the authorized native subscription improvement loop |
+| `dal live status / task / rollback / revoke / recover` | Inspect evidence, consume the active prompt, restore the prior generation or stop/recover the campaign |
+| `dal setup [--dir <dir>]` | Non-overwriting workspace scaffold plus truthful diagnostics |
+| `dal doctor [--dir <dir>]` | Read-only packaged-asset and workspace-evidence checks; no auth or model probe |
+| `dal campaign prepare --plan <file>` | Freeze a bounded, digest-pinned replay plan with goal hypotheses |
+| `dal campaign replay --campaign <id> [--steps <count>]` | Resume deterministic candidate-output comparison; no activation authority |
+| `dal campaign status --campaign <id>` | Revalidate sources and history, then report comparison state |
 | `dal feedback validate <file>` | Validate schema, outcome semantics, and secret/PII policy without writing |
 | `dal feedback ingest <file> [--store <dir>]` | Atomically publish an immutable local envelope after validation |
 | `dal feedback query [filters]` | Query local records by ID, change, outcome, privacy tag, or date |

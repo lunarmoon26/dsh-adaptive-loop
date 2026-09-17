@@ -9,9 +9,13 @@ import { validateApprovalDecision, verifyApprovalFile } from "./approval.js";
 import { admissionStatus, completeAdmission, issueAdmission } from "./admission.js";
 import { branchStats, evaluateBranch, recordBranch, selectBranchUcb } from "./branch.js";
 import { checkCapsulePath } from "./capsule.js";
+import { campaignReplayStatus, prepareCampaignReplay, replayCampaign } from "./campaign-replay.js";
+import { createLiveDemo, liveStatus, prepareLive, recoverLive, revokeLive, rollbackLive, runLive, taskLive } from "./live/loop.js";
+import { planDigest, readLive, validateLivePlan, verifyLiveGrant } from "./live/authority.js";
 import { clusterRunRecords } from "./clustering.js";
 import { estimateControllerState } from "./control/index.js";
 import { DalError } from "./errors.js";
+import { doctorWorkspace } from "./doctor.js";
 import { runEvaluationSuite } from "./evaluation.js";
 import { runVerifier } from "./executor.js";
 import { validateFeedbackDocument } from "./feedback.js";
@@ -89,6 +93,56 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
   }
 
   const [group, action, ...rest] = argv;
+  if (group === "live") {
+    const parsed = parseArguments(rest);
+    exactlyPositionals(parsed, 0, "live <demo|prepare|run|status|task|rollback|revoke|recover> [options]");
+    if (action === "demo") {
+      assertOptions(parsed, ["campaign", "credential-store"]);
+      printJson(io, { plan_path: await createLiveDemo(requiredOption(parsed, "campaign"), oneOption(parsed, "credential-store")) });
+    } else if (action === "prepare") {
+      assertOptions(parsed, ["plan"]);
+      printJson(io, await prepareLive(requiredOption(parsed, "plan")));
+    } else if (action === "status") {
+      assertOptions(parsed, ["campaign"]);
+      printJson(io, await liveStatus(requiredOption(parsed, "campaign")));
+    } else if (action === "revoke" || action === "recover") {
+      assertOptions(parsed, ["campaign"]);
+      const id = requiredOption(parsed, "campaign");
+      if (action === "revoke") await revokeLive(id); else await recoverLive(id);
+      printJson(io, { status: action === "revoke" ? "revoked" : "lease-recovered", campaign_id: id });
+    } else if (action === "run" || action === "rollback" || action === "task") {
+      assertOptions(parsed, action === "task" ? ["campaign", "grant", "mount-approval", "case", "operation"] : ["campaign", "grant", "mount-approval"]);
+      const options = { campaign: requiredOption(parsed, "campaign"), grant: requiredOption(parsed, "grant"), mountApproval: requiredOption(parsed, "mount-approval") };
+      printJson(io, action === "run" ? await runLive(options) : action === "rollback" ? await rollbackLive(options) : await taskLive(options, requiredOption(parsed, "case"), requiredOption(parsed, "operation")));
+    } else throw new DalError("USAGE_ERROR", "Unknown live campaign command");
+    return;
+  }
+  if (group === "campaign") {
+    const parsed = parseArguments(rest);
+    if (action === "prepare") {
+      assertOptions(parsed, ["plan"]);
+      exactlyPositionals(parsed, 0, "campaign prepare --plan <file>");
+      printJson(io, await prepareCampaignReplay(requiredOption(parsed, "plan")));
+    } else if (action === "replay" || action === "status") {
+      assertOptions(parsed, action === "replay" ? ["campaign", "steps"] : ["campaign"]);
+      exactlyPositionals(parsed, 0, `campaign ${action} --campaign <id>`);
+      const id = requiredOption(parsed, "campaign");
+      printJson(io, action === "status" ? await campaignReplayStatus(id) : await replayCampaign(id, Number(oneOption(parsed, "steps") ?? 32)));
+    } else {
+      throw new DalError("USAGE_ERROR", "Supported campaign commands: prepare, replay, status. Live execution is unavailable.");
+    }
+    return;
+  }
+  if (group === "doctor" || group === "setup") {
+    const parsed = parseArguments(argv.slice(1));
+    assertOptions(parsed, ["dir"]);
+    exactlyPositionals(parsed, 0, `${group} [--dir <directory>]`);
+    const dir = oneOption(parsed, "dir") ?? ".";
+    const setup = group === "setup" ? await initWorkspace({ dir }) : null;
+    const diagnostics = await doctorWorkspace(dir);
+    printJson(io, setup === null ? diagnostics : { setup, diagnostics });
+    return;
+  }
   if (group === "feedback" && action === "validate") {
     await feedbackValidate(rest, io);
     return;
@@ -312,8 +366,21 @@ async function capsuleCheck(argv: readonly string[], io: CliIo): Promise<void> {
 
 async function approvalVerify(argv: readonly string[], io: CliIo): Promise<void> {
   const parsed = parseArguments(argv);
-  assertOptions(parsed, ["action", "scope", "candidate-sha256", "at"]);
+  assertOptions(parsed, ["action", "scope", "candidate-sha256", "at", "plan"]);
   const [filePath] = exactlyPositionals(parsed, 1, "approval verify <decision-file> --action <action> --scope <scope>");
+  const livePlanPath = oneOption(parsed, "plan");
+  if (livePlanPath !== undefined) {
+    const plan = await validateLivePlan(await readLive(livePlanPath));
+    const action = requiredOption(parsed, "action");
+    const capability = action === "send_data_externally" ? "send_text" : action === "apply_optimization_candidate" ? "activate_prompt" : action;
+    if (!["send_text", "activate_prompt", "rollback_prompt"].includes(capability) || oneOption(parsed, "candidate-sha256") !== undefined || requiredOption(parsed, "scope") !== planDigest(plan)) {
+      throw new DalError("LIVE_GRANT_DENIED", "Live grants require their exact plan scope and supported capability");
+    }
+    const at = oneOption(parsed, "at");
+    const grant = await verifyLiveGrant(plan, filePath!, capability as "send_text" | "activate_prompt" | "rollback_prompt", at === undefined ? new Date() : parseDate(at, "at"));
+    printJson(io, { status: "approved", decision_id: grant.decision_id, action: capability, plan_sha256: grant.plan_sha256, expires_at: grant.expires_at });
+    return;
+  }
   const action = sensitiveAction(requiredOption(parsed, "action"));
   const scope = requiredOption(parsed, "scope");
   const atValue = oneOption(parsed, "at");
@@ -1213,6 +1280,18 @@ function printJson(io: CliIo, value: unknown): void {
 const HELP = `DSH Adaptive Loop (dal)
 
 Usage:
+  dal live demo --campaign <id> [--credential-store <native-store-path>]
+  dal live prepare --plan <file>
+  dal live run --campaign <id> --grant <file> --mount-approval <file>
+  dal live status --campaign <id>
+  dal live task --campaign <id> --grant <file> --mount-approval <file> --case <id> --operation <task-id>
+  dal live rollback --campaign <id> --grant <file> --mount-approval <file>
+  dal live revoke|recover --campaign <id>
+  dal campaign prepare --plan <file>
+  dal campaign replay --campaign <id> [--steps <count>]
+  dal campaign status --campaign <id>
+  dal setup [--dir <directory>]
+  dal doctor [--dir <directory>]
   dal feedback validate <file>
   dal feedback ingest <file> [--store <directory>]
   dal feedback query [--feedback <id>] [--change <id>] [--outcome <status>]
@@ -1255,7 +1334,7 @@ Usage:
                              --evidence <uri> --notes <text> --output <new-file>
                              [--decision <file>] [--at <date-time>]
 
-No command runs an optimizer. Approval-gated propose run sends a payload-only request to DeepSeek; prepare makes no model call. Confined verify run executes a requested action. Other sensitive operations retain their exact approval gates.
+The versioned live text loop requires exact campaign authority and separate native-service mount approval. Historical v0 commands retain their existing gates. Confined verify run executes a requested action. Prepare and replay make no model calls; HMR application remains quarantined.
 `;
 
 export function matchesEntryPoint(

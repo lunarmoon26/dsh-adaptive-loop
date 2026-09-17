@@ -2,10 +2,10 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.7.6",
+  "capsule_version": "1.8.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-09-06",
+  "checked_at": "2026-09-16",
   "refresh_after": "2026-12-01",
   "sources": [
     {
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "dal-skill-adaptation-slice-2026-09-10",
-      "sha256": "a84581689f25e78e977041426cae6261072b749835c3aa1311fc975203541c0e",
+      "revision": "chg-dal-live-text-loop-20260916-reviewed",
+      "sha256": "d3cde5f8a59dbd7e273bf1a16b4ac43302d6f2055d6864a260e52dc86801f753",
       "local_path": "../ROADMAP.md",
       "required": true
     },
@@ -56,7 +56,7 @@
     },
     {
       "id": "claim-optional-cordis",
-      "text": "Cordis run, improvement, quarantined HMR-staging, and G2 packages ship as workspace source only; profile installation or mounting remains opt-in and separately approved. Awaited session flushes are durable, while observe-only disposal leaves final recorder persistence unproved.",
+      "text": "Legacy workbench profile installation or mounting remains opt-in and separately approved. The live text host is a separately packaged, tool-free native-service composition with its own mount approval and awaited disposal. It does not establish the general recorder's final-disposal durability or HMR readiness.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-roadmap",

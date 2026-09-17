@@ -64,6 +64,7 @@ export async function clusterRunRecords(
   let skippedUnfailed = 0;
   let clusteredHarnessFailures = 0;
   let clusteredBusinessFailures = 0;
+  const runIds = new Set<string>();
 
   for (const name of names) {
     const document = await readJsonFile<unknown>(resolve(store, name));
@@ -71,6 +72,14 @@ export async function clusterRunRecords(
     if (requestedBatch !== null && (run.batch_id ?? null) !== requestedBatch) {
       continue;
     }
+    if (run.record_stage === "checkpoint") {
+      skippedUnfailed += 1;
+      continue;
+    }
+    if (runIds.has(run.run_id)) {
+      throw new DalError("CLUSTER_DUPLICATE_RUN", "Run identity appears more than once in the selected batch");
+    }
+    runIds.add(run.run_id);
     const facts = clusterFacts(run);
     if (facts === null) {
       if (run.outcome === "succeeded") {

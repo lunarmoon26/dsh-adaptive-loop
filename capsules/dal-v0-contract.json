@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.7.7",
+  "capsule_version": "1.9.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
-  "checked_at": "2026-09-06",
+  "checked_at": "2026-09-16",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "dal-skillsbench-paid-pilot-2026-09-11",
-      "sha256": "1536acdce2cb5418eca8859b976debccd1b3c41d05906bc240fae991920d0733",
+      "revision": "chg-dal-live-text-loop-20260916-reviewed",
+      "sha256": "bfd3be6b0c2c8be3cca65045bbbc01a07dfab707b958298791b01dc07b619320",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -21,8 +21,8 @@
       "id": "src-dal-governance",
       "kind": "local_file",
       "uri": "repo://docs/governance.md",
-      "revision": "dal-v0-hmr-admission-quarantine-2026-09-05",
-      "sha256": "706120d12d8a522c7dcbba329be94c7dee1860db5096063e5d79a83fc6699543",
+      "revision": "chg-dal-live-text-loop-20260916-reviewed",
+      "sha256": "2b0784dd3c65390d0f0fa3a5698a42894dea4843c7c3dc21269817412c2d59d3",
       "local_path": "../docs/governance.md",
       "required": true
     },
@@ -47,8 +47,13 @@
   ],
   "claims": [
     {
+      "id": "claim-campaign-replay",
+      "text": "Campaign replay regrades supplied digest-pinned outputs and recomputes resumable comparison history. It reports proxy and qualification results plus simulated retention, but executes no candidate or model and grants no activation authority. The separate live text path requires an exact campaign grant and native-host mount decision.",
+      "source_ids": ["src-dal-spec"]
+    },
+    {
       "id": "claim-local-only",
-      "text": "Version 0 is local-only by default. Purpose-specific installer, proposer, and e2e paths independently verify exact approvals; the HMR helper provides inactive staging only, and no generic shared-configuration or network executor, plugin installer or mounter, optimizer runner, candidate applier, or automatic promotion path ships.",
+      "text": "Historical version 0 remains local-only by default with independently approved purpose-specific executors and quarantined HMR. The versioned live extension permits bounded native Codex calls and local prompt promotion under an exact human campaign grant and separate host-mount approval; it supplies no arbitrary code evolution or shared-profile authority.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",

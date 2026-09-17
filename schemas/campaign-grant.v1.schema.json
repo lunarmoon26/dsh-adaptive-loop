@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/campaign-grant.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "decision_id", "decision", "reviewer", "plan_sha256", "actions", "decided_at", "expires_at"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/campaign-grant.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "decision_id": { "type": "string", "pattern": "^dec-[a-z0-9-]+$", "maxLength": 100 },
+    "decision": { "enum": ["approved", "rejected"] },
+    "reviewer": { "type": "object", "additionalProperties": false, "required": ["kind", "id"], "properties": { "kind": { "const": "human" }, "id": { "type": "string", "minLength": 1, "maxLength": 128 } } },
+    "plan_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+    "actions": { "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": { "enum": ["send_text", "activate_prompt", "rollback_prompt"] } },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" }
+  }
+}

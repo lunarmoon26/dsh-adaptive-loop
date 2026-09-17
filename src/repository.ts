@@ -69,7 +69,7 @@ export function repositoryPathUri(filePath: string, label: string): string {
 }
 
 /** Read one repository JSON file through a checked descriptor, never a followed final symlink. */
-export async function readRepositoryJsonFile<T>(uri: string, label: string): Promise<JsonDocument<T>> {
+export async function readRepositoryJsonFile<T>(uri: string, label: string, maximumBytes?: number): Promise<JsonDocument<T>> {
   const path = resolveRepositoryUri(uri, label);
   const root = await realpath(process.cwd());
   if (
@@ -92,6 +92,9 @@ export async function readRepositoryJsonFile<T>(uri: string, label: string): Pro
     const opened = await handle.stat({ bigint: true });
     if (!opened.isFile()) {
       throw new DalError("REPOSITORY_FILE_READ_FAILED", `${label} is not a regular file`);
+    }
+    if (maximumBytes !== undefined && opened.size > BigInt(maximumBytes)) {
+      throw new DalError("REPOSITORY_FILE_READ_FAILED", `${label} exceeds the input byte limit`);
     }
     const resolvedPath = await realpath(path);
     const fromRoot = relative(root, resolvedPath);

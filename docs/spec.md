@@ -109,6 +109,15 @@ Version 0 implements the deterministic core of the improvement loop plus one app
 
 ### DAL-011 — Workspace onboarding and user-global install
 
+The 0.2.0 distribution adds `dal setup [--dir <directory>]`, which runs the
+non-overwriting initializer and returns diagnostics, and read-only `dal doctor`.
+Doctor validates packaged assets and reports bounded local record counts; it does
+not infer native authentication, runtime assurance, grader integration or automatic
+recording from scaffold presence. Exact behavior and OIDC release configuration
+live in [distribution](distribution.md). The bundle declares its plugin dependencies
+and the improvement plugin resolves the packaged CLI export, so consumer usage
+does not depend on a source checkout. Setup does not mount plugins or edit profiles.
+
 `dal init [--dir <directory>] [--skill <name>]` scaffolds a workspace: the `.dal/` evidence stores, an `end-task-feedback` skill, workspace instructions, and the evidence-store gitignore rules. It never overwrites existing files and never touches `~/.dsh` or `~/.agents`. `dal install user-global --approval <decision-file>` automates the shared-configuration step: it verifies an exact approved, unexpired `change_shared_harness_config` decision whose scope digest binds the exact template bytes, then writes the skill under `~/.agents/skills/` and the fixed user-global `AGENTS.md` under `$DSH_HOME`, idempotently; differing existing content fails closed with a conflict instead of overwriting. dsh loads the global `AGENTS.md` in every session and discovers the skill in every workspace, so the run/reconcile loop is active everywhere without any manual copying. The inspected dsh instruction loader reads instruction files only (project `AGENTS.md`/`CLAUDE.md`, local overlays, and the fixed user-global `AGENTS.md`); there is no programmatic instruction registry, and plugin-side `agent.inject()`/`agent.steer()` injection is advisory and separate from the instructions baseline.
 
 ### DAL-012 — Sealed holdout ceremony
@@ -228,6 +237,56 @@ The workbench package configures one loaded plugin entry, a bounded list of exis
 
 The coordinator can observe unrelated HMR sequence changes but never marks a generation admitted. Consequently, recorder output cannot become candidate-evaluation-eligible through this package. `dal_candidate_reject` may discard an untouched prepared baseline, but current DAL provides no in-process candidate activation or rollback claim. Re-enabling admission requires authoritative imported-closure identity, awaited Fiber readiness, failed-start rollback, durable transition recovery, and version-pinned real integration evidence. Promotion remains an explicit human review and separate deployment action.
 
+### DAL-026 — Bounded campaign replay and terminal evidence repair
+
+`dal campaign prepare`, `replay`, and `status` implement an offline, resumable
+comparison core under `.dal/campaigns/`. Plans bind a broad goal, gap/proxy/mechanism
+hypotheses, fixed runtime identity, exact JSON input digests, separate development
+and qualification cases, candidates and finite evaluation allocations. Every status
+or replay revalidates source bytes and recomputes the immutable snapshot chain.
+Reports distinguish best evaluated, eligible selected and simulated retained
+candidates; actual retained generation remains the baseline and activation is never
+authorized. The core grades supplied outputs, not candidate executions. It calls
+no model, runs no optimizer or DSH process, and supplies no campaign authority grant.
+See [campaign replay](campaign-replay.md) and the two owning schemas. Goal discovery,
+native subscription execution and automatic local promotion are outside replay;
+the separate versioned live extension below implements their bounded text-only path.
+
+New recorder final identities include `-final`, avoiding a same-sequence checkpoint
+collision while preserving recognizable `.final.json` filenames and historical
+schema compatibility. Tool trace outcomes correlate native call IDs with turn/step
+identity; missing or ambiguous identities remain unknown and errors without codes
+remain failures. Call IDs are not persisted. Clustering excludes explicit checkpoints
+and rejects duplicate selected run identities. A batch must be closed before
+clustering: the existing fingerprint/batch identity distinguishes different batches,
+but intentionally rejects changed membership within an already published cluster.
+Use a new batch for a new observation cohort, not repeated publication of a growing
+batch. These repairs do not establish awaited DSH teardown or runtime attestation.
+
+## Versioned live extension — tool-free text campaigns
+
+The historical v0 behaviors and their exact-action decisions remain unchanged.
+`dal live` adds a separate campaign-authorized text-harness loop: a fixed native
+DSH/Codex host receives only text, no agent/tools/workspace discovery, and the model
+cannot execute code or alter the outer controller. A human `campaign-grant.v1`
+delegates bounded calls, prompt activation and rollback for one exact frozen plan;
+native service mounting requires a separate legacy decision. Installation of peers
+does not mount them. The isolated native-host package pins DSH 0.1.5-rc.2 and Cordis
+4.0.2 independently of v0 dependencies. Neither shared profiles nor HMR are changed.
+
+The loop runs baseline cases, asks the native model for a gap/proxy/mechanism and
+bounded replacement prompt using development feedback, evaluates candidates,
+selects strict non-regressing qualification gains, switches a workspace-local
+generation pointer, probes through that pointer and compensates failures by
+restoring the prior retained prompt. Calls reserve finite allocations before
+credential access; ambiguous pending operations are never resent. Immutable receipts
+and linked state snapshots support verified resume; qualifications are adaptive
+selection evidence, not untouched holdouts. `live task` consumes the active prompt
+for an already approved case; manual rollback and revocation are explicit commands.
+Exact shapes, trust assumptions and runtime limits are in [live text loop](live-text-loop.md)
+and its owning schemas. This extension does not establish arbitrary executable
+harness evolution, general runtime-closure attestation or improved research quality.
+
 ## Constraints and assumptions
 
 - Node.js and ESM align with dsh's implementation conventions. TypeScript is the implementation language.
@@ -265,6 +324,10 @@ The coordinator can observe unrelated HMR sequence changes but never marks a gen
 24. Given two terminal run-mode sessions with one explicit compatible `controllerObservation` configuration and stable policy-qualified launcher evidence, their final records validate and feed `dal control estimate` directly; checkpoint, incomplete, contradictory, and unconfigured records do not join the batch; configured pins cannot bypass runtime attestation or HMR quarantine; raw session content remains absent.
 
 ## Evidence plan
+
+- Distribution and replay: clean-consumer tarball smoke, setup diagnostics,
+  checkpoint/final ingestion, interleaved tool attribution, bounded replay resume,
+  source/history drift, regression rejection and non-authorizing selection.
 
 - Automated: TypeScript type checking, Vitest suites, schema validation, privacy precision/recall fixtures, guardrail policy tests, offline scorecards, CLI integration tests, capsule source-digest checks, and a documentation command smoke.
 - Manual: review field semantics, threat assumptions, source citations, current/future labels, and the root workflow wording.

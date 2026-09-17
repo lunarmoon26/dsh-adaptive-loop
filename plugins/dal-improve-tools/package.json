@@ -1,13 +1,14 @@
 {
   "name": "@lunarmoon26/dal-improve-tools",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "files": [
     "lib"
   ],
-  "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+  "scripts": { "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json" },
+  "dependencies": { "@lunarmoon26/dal": "0.2.0" },
   "description": "DSH Adaptive Loop improvement mode: workbench tools that run the deterministic dal CLI (cluster, prepare payload, summarize, evaluate branch, reset status). Never approval-gated operations: no propose run, no reset execute.",
   "license": "MIT",
   "peerDependencies": {

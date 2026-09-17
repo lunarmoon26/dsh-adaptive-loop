@@ -1,3 +1,9 @@
+packages:
+  - plugins/dal-native-text
+linkWorkspacePackages: true
+resolvePeersFromWorkspaceRoot: false
 allowBuilds:
+  '@google/genai': false
   esbuild: true
   koffi: true
+  protobufjs: false

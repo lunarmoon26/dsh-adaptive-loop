@@ -105,6 +105,65 @@ function candidateGeneration(): CandidateGenerationLike {
 }
 
 describe("run-mode recorder", () => {
+  it("ingests same-sequence checkpoint and final records without identity collision and clusters only the final", async () => {
+    const root = await workspace();
+    const recorder = new RunSessionRecorder({});
+    const input = session("session-stage-identity", root);
+    recorder.onEvent(input, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(input, event("turn/end", { reason: { kind: "error" } }, 1));
+    await recorder.flush(input);
+    await recorder.dispose(input);
+    const identities = [];
+    for (const file of await recordsIn(root)) {
+      const path = join(root, ".dal/runs", file);
+      identities.push(JSON.parse(await readFile(path, "utf8")).run_id);
+      await ingestRunRecord(path, join(root, "ingested"));
+    }
+    expect(new Set(identities).size).toBe(2);
+    const clustered = await clusterRunRecords({ store: join(root, "ingested"), output: join(root, "clusters") });
+    expect(clustered.clustered_runs).toBe(1);
+    expect(clustered.skipped_unfailed_runs).toBe(1);
+  });
+
+  it("correlates interleaved results by call identity, retains unmatched unknowns, and records errors without codes", async () => {
+    const root = await workspace();
+    const recorder = new RunSessionRecorder({});
+    const input = session("session-interleaved", root);
+    recorder.onEvent(input, event("turn/start", { turn: 1 }, 0));
+    recorder.onEvent(input, event("tool/call", { callId: "first-private", name: "read" }, 1));
+    recorder.onEvent(input, event("tool/call", { callId: "second-private", name: "write" }, 2));
+    recorder.onEvent(input, event("tool/result", { callId: "first-private", error: { name: "ToolError" } }, 3));
+    recorder.onEvent(input, event("tool/result", { callId: "second-private", error: null }, 4));
+    recorder.onEvent(input, event("tool/call", { name: "unmatched" }, 5));
+    recorder.onEvent(input, event("tool/result", {}, 6));
+    recorder.onEvent(input, event("turn/end", { reason: { kind: "completed" } }, 7));
+    await recorder.dispose(input);
+    const raw = await readFile(join(root, ".dal/runs", (await recordsIn(root))[0]!), "utf8");
+    expect(JSON.parse(raw).trace.map((entry: { outcome: string; code: string | null }) => [entry.outcome, entry.code])).toEqual([
+      ["failed", "UNKNOWN"], ["ok", null], ["unknown", null],
+    ]);
+    expect(raw).not.toContain("first-private");
+    expect(raw).not.toContain("second-private");
+  });
+
+  it("keeps ambiguous call identities unknown even after the bounded trace is full", async () => {
+    const root = await workspace();
+    const recorder = new RunSessionRecorder({});
+    const input = session("session-capped-trace", root);
+    recorder.onEvent(input, event("turn/start", { turn: 1 }, 0));
+    for (let index = 0; index < 512; index++) {
+      recorder.onEvent(input, event("tool/call", { name: "read", callId: `call-${index}` }, index + 1));
+    }
+    recorder.onEvent(input, event("tool/call", { name: "read", callId: "call-0" }, 513));
+    recorder.onEvent(input, event("tool/result", { callId: "call-0" }, 514));
+    recorder.onEvent(input, event("turn/end", { reason: { kind: "completed" } }, 515));
+    await recorder.dispose(input);
+    const record = JSON.parse(await readFile(join(root, ".dal/runs", (await recordsIn(root))[0]!), "utf8"));
+    expect(record.trace).toHaveLength(512);
+    expect(record.trace[0].outcome).toBe("unknown");
+    expect(record.metrics.tool_calls).toBe(513);
+  });
+
   it("projects a failed session into a schema-valid run record with no raw content", async () => {
     const root = await workspace();
     const recorder = new RunSessionRecorder({ storeRoot: ".dal/runs", maxErrorFacts: 64 });
@@ -116,7 +175,7 @@ describe("run-mode recorder", () => {
     recorder.onEvent(session(sessionId, root), event("request/context", { provider: "deepseek-official", model: "deepseek-v4-flash" }, 3));
     recorder.onEvent(session(sessionId, root), event("assistant/message", { content: "secret answer", usage: { inputTokens: 12, outputTokens: 5, cacheReadTokens: 3, cacheWriteTokens: 2, reasoningTokens: 4 } }, 4));
     recorder.onEvent(session(sessionId, root), event("tool/call", { turn: 1, step: 1, callId: "c1", name: "bash", arguments: '{"command":"rm -rf / secret"}' }, 5));
-    recorder.onEvent(session(sessionId, root), event("tool/result", { turn: 1, step: 1, message: { content: "secret output" }, error: { name: "ToolError", code: "TIMEOUT_EXCEEDED" } }, 6));
+    recorder.onEvent(session(sessionId, root), event("tool/result", { turn: 1, step: 1, callId: "c1", message: { content: "secret output" }, error: { name: "ToolError", code: "TIMEOUT_EXCEEDED" } }, 6));
     recorder.onEvent(session(sessionId, root), event("turn/end", { turn: 1, reason: { kind: "error", error: { code: "TIMEOUT_EXCEEDED" } } }, 7));
     await recorder.dispose(session(sessionId, root));
 

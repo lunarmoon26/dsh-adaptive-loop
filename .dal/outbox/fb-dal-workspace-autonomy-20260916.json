@@ -1,0 +1,72 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-dal-workspace-autonomy-20260916",
+  "change_id": "chg-dal-workspace-autonomy-20260916",
+  "created_at": "2026-09-16T20:52:33.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode" },
+    "harness": { "name": "opencode", "version": null, "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": "repo://docs/workspace-autonomy.md"
+  },
+  "goal": "Refactor DAL toward workspace-local autonomous improvement with native subscription execution and portable tokenless distribution.",
+  "acceptance_criteria": [
+    { "id": "ac-portable-packages", "statement": "All release packages work in a clean consumer without a DAL checkout.", "result": "passed", "evidence": ["ev-package-smoke"] },
+    { "id": "ac-release-configuration", "statement": "Release configuration uses committed versions, tested artifacts and tokenless trusted publishing.", "result": "passed", "evidence": ["ev-distribution"] },
+    { "id": "ac-terminal-evidence", "statement": "Terminal record identities and interleaved tool attribution support reliable evidence enrollment.", "result": "passed", "evidence": ["ev-recorder"] },
+    { "id": "ac-replay-core", "statement": "A bounded comparison core preserves goal hypotheses, resumes, validates pinned history and distinguishes evaluated, eligible and simulated-retained candidates.", "result": "passed", "evidence": ["ev-replay"] },
+    { "id": "ac-live-autonomy", "statement": "A campaign autonomously discovers hypotheses, generates and executes candidates through native DSH, and activates or rolls back workspace generations.", "result": "failed", "evidence": ["ev-remaining"] },
+    { "id": "ac-live-pilot", "statement": "The requested workspace completes a live authorized improvement cycle with independently measured results.", "result": "not_run", "evidence": ["ev-remaining", "ev-verification"] },
+    { "id": "ac-npm-publication", "statement": "The updated release is published through the configured npm trusted publisher.", "result": "not_run", "evidence": ["ev-distribution"] },
+    { "id": "ac-local-verification", "statement": "Focused tests, repository checks and installed-package replay pass.", "result": "passed", "evidence": ["ev-verification", "ev-package-smoke"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "Portable distribution, evidence repairs and deterministic campaign replay are implemented and verified; the requested live autonomous loop remains incomplete.",
+    "exception": {
+      "kind": "blocked",
+      "reason": "Campaign authority, native subscription execution, automatic hypothesis and candidate construction, and isolated activation and rollback are not implemented. Current exact-action rules and missing runtime evidence do not permit treating replay as live promotion. Registry trust and release execution are also pending.",
+      "owner": "dal-maintainer-and-runtime-integrator",
+      "next_action": "Implement and review the campaign authority contract and native confined executor, prove cold-start activation and rollback, then prepare exact authorized workspace and release operations. Use the roadmap integration sequence."
+    }
+  },
+  "what_worked": [
+    "Seven release tarballs passed a clean-consumer test including complete deterministic campaign replay.",
+    "The repository gate passed with 1217 tests and seven explicitly skipped integration tests.",
+    "Replay separates proxy gains, qualification regressions, eligible selection and actual non-activation.",
+    "Read-only workspace diagnostics reported evidence presence without inferring authentication or runtime assurance.",
+    "Human source review preceded the capsule refresh."
+  ],
+  "what_failed": [
+    "The full live autonomy acceptance criterion remains unsatisfied.",
+    "The first post-documentation gate detected a stale capsule test date and a second changed source pin; both were reconciled before the final passing gate."
+  ],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "local-verification", "purpose": "Verify implementation and contracts.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-verification"] },
+    { "sequence": 2, "kind": "tool", "name": "clean-consumer-verification", "purpose": "Verify packaged runtime assets and campaign replay without a source checkout.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-package-smoke"] }
+  ],
+  "failures_and_inefficiencies": [
+    { "id": "fi-live-integration", "category": "harness", "summary": "The comparison core has no live campaign executor or activation boundary.", "impact": "high", "recoverable": true, "suggested_action": "Complete the native executor and authority integration before claiming an autonomous loop.", "evidence": ["ev-remaining"] },
+    { "id": "fi-source-review", "category": "verification", "summary": "A linked roadmap capsule and fixed test date required reconciliation after the reviewed documentation changes.", "impact": "low", "recoverable": true, "suggested_action": "Review all affected capsule source references together when updating canonical contracts.", "evidence": ["ev-verification"] }
+  ],
+  "evidence": [
+    { "id": "ev-package-smoke", "kind": "file", "uri": "repo://.dal/release/0.2.0/manifest.json", "summary": "Seven built artifacts passed clean-consumer executable, asset, import, package-resolution and full replay checks.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" },
+    { "id": "ev-distribution", "kind": "file", "uri": "repo://docs/distribution.md", "summary": "Portable packaging and OIDC configuration are implemented locally; registry account setup and publication were not executed.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" },
+    { "id": "ev-recorder", "kind": "test", "uri": "repo://tests/plugin-modes.test.ts", "summary": "Recorder tests cover stage identity, checkpoint exclusion and bounded call-identity attribution.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" },
+    { "id": "ev-replay", "kind": "test", "uri": "repo://tests/campaign-replay.test.ts", "summary": "Seven focused replay tests cover resume, budgets, drift, qualification, no-change and non-authorizing results.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" },
+    { "id": "ev-verification", "kind": "file", "uri": "repo://docs/requirement-evidence.md", "summary": "Final repository gate passed 1217 tests with seven opt-in skips; capsule, policy and both offline scorecards passed. Read-only target-workspace diagnostics are summarized separately from runtime proof.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" },
+    { "id": "ev-remaining", "kind": "file", "uri": "repo://ROADMAP.md", "summary": "Lists unimplemented live authority, subscription execution, objective construction, confinement, activation, rollback and pilot work.", "sha256": null, "observed_at": "2026-09-16T20:52:33.000Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-live-proof", "statement": "No live subscription, runtime isolation, candidate execution or promotion evidence was produced.", "level": "high", "resolution": "Complete the missing executor and perform a separately authorized native integration.", "evidence": ["ev-remaining"] },
+    { "id": "un-oidc-proof", "statement": "GitHub OIDC publication has not been exercised for the new release set.", "level": "medium", "resolution": "Configure package-side trusted publishers and perform the reviewed release operation.", "evidence": ["ev-distribution"] }
+  ],
+  "human_review": {
+    "status": "pending", "reviewer": null, "reviewed_at": null,
+    "notes": ["The user approved source capsule refresh; this is not approval of live execution, mounting, promotion or publication."],
+    "approval_refs": []
+  },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets", "safe-summary"], "contains_personal_data": false, "redactions": [] }
+}

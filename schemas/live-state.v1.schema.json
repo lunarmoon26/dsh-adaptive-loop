@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/live-state.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "sequence", "previous_sha256", "plan_sha256", "phase", "active", "retained", "evaluations", "candidate_index", "last_error"],
+  "$defs": {
+    "pointer": {
+      "$id": "https://recursive-dev-loop.dev/schemas/live-pointer.v1.schema.json",
+      "type": "object", "additionalProperties": false, "required": ["sequence", "state_sha256", "generation"],
+      "properties": { "sequence": { "type": "integer", "minimum": 0, "maximum": 1000 }, "state_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "generation": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "lease": {
+      "$id": "https://recursive-dev-loop.dev/schemas/live-lease.v1.schema.json",
+      "type": "object", "additionalProperties": false, "required": ["pid"],
+      "properties": { "pid": { "type": "integer", "minimum": 1, "maximum": 2147483647 } }
+    },
+    "revocation": { "type": "object", "additionalProperties": false, "required": ["revoked"], "properties": { "revoked": { "const": true } } }
+  },
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/live-state.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "sequence": { "type": "integer", "minimum": 0, "maximum": 1000 },
+    "previous_sha256": { "anyOf": [{ "$ref": "live-plan.v1.schema.json#/$defs/digest" }, { "type": "null" }] },
+    "plan_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+    "phase": { "enum": ["prepared", "baseline", "search", "probe", "complete", "rolled_back", "failed"] },
+    "active": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+    "retained": { "type": "array", "minItems": 1, "maxItems": 10, "uniqueItems": true, "items": { "$ref": "live-plan.v1.schema.json#/$defs/digest" } },
+    "candidate_index": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "last_error": { "type": ["string", "null"], "maxLength": 128 },
+    "evaluations": {
+      "type": "array", "maxItems": 9,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["generation", "development", "qualification", "cases"],
+        "properties": {
+          "generation": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+          "development": { "type": "number", "minimum": 0, "maximum": 1 },
+          "qualification": { "type": "number", "minimum": 0, "maximum": 1 },
+          "cases": { "type": "array", "minItems": 2, "maxItems": 32, "items": {
+            "type": "object", "additionalProperties": false, "required": ["id", "pass", "response_sha256"],
+            "properties": { "id": { "$ref": "live-plan.v1.schema.json#/$defs/id" }, "pass": { "type": "boolean" }, "response_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" } }
+          } }
+        }
+      }
+    }
+  }
+}
