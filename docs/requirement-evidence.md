@@ -1,5 +1,30 @@
 # Requirement Evidence
 
+## Human-gated promotion and Dream-RSI orchestration (2026-09-27)
+
+Changes: `chg-dal-hitl-promotion-control-20260927` and
+`chg-dream-rsi-orchestration-20260927`. Status: completed for the local contract
+and synthetic-transport evidence only. A qualifying prompt candidate now stages in
+`awaiting_review`; an exact current human `apply_optimization_candidate` decision
+is required before the DAL promotion executor changes the active pointer. The
+loopback review dashboard is read-only and exports the request only. Deterministic
+canary failure compensates to the exact incumbent.
+
+The live state now records a fixed-policy, parent-linked discovery tree. `dal live
+dream` evaluates the bounded breadth-first and development-first policy family over
+one or more compatible stored trees using only prefix-revealed stored children. It
+does not invoke the model, evaluator, native host or promotion path. A selected
+policy is advisory evidence for a human to place in a later frozen campaign plan; it
+has no authority to redeploy itself.
+
+Focused evidence: `tests/live-loop.test.ts` covers human approval/rejection,
+dashboard non-authority, BPE non-leakage, canary compensation and replay-only
+prefix behavior; `tests/cli.test.ts` covers CLI help behavior. Current local
+verification: `pnpm run check` passed 1,248 tests with seven opt-in skips; capsule,
+policy and scorecard checks passed; `pnpm run release:pack` and `pnpm run
+release:smoke` passed. No new native campaign was run, and the historical native
+pilot remains pre-HITL, rolled back and revoked.
+
 ## Native autonomous text loop (2026-09-17)
 
 Change: `chg-dal-live-text-loop-20260916`. Completed for bounded tool-free prompt

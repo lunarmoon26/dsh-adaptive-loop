@@ -15,6 +15,15 @@
     "response_contract": { "$ref": "#/$defs/text" },
     "base_prompt": { "$ref": "#/$defs/text" },
     "minimum_gain": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "exploration_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["strategy", "max_parallelism", "max_rounds"],
+      "properties": {
+        "strategy": { "enum": ["breadth_first", "development_first"] },
+        "max_parallelism": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "max_rounds": { "type": "integer", "minimum": 1, "maximum": 8 }
+      }
+    },
     "cases": {
       "type": "array", "minItems": 3, "maxItems": 32,
       "items": {

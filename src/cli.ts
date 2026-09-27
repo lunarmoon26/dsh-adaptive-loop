@@ -10,7 +10,9 @@ import { admissionStatus, completeAdmission, issueAdmission } from "./admission.
 import { branchStats, evaluateBranch, recordBranch, selectBranchUcb } from "./branch.js";
 import { checkCapsulePath } from "./capsule.js";
 import { campaignReplayStatus, prepareCampaignReplay, replayCampaign } from "./campaign-replay.js";
-import { createLiveDemo, liveStatus, prepareLive, recoverLive, revokeLive, rollbackLive, runLive, taskLive } from "./live/loop.js";
+import { createLiveDemo, dreamLive, liveStatus, prepareLive, recoverLive, revokeLive, rollbackLive, runLive, taskLive } from "./live/loop.js";
+import { promoteLive, rejectLive } from "./live/loop.js";
+import { serveLiveReviewDashboard } from "./live/dashboard.js";
 import { planDigest, readLive, validateLivePlan, verifyLiveGrant } from "./live/authority.js";
 import { clusterRunRecords } from "./clustering.js";
 import { estimateControllerState } from "./control/index.js";
@@ -95,7 +97,7 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
   const [group, action, ...rest] = argv;
   if (group === "live") {
     const parsed = parseArguments(rest);
-    exactlyPositionals(parsed, 0, "live <demo|prepare|run|status|task|rollback|revoke|recover> [options]");
+    exactlyPositionals(parsed, 0, "live <demo|prepare|run|dream|review|promote|reject|status|task|rollback|revoke|recover> [options]");
     if (action === "demo") {
       assertOptions(parsed, ["campaign", "credential-store"]);
       printJson(io, { plan_path: await createLiveDemo(requiredOption(parsed, "campaign"), oneOption(parsed, "credential-store")) });
@@ -105,15 +107,27 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
     } else if (action === "status") {
       assertOptions(parsed, ["campaign"]);
       printJson(io, await liveStatus(requiredOption(parsed, "campaign")));
+    } else if (action === "dream") {
+      assertOptions(parsed, ["campaign"]);
+      const campaigns = manyOptions(parsed, "campaign");
+      if (campaigns.length === 0) throw new DalError("USAGE_ERROR", "Missing required option --campaign");
+      printJson(io, await dreamLive(campaigns));
+    } else if (action === "review") {
+      assertOptions(parsed, ["campaign", "port"]);
+      const dashboard = await serveLiveReviewDashboard(requiredOption(parsed, "campaign"), Number(oneOption(parsed, "port") ?? 0));
+      printJson(io, { status: "review-serving", campaign_id: requiredOption(parsed, "campaign"), url: dashboard.url });
     } else if (action === "revoke" || action === "recover") {
       assertOptions(parsed, ["campaign"]);
       const id = requiredOption(parsed, "campaign");
       if (action === "revoke") await revokeLive(id); else await recoverLive(id);
       printJson(io, { status: action === "revoke" ? "revoked" : "lease-recovered", campaign_id: id });
-    } else if (action === "run" || action === "rollback" || action === "task") {
-      assertOptions(parsed, action === "task" ? ["campaign", "grant", "mount-approval", "case", "operation"] : ["campaign", "grant", "mount-approval"]);
+    } else if (action === "reject") {
+      assertOptions(parsed, ["campaign", "approval"]);
+      printJson(io, await rejectLive(requiredOption(parsed, "campaign"), requiredOption(parsed, "approval")));
+    } else if (action === "run" || action === "rollback" || action === "task" || action === "promote") {
+      assertOptions(parsed, action === "task" ? ["campaign", "grant", "mount-approval", "case", "operation"] : action === "promote" ? ["campaign", "grant", "mount-approval", "approval"] : ["campaign", "grant", "mount-approval"]);
       const options = { campaign: requiredOption(parsed, "campaign"), grant: requiredOption(parsed, "grant"), mountApproval: requiredOption(parsed, "mount-approval") };
-      printJson(io, action === "run" ? await runLive(options) : action === "rollback" ? await rollbackLive(options) : await taskLive(options, requiredOption(parsed, "case"), requiredOption(parsed, "operation")));
+      printJson(io, action === "run" ? await runLive(options) : action === "rollback" ? await rollbackLive(options) : action === "promote" ? await promoteLive({ ...options, approval: requiredOption(parsed, "approval") }) : await taskLive(options, requiredOption(parsed, "case"), requiredOption(parsed, "operation")));
     } else throw new DalError("USAGE_ERROR", "Unknown live campaign command");
     return;
   }
@@ -1283,6 +1297,10 @@ Usage:
   dal live demo --campaign <id> [--credential-store <native-store-path>]
   dal live prepare --plan <file>
   dal live run --campaign <id> --grant <file> --mount-approval <file>
+  dal live dream --campaign <id> [--campaign <id>]
+  dal live review --campaign <id> [--port <port>]
+  dal live promote --campaign <id> --grant <file> --mount-approval <file> --approval <decision>
+  dal live reject --campaign <id> --approval <decision>
   dal live status --campaign <id>
   dal live task --campaign <id> --grant <file> --mount-approval <file> --case <id> --operation <task-id>
   dal live rollback --campaign <id> --grant <file> --mount-approval <file>

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/live-review.v1.schema.json",
+  "oneOf": [
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["$schema", "schema_version", "kind", "plan_sha256", "state_sha256", "candidate", "incumbent", "evaluation_sha256", "scope"],
+      "properties": {
+        "$schema": { "const": "https://recursive-dev-loop.dev/schemas/live-review.v1.schema.json" },
+        "schema_version": { "const": "1.0.0" },
+        "kind": { "const": "request" },
+        "plan_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "state_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "candidate": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "incumbent": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "evaluation_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "scope": { "type": "string", "minLength": 1, "maxLength": 1024 }
+      }
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["$schema", "schema_version", "kind", "request_sha256", "approval_sha256", "decision_id", "outcome", "reviewer"],
+      "properties": {
+        "$schema": { "const": "https://recursive-dev-loop.dev/schemas/live-review.v1.schema.json" },
+        "schema_version": { "const": "1.0.0" },
+        "kind": { "const": "decision" },
+        "request_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "approval_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+        "decision_id": { "type": "string", "pattern": "^dec-[a-z0-9-]+$", "maxLength": 100 },
+        "outcome": { "enum": ["approved", "rejected"] },
+        "reviewer": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    }
+  ]
+}

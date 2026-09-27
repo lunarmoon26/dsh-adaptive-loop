@@ -39,6 +39,27 @@ replacement prompt. The controller evaluates baseline and candidates on the same
 cases. Development evidence guides generation; qualification selects winners and
 is not described as an untouched holdout.
 
+Each live rollout has one fixed declarative exploration policy. It selects a batch
+of the root or currently unexpanded leaves, then each selected parent produces one
+child candidate and deterministic evaluation. State persists a parent-linked
+discovery tree with the evaluated development/qualification score and evaluation
+digest for every node. The controller derives a read-only workspace BPE projection
+from verified state: **Belief** contains development status plus input/response
+digests, **Progress** contains phase and finite candidate allocation, and
+**Experience** contains development scores for evaluated generations. The generator
+receives this development-scoped view and already-authorized development inputs,
+never qualification/canary inputs or outcomes, expected answers, raw replies or
+mutable model memory.
+
+`dal live dream --campaign <id> [--campaign <id>]` replays compatible complete
+recorded trees under each bounded policy in the supported policy family. It starts
+from each root, reveals only recorded child nodes after an identical policy batch
+decision, and scores qualification quality, represented work and useful parallelism.
+It invokes no model, evaluator, native service or new candidate generation. A replay
+result is advisory evidence: a human places its selected policy in the next frozen
+campaign plan and approves that plan before the next online rollout. Policy
+code/configuration never changes during a rollout.
+
 Before every call the controller revalidates authority, reserves a unique operation
 durably, and then accesses native services. Failed or uncertain attempts consume
 allocation. A pending operation after a crash is not automatically resent. Immutable
@@ -47,12 +68,15 @@ by fixed local code. Resuming a completed operation reuses verified evidence.
 Concurrent supervisors cannot hold the same campaign lease.
 
 Only a strict qualification gain with no baseline-passing case regression qualifies
-for promotion. Prompt generations are content-addressed. An atomic workspace-local
-active pointer selects the prompt for subsequent fresh calls; the original skill
-file and existing shared profiles are not rewritten. Post-activation verification
-uses that pointer and rolls back to the prior retained generation on failure. A
-manual rollback can select only a previously retained generation. No-op retention
-is a successful campaign result, not an improvement claim.
+for review. Prompt generations are content-addressed. Search records
+`awaiting_review` while leaving the workspace-local active pointer unchanged. The
+separate promotion executor requires a human-attested, exact current decision for
+the candidate, evaluation, incumbent and pre-review state before switching that
+pointer. The original skill file and existing shared profiles are not rewritten.
+Post-activation verification uses that pointer and compensates a failed canary to
+the prior retained prompt. A manual rollback can select only a previously retained
+generation. No-op retention is a successful campaign result, not an improvement
+claim. See [live promotion control](live-promotion-control.md).
 
 ## Acceptance criteria
 
@@ -60,15 +84,17 @@ is a successful campaign result, not an improvement claim.
    bounded output/time, terminal completion and privacy-safe usage receipts.
 2. Wrong scope, expired/revoked grants, exhausted allocations, source drift and
    unapproved service mounting fail before credential access or transmission.
-3. Baseline, hypothesis/candidate generation, development/qualification evaluation,
-   selection, activation, post-activation probe and rollback compose automatically.
+3. Baseline, fixed-policy hypothesis/candidate generation and
+   development/qualification evaluation compose into a parent-linked discovery tree.
+   Search stages strict selections for review without activating a candidate.
 4. Resume cannot double-send a pending operation; concurrent runs are excluded;
    receipts and current generation are verified before use.
 5. Candidate text cannot alter budgets, grader, authority, runtime or filesystem
    targets; evaluator answers never reach the generator or task executor.
-6. Focused tests cover failure and recovery paths. An exact approved native pilot
-   executes the full loop; actual gains, equality or regressions are reported as
-   observed, independently of process success.
+6. Replay evaluates alternative bounded policies from prefix-only recorded trees
+   without new execution. An exact human decision binds promotion to the staged
+   candidate and evidence; focused tests cover rejection, decision drift,
+   activation, canary compensation and recovery paths.
 
 ## Commands and persistence
 
@@ -86,10 +112,17 @@ send_data_externally --scope <plan-digest>` verifies the delegated transfer scop
 `apply_optimization_candidate` maps to `activate_prompt` only on this explicit
 `--plan` path. Legacy approvals are never interpreted as campaign grants.
 
-`dal live run --campaign <id> --grant <file> --mount-approval <file>` drives the
-whole loop. `dal live status --campaign <id>` validates the state chain, regrades
-referenced task receipts and reports allocations, best evaluated, eligible selection
-and the actual active generation. `dal live task` takes an approved case ID and a
+`dal live run --campaign <id> --grant <file> --mount-approval <file>` drives
+fixed-policy search and stages an eligible candidate for review. `dal live status
+--campaign <id>` validates the state chain, regrades referenced task receipts and
+reports allocations, best evaluated, eligible selection, actual active generation
+and digest-only BPE. `dal live review --campaign <id> [--port <port>]` starts a
+loopback-only read dashboard and downloads the exact review request; it has no write
+endpoint. The reviewer creates an out-of-band human decision, then `dal live
+promote --campaign <id> --grant <file> --mount-approval <file> --approval <decision>`
+revalidates it, switches the pointer and runs the canary. `dal live reject
+--campaign <id> --approval <decision>` records a human rejection without changing
+the pointer. `dal live task` takes an approved case ID and a
 unique `--operation task-...` identity, then runs that case with the current prompt.
 It shares campaign allocations and cannot introduce unapproved task input.
 `dal live rollback` restores the preceding retained generation under the grant.
@@ -100,19 +133,22 @@ start new attempts; no automatic resend, refund, budget reset or hidden retry ex
 
 All campaign artifacts live under `.dal/live/<id>/`. Exact JSON owners are
 `live-plan.v1`, `campaign-grant.v1`, `live-generation.v1`, `live-operation.v1`,
-and `live-state.v1` (including pointer/lease/revocation definitions). `current.json`
-is an atomic pointer to a hash-linked state snapshot and content-addressed prompt.
+`live-state.v1` and `live-review.v1` (including pointer/lease/revocation and
+review-request/decision definitions). Multi-world replay outputs use
+`live-dream.v1` under `.dal/live/dreams/`. `current.json` is an atomic pointer to a
+hash-linked state snapshot and content-addressed prompt.
 An interrupted snapshot/pointer publication is reconciled by authorized `live run`.
 The private artifact store can contain approved prompt and structured response
 objects; these contents never enter feedback logs, capsules or the team run store.
 
 The grant fixes complete inputs and finite requests, not unknown future response
-bytes. Automatic compensation after probe failure restores only the exact previously
-retained prompt even if the grant expired or was revoked while a call was in flight;
-it sends nothing and cannot install a novel generation. Revocation stops new calls,
-not an already dispatched provider request. The timeout includes a bounded five-second
-host startup/termination allowance. Missing usage remains unknown; failed attempts
-retain their allocation.
+bytes. It does not replace the candidate-specific human approval required for
+promotion. Automatic compensation after a post-approval probe failure restores only
+the exact previously retained prompt even if the grant expired or was revoked while
+a call was in flight; it sends nothing and cannot install a novel generation.
+Revocation stops new calls, not an already dispatched provider request. The timeout
+includes a bounded five-second host startup/termination allowance. Missing usage
+remains unknown; failed attempts retain their allocation.
 
 The native host is a separate package with Cordis 4.0.2 and DSH 0.1.5-rc.2 services.
 Legacy v0 dependencies remain pinned independently. Runtime identity pins compiled

@@ -1,0 +1,235 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dream-rsi-orchestration-20260927",
+  "ingested_at": "2026-09-27T21:03:56.187Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dream-rsi-orchestration-20260927.json",
+    "sha256": "c7b251896ce6f9c516a800d7e8da3584a56fb802f12c3ae7decd7ee47fbda825"
+  },
+  "feedback_sha256": "7a6103149a16ca6247cd7d5c4317fde81db0ca0e30445c104733526ce8da8541",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-27T21:03:56.187Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dream-rsi-orchestration-20260927",
+    "change_id": "chg-dream-rsi-orchestration-20260927",
+    "created_at": "2026-09-27T22:02:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "gpt-5.6-terra",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "f921a0cdc2e6b6185c74d80a670f7d1ff420e55c",
+        "branch": "main",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/live-promotion-control.md"
+    },
+    "goal": "Add human-gated live prompt promotion and bounded Dream-RSI-style exploration-policy replay.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-discovery-tree",
+        "statement": "Online live search persists a fixed-policy parent-linked discovery tree and validates its recorded batch decisions.",
+        "result": "passed",
+        "evidence": [
+          "ev-live-focused"
+        ]
+      },
+      {
+        "id": "ac-replay-only",
+        "statement": "Dream replay uses compatible fully recorded trees and stored prefix outcomes without model, evaluator, native-host, or pointer activity.",
+        "result": "passed",
+        "evidence": [
+          "ev-live-focused"
+        ]
+      },
+      {
+        "id": "ac-human-promotion",
+        "statement": "An exact current human decision gates pointer activation, failed canaries compensate, and recovery does not bypass authorization.",
+        "result": "passed",
+        "evidence": [
+          "ev-live-focused"
+        ]
+      },
+      {
+        "id": "ac-contracts",
+        "statement": "Schemas, focused contracts, capsules, documentation, and regression coverage describe the staged promotion and replay boundaries.",
+        "result": "passed",
+        "evidence": [
+          "ev-capsules",
+          "ev-repository-gate"
+        ]
+      },
+      {
+        "id": "ac-distribution",
+        "statement": "The package and clean-consumer smoke checks retain executable CLI, schema, template, plugin-import, and replay behavior.",
+        "result": "passed",
+        "evidence": [
+          "ev-package-smoke"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "The bounded local contracts, implementation, tests, capsule refresh, and package verification completed without a new native campaign.",
+      "exception": null
+    },
+    "what_worked": [
+      "A shared root-or-leaf batch interface preserves prefix-only replay semantics.",
+      "Separating review staging from pointer writes keeps dashboard and replay outputs non-authorizing.",
+      "Focused recovery tests exposed and closed pointer, approval, and legacy-state edge cases before the repository gate."
+    ],
+    "what_failed": [
+      "The first repository gate exposed a capsule test date that predated the refreshed capsule review date; the deterministic test pin was updated and the full gate passed on rerun."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest-live-loop",
+        "purpose": "Verify discovery, replay, promotion, rollback, dashboard, recovery, and compatibility behavior with synthetic transport.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-live-focused"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "capsule-check",
+        "purpose": "Validate refreshed contract capsules against their pinned local sources.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-capsules"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "repository-check",
+        "purpose": "Run type, build, test, capsule, policy, scorecard, and benchmark verification.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-repository-gate"
+        ]
+      },
+      {
+        "sequence": 4,
+        "kind": "tool",
+        "name": "release-smoke",
+        "purpose": "Pack repository artifacts and verify a clean consumer without native mounting or a model call.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-package-smoke"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [
+      {
+        "id": "fi-capsule-test-date",
+        "category": "verification",
+        "summary": "The refreshed capsule review date required updating the deterministic capsule-test clock.",
+        "impact": "low",
+        "recoverable": true,
+        "suggested_action": "Keep capsule test time at or after any intentional checked_at refresh.",
+        "evidence": [
+          "ev-repository-gate"
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "ev-live-focused",
+        "kind": "test",
+        "uri": "repo://tests/live-loop.test.ts",
+        "summary": "Focused live-loop and CLI verification passed 31 tests with synthetic transport.",
+        "sha256": null,
+        "observed_at": "2026-09-27T22:00:00.000Z"
+      },
+      {
+        "id": "ev-capsules",
+        "kind": "command",
+        "uri": "command://dal-capsule-check",
+        "summary": "All committed capsules validated against current pinned sources.",
+        "sha256": null,
+        "observed_at": "2026-09-27T22:01:00.000Z"
+      },
+      {
+        "id": "ev-repository-gate",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Repository verification passed 1,248 tests with seven opt-in skips plus required policy and scorecard checks.",
+        "sha256": null,
+        "observed_at": "2026-09-27T22:01:00.000Z"
+      },
+      {
+        "id": "ev-package-smoke",
+        "kind": "command",
+        "uri": "command://release-pack-smoke",
+        "summary": "Eight package artifacts and clean-consumer smoke verification passed without native mounting or a model call.",
+        "sha256": null,
+        "observed_at": "2026-09-27T22:01:00.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-no-native-campaign",
+        "statement": "No new native campaign or external-service execution occurred; evidence is local implementation and synthetic transport verification only.",
+        "level": "medium",
+        "resolution": "Run a separately approved exact live campaign before claiming native-service proof.",
+        "evidence": [
+          "ev-live-focused",
+          "ev-repository-gate"
+        ]
+      },
+      {
+        "id": "un-policy-generalization",
+        "statement": "The bounded declarative policy family is not evidence of general model-developed exploration policies or cross-workspace policy gains.",
+        "level": "high",
+        "resolution": "Evaluate pre-registered policy baselines across independently approved compatible campaign worlds.",
+        "evidence": [
+          "ev-live-focused"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "No live promotion, native campaign, shared-profile change, plugin mount, or external transfer occurred during this change."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "no-raw-prompts",
+        "synthetic-transport"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

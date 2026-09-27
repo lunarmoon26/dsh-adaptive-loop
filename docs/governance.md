@@ -70,9 +70,12 @@ candidate/request/time/output limits and promotion threshold. It authorizes only
 the dynamic prompt-text search and bounded transfers described by that plan.
 Expected outputs remain local; qualification inputs never enter the generator.
 
-One human campaign decision replaces per-candidate decisions only within this
-explicit text-only scope. The host independently verifies authority at each
-operation and records exact request/generation identities. The model has no tool
+The campaign decision delegates bounded text calls, not per-candidate promotion.
+An eligible live candidate requires a separate exact current
+`apply_optimization_candidate` decision whose scope binds the frozen plan,
+pre-review state, incumbent, candidate and deterministic evaluation. The DAL
+promotion executor independently verifies both authorities at its operation
+boundary and records request/generation identities. The model has no tool
 dispatcher or filesystem capability. A separate exact legacy mount approval binds
 the native-service host to the same plan/runtime. Shared profiles, executable
 plugins, new tasks, expanded limits and different runtimes require new scope.

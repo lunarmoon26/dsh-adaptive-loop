@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dsh-adapter-boundary",
-  "capsule_version": "1.8.0",
+  "capsule_version": "1.9.0",
   "title": "dsh and optimizer adapter boundary",
   "audience": "Agents and maintainers planning dsh, Cordis, GEPA, SkillOpt, or evaluation integration",
-  "checked_at": "2026-09-16",
+  "checked_at": "2026-09-27",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-architecture",
       "kind": "local_file",
       "uri": "repo://docs/architecture.md",
-      "revision": "dal-paid-e2e-preflight-2026-09-08",
-      "sha256": "55791488b1a41517cd35b13d93c2080c523d469e39d37c0f469587faf14ece19",
+      "revision": "chg-dream-rsi-orchestration-20260927-reviewed",
+      "sha256": "ff75c13ea7576d5799e30f2f9c679f6bbcf0f3806180f6bde90497159421390a",
       "local_path": "../docs/architecture.md",
       "required": true
     },
@@ -30,8 +30,8 @@
       "id": "src-dal-roadmap",
       "kind": "local_file",
       "uri": "repo://ROADMAP.md",
-      "revision": "chg-dal-live-text-loop-20260916-reviewed",
-      "sha256": "d3cde5f8a59dbd7e273bf1a16b4ac43302d6f2055d6864a260e52dc86801f753",
+      "revision": "chg-dream-rsi-orchestration-20260927-reviewed",
+      "sha256": "dc41943f37b23124bd3bca979519f334ff5733dd95f0d3771f99f6976d924ab4",
       "local_path": "../ROADMAP.md",
       "required": true
     },
@@ -108,6 +108,14 @@
     {
       "id": "claim-controller-boundary",
       "text": "The run-to-run controller foundation is an offline observation subsystem separate from proposal lifecycle; an optional unmounted recorder bridge can supply pinned closed terminal observations, while PI governance, response learning, predictive selection, canary, and rollback control remain future work.",
+      "source_ids": [
+        "src-dal-architecture",
+        "src-dal-roadmap"
+      ]
+    },
+    {
+      "id": "claim-live-dream-boundary",
+      "text": "The versioned live text loop now records fixed-policy discovery trees and replays a bounded data-only policy family from prefix-revealed stored outcomes. This is not DSH policy code execution, plugin mounting, model-based policy generation, or self-authorized deployment.",
       "source_ids": [
         "src-dal-architecture",
         "src-dal-roadmap"

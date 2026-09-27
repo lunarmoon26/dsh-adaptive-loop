@@ -29,6 +29,8 @@ export const SCHEMA_IDS = {
   liveState: "https://recursive-dev-loop.dev/schemas/live-state.v1.schema.json",
   liveOperation: "https://recursive-dev-loop.dev/schemas/live-operation.v1.schema.json",
   liveGeneration: "https://recursive-dev-loop.dev/schemas/live-generation.v1.schema.json",
+  liveReview: "https://recursive-dev-loop.dev/schemas/live-review.v1.schema.json",
+  liveDream: "https://recursive-dev-loop.dev/schemas/live-dream.v1.schema.json",
   livePointer: "https://recursive-dev-loop.dev/schemas/live-pointer.v1.schema.json",
   liveLease: "https://recursive-dev-loop.dev/schemas/live-lease.v1.schema.json",
   clusterRecord: "https://recursive-dev-loop.dev/schemas/cluster-record.v1.schema.json",

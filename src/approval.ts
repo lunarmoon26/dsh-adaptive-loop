@@ -47,12 +47,20 @@ export async function verifyApproval(
   value: unknown,
   expectation: ApprovalExpectation,
 ): Promise<ApprovalDecision> {
+  return verifyApprovalOutcome(value, expectation, "approved");
+}
+
+export async function verifyApprovalOutcome(
+  value: unknown,
+  expectation: ApprovalExpectation,
+  outcome: ApprovalDecision["decision"],
+): Promise<ApprovalDecision> {
   const decision = await validateApprovalDecision(value);
   const at = expectation.at ?? new Date();
   const issues: string[] = [];
 
-  if (decision.decision !== "approved") {
-    issues.push("decision is not approved");
+  if (decision.decision !== outcome) {
+    issues.push(`decision is not ${outcome}`);
   }
   if (decision.action !== expectation.action) {
     issues.push(`action does not match ${expectation.action}`);
@@ -94,4 +102,15 @@ export async function verifyApprovalFile(
   assertNoSecrets(scanSecrets(value, raw.toString("utf8")));
   assertNoPii(scanPii(value, raw.toString("utf8")));
   return verifyApproval(value, expectation);
+}
+
+export async function verifyApprovalOutcomeFile(
+  filePath: string,
+  expectation: ApprovalExpectation,
+  outcome: ApprovalDecision["decision"],
+): Promise<ApprovalDecision> {
+  const { value, raw } = await readJsonFile<unknown>(filePath);
+  assertNoSecrets(scanSecrets(value, raw.toString("utf8")));
+  assertNoPii(scanPii(value, raw.toString("utf8")));
+  return verifyApprovalOutcome(value, expectation, outcome);
 }

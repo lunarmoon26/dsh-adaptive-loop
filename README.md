@@ -34,10 +34,12 @@ is [resumable campaign replay](docs/campaign-replay.md), separating development
 proxies, qualification, best evaluated, eligible selection and simulated retention.
 Replay executes the deterministic grader on supplied artifacts, not the candidate
 or a model. The separate [live text loop](docs/live-text-loop.md) supplies native
-DSH/Codex subscription calls, automatic bounded prompt generation, qualification,
-local activation, canary checks and rollback under one exact campaign grant plus
-a native service-mount decision. It is tool-free: arbitrary executable harness
-evolution and shared-profile changes remain outside that grant.
+DSH/Codex subscription calls, fixed-policy bounded prompt generation,
+qualification, replay-only exploration-policy comparison, human-gated local
+activation, canary checks and rollback. A campaign grant plus native service-mount
+decision authorize calls; exact human candidate approval authorizes promotion. It is
+tool-free: arbitrary executable harness evolution and shared-profile changes remain
+outside that grant.
 
 ## Quick start
 
@@ -62,6 +64,8 @@ Expected results: the feedback, local-read policy decision, capsules, and evalua
 | --- | --- |
 | `dal live demo / prepare` | Prepare synthetic inputs or freeze a bounded text-campaign plan; no model call |
 | `dal live run` | Execute the authorized native subscription improvement loop |
+| `dal live dream --campaign <id> [--campaign <id>]` | Replay bounded exploration policies from recorded discovery trees; no model, evaluator, or activation |
+| `dal live review / promote / reject` | Read a loopback review bundle, then separately record human rejection or approved candidate activation |
 | `dal live status / task / rollback / revoke / recover` | Inspect evidence, consume the active prompt, restore the prior generation or stop/recover the campaign |
 | `dal setup [--dir <dir>]` | Non-overwriting workspace scaffold plus truthful diagnostics |
 | `dal doctor [--dir <dir>]` | Read-only packaged-asset and workspace-evidence checks; no auth or model probe |

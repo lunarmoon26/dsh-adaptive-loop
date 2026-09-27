@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "1.9.0",
+  "capsule_version": "2.0.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
-  "checked_at": "2026-09-16",
+  "checked_at": "2026-09-27",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "chg-dal-live-text-loop-20260916-reviewed",
-      "sha256": "bfd3be6b0c2c8be3cca65045bbbc01a07dfab707b958298791b01dc07b619320",
+      "revision": "chg-dream-rsi-orchestration-20260927-reviewed",
+      "sha256": "8512f2aa7d3fc11124ec85c54c97feb15542ca3112adf7fb0fb33f505c6b3063",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -21,8 +21,8 @@
       "id": "src-dal-governance",
       "kind": "local_file",
       "uri": "repo://docs/governance.md",
-      "revision": "chg-dal-live-text-loop-20260916-reviewed",
-      "sha256": "2b0784dd3c65390d0f0fa3a5698a42894dea4843c7c3dc21269817412c2d59d3",
+      "revision": "chg-dal-hitl-promotion-control-20260927-reviewed",
+      "sha256": "0f51af73d46dedf34cca9b17cff465d37efe1bdb8799e7b0cdc111f473177a6e",
       "local_path": "../docs/governance.md",
       "required": true
     },
@@ -53,7 +53,7 @@
     },
     {
       "id": "claim-local-only",
-      "text": "Historical version 0 remains local-only by default with independently approved purpose-specific executors and quarantined HMR. The versioned live extension permits bounded native Codex calls and local prompt promotion under an exact human campaign grant and separate host-mount approval; it supplies no arbitrary code evolution or shared-profile authority.",
+      "text": "Historical version 0 remains local-only by default with independently approved purpose-specific executors and quarantined HMR. The versioned live extension permits bounded native Codex calls; local prompt promotion additionally requires an exact current human candidate decision and separate host-mount approval. Replay-only exploration policy comparison has no activation authority and supplies no arbitrary code evolution or shared-profile authority.",
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance",
@@ -74,6 +74,13 @@
       "source_ids": [
         "src-dal-spec",
         "src-dal-governance"
+      ]
+    },
+    {
+      "id": "claim-live-dream-boundary",
+      "text": "Live discovery history records parent-linked evaluated nodes under one fixed bounded policy. Dream replay reuses only prefix-revealed stored outcomes, performs no model or evaluator call, and can influence only a later human-approved frozen plan.",
+      "source_ids": [
+        "src-dal-spec"
       ]
     },
     {
