@@ -160,3 +160,12 @@ Agents work normally during the day; each task ends with a structured feedback r
 ## Benchmark workspace
 
 [`benchmarks/tau-style-workflow/`](benchmarks/tau-style-workflow/) is a target test workspace modeling the τ-bench pattern: closed-loop repetitive workflows, deterministic state/effect grading, written policy, and separate harness/business outcomes. Its approval-bound e2e path stages a minimal read-only candidate and separates candidate, journal-owning service, and grader containers so evaluator artifacts are not candidate-visible. `pnpm run benchmark:check` runs the offline suite and is part of `pnpm run check`; model batches still require exact external-transfer approval.
+
+## Artifact-aware multi-round work
+
+The [generic campaign ledger](docs/artifact-campaigns.md) persists experiment trees,
+shared artifact dependencies, bounded reservations and separate supervisor reviews.
+Use `dal campaign create`, `append` and `tree` from an outer harness; the API is
+also exported as `@lunarmoon26/dal/campaign`. Artifacts are opaque digest references,
+not copied datasets or model files. This does not execute work, activate the live
+text loop, promote a policy or certify open-ended research improvement.

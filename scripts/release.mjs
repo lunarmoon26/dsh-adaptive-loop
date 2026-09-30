@@ -129,19 +129,40 @@ if (command === "check") {
     assert.equal(replay.retained_generation, "baseline");
     assert.equal(replay.activation_authorized, false);
     assert.deepEqual(JSON.parse(run(cli, ["campaign", "status", "--campaign", "release-smoke"], workspace)), replay);
+    const artifactFixtures = join(root, "tests", "fixtures", "artifact-campaign");
+    const artifactPlan = JSON.parse(await readFile(join(artifactFixtures, "plan.json"), "utf8"));
+    const artifactPlanPath = join(fixtures, "artifact-plan.json");
+    await writeFile(artifactPlanPath, JSON.stringify(artifactPlan));
+    run(cli, ["campaign", "create", "--plan", artifactPlanPath], workspace);
+    for (const name of (await readdir(artifactFixtures)).filter(name => /^\d.*\.json$/.test(name)).sort()) {
+      const path = join(fixtures, `artifact-${name}`);
+      await writeFile(path, await readFile(join(artifactFixtures, name)));
+      run(cli, ["campaign", "append", "--operation", path], workspace);
+    }
+    const artifactTree = JSON.parse(run(cli, ["campaign", "tree", "--campaign", artifactPlan.campaign_id], workspace));
+    assert.equal(artifactTree.nodes.length, 2);
+    assert.equal(artifactTree.sequence, 6);
+    assert.equal(artifactTree.active, 0);
+    assert.ok(artifactTree.best !== null);
+    const artifactPrefix = JSON.parse(run(cli, ["campaign", "tree", "--campaign", artifactPlan.campaign_id, "--through", "3"], workspace));
+    assert.equal(artifactPrefix.nodes.length, 1);
+    assert.equal(artifactPrefix.best, null);
     const probe = `
       import assert from 'node:assert/strict';
       import { userGlobalInstallScopeDigest } from '@lunarmoon26/dal/install';
       import { defaultCli } from '@lunarmoon26/dal-improve-tools';
+      import { artifactCampaignStatus } from '@lunarmoon26/dal/campaign';
       import { existsSync } from 'node:fs';
       assert.match(await userGlobalInstallScopeDigest(), /^[a-f0-9]{64}$/);
       assert.ok(existsSync(defaultCli()[1]));
+      process.chdir(${JSON.stringify(workspace)});
+      assert.equal((await artifactCampaignStatus(${JSON.stringify(artifactPlan.campaign_id)})).sequence, 6);
       for (const name of ${JSON.stringify(packages.filter((pkg) => pkg.directory !== "." && !pkg.name.endsWith("dal-modes")).map((pkg) => pkg.name))}) {
         await import(name);
       }
     `;
     run(process.execPath, ["--input-type=module", "-e", probe], temporary);
-    console.log("Clean consumer smoke passed: executable CLI, schemas, templates, plugin imports, packaged CLI resolution and complete campaign replay; no DSH mount or model call");
+    console.log("Clean consumer smoke passed: executable CLI, schemas, templates, plugin imports, packaged CLI resolution, campaign replay and artifact-campaign API/tree; no DSH mount or model call");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

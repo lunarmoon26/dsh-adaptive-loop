@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json",
+  "oneOf": [
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["$schema", "schema_version", "operation_id", "campaign_id", "actor", "kind", "node_id", "parent_id", "round", "hypothesis", "contract_sha256", "worker_id", "workspace_sha256", "inputs", "reservation"],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaId" },
+        "schema_version": { "const": "1.0.0" },
+        "operation_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "campaign_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "kind": { "const": "reserve" },
+        "node_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "parent_id": { "anyOf": [{ "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" }, { "type": "null" }] },
+        "round": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "hypothesis": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/summary" },
+        "contract_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" },
+        "worker_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "workspace_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" },
+        "inputs": { "type": "array", "maxItems": 100, "items": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/input" } },
+        "reservation": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/resources" }
+      }
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["$schema", "schema_version", "operation_id", "campaign_id", "actor", "kind", "node_id", "outcome", "outputs", "metrics", "usage", "evidence_sha256"],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaId" },
+        "schema_version": { "const": "1.0.0" },
+        "operation_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "campaign_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "kind": { "enum": ["result", "resolve"] },
+        "node_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "outcome": { "enum": ["completed", "failed", "timed_out", "unknown"] },
+        "outputs": { "type": "array", "maxItems": 100, "items": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/artifact" } },
+        "metrics": { "type": "array", "maxItems": 30, "items": { "$ref": "#/$defs/metric" } },
+        "usage": {
+          "type": "object", "minProperties": 1, "maxProperties": 16,
+          "propertyNames": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/resourceUnit" },
+          "additionalProperties": { "anyOf": [{ "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/resourceAmount" }, { "type": "null" }] }
+        },
+        "evidence_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" }
+      }
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["$schema", "schema_version", "operation_id", "campaign_id", "actor", "kind", "node_id", "result_sha256", "accept_result", "accepted_artifacts", "evidence_sha256"],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaId" },
+        "schema_version": { "const": "1.0.0" },
+        "operation_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "campaign_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "actor": { "$ref": "#/$defs/actor" },
+        "kind": { "const": "review" },
+        "node_id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "result_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" },
+        "accept_result": { "type": "boolean" },
+        "accepted_artifacts": { "type": "array", "maxItems": 100, "uniqueItems": true, "items": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" } },
+        "evidence_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" }
+      }
+    }
+  ],
+  "$defs": {
+    "schemaId": { "const": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json" },
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "role"],
+      "properties": {
+        "id": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/id" },
+        "role": { "enum": ["supervisor", "worker"] }
+      }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "value", "context_sha256"],
+      "properties": {
+        "name": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/slug" },
+        "value": { "type": ["number", "null"], "minimum": -1.7976931348623157e308, "maximum": 1.7976931348623157e308 },
+        "context_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" }
+      }
+    }
+  }
+}

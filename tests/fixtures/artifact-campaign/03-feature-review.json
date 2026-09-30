@@ -1,0 +1,13 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json",
+  "schema_version": "1.0.0",
+  "operation_id": "review-feature-cache",
+  "campaign_id": "synthetic-cache-campaign",
+  "actor": { "id": "supervisor-demo", "role": "supervisor" },
+  "kind": "review",
+  "node_id": "feature-producer",
+  "result_sha256": "7b95a4bdfec7f92035f65c33a0a02a33e89fe41e6d0488f537fd1e7c8fb4d109",
+  "accept_result": true,
+  "accepted_artifacts": ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+  "evidence_sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+}

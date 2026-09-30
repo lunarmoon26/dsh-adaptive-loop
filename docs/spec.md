@@ -59,6 +59,20 @@ The 2026-08-29 project rename (recursive-dev-loop → dsh-adaptive-loop) deliber
 
 ## Current v0 behavior
 
+### Artifact-aware campaign ledger
+
+The additive [artifact campaign contract](artifact-campaigns.md) records generic
+multi-round experiment trees and shared artifact dependencies for an outer harness.
+`dal campaign create`, `append` and `tree` persist frozen plans, pre-execution
+reservations, separate outcomes/reviews, opaque artifact identities and historical
+prefix projections. Unknown outcomes retain active slots, failures retain budget
+charges, and only independently attested accepted artifacts can feed subsequent
+nodes. These are metadata integrity/accounting checks, not an executor, actual
+resource enforcement, artifact-byte verification or an improvement certification.
+Open-ended research can record evidence without acquiring a DAL improvement claim.
+The live-text loop, its schemas, policy promotion and historical campaign replay
+commands remain separate and unchanged.
+
 ### DAL-001 — Structured task feedback
 
 Every feature-change task record contains a change ID, goal, acceptance criteria and outcomes, overall outcome, what worked, what failed, tool/harness/plugin calls, failures or inefficiencies, evidence references, uncertainty, human review and approval state, privacy classification, and redaction metadata. The feedback JSON Schema owns exact syntax; semantic validation owns cross-field rules.

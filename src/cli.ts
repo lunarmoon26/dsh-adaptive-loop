@@ -10,6 +10,7 @@ import { admissionStatus, completeAdmission, issueAdmission } from "./admission.
 import { branchStats, evaluateBranch, recordBranch, selectBranchUcb } from "./branch.js";
 import { checkCapsulePath } from "./capsule.js";
 import { campaignReplayStatus, prepareCampaignReplay, replayCampaign } from "./campaign-replay.js";
+import { appendCampaignOperation, artifactCampaignStatus, prepareArtifactCampaign, readCampaignInput } from "./artifact-campaign.js";
 import { createLiveDemo, dreamLive, liveStatus, prepareLive, recoverLive, revokeLive, rollbackLive, runLive, taskLive } from "./live/loop.js";
 import { promoteLive, rejectLive } from "./live/loop.js";
 import { serveLiveReviewDashboard } from "./live/dashboard.js";
@@ -133,7 +134,20 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
   }
   if (group === "campaign") {
     const parsed = parseArguments(rest);
-    if (action === "prepare") {
+    if (action === "create") {
+      assertOptions(parsed, ["plan"]);
+      exactlyPositionals(parsed, 0, "campaign create --plan <file>");
+      printJson(io, await prepareArtifactCampaign(await readCampaignInput(requiredOption(parsed, "plan"))));
+    } else if (action === "append") {
+      assertOptions(parsed, ["operation"]);
+      exactlyPositionals(parsed, 0, "campaign append --operation <file>");
+      printJson(io, await appendCampaignOperation(await readCampaignInput(requiredOption(parsed, "operation"))));
+    } else if (action === "tree") {
+      assertOptions(parsed, ["campaign", "through"]);
+      exactlyPositionals(parsed, 0, "campaign tree --campaign <id> [--through <sequence>]");
+      const through = oneOption(parsed, "through");
+      printJson(io, await artifactCampaignStatus(requiredOption(parsed, "campaign"), through === undefined ? undefined : Number(through)));
+    } else if (action === "prepare") {
       assertOptions(parsed, ["plan"]);
       exactlyPositionals(parsed, 0, "campaign prepare --plan <file>");
       printJson(io, await prepareCampaignReplay(requiredOption(parsed, "plan")));
@@ -143,7 +157,7 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
       const id = requiredOption(parsed, "campaign");
       printJson(io, action === "status" ? await campaignReplayStatus(id) : await replayCampaign(id, Number(oneOption(parsed, "steps") ?? 32)));
     } else {
-      throw new DalError("USAGE_ERROR", "Supported campaign commands: prepare, replay, status. Live execution is unavailable.");
+      throw new DalError("USAGE_ERROR", "Supported campaign commands: create, append, tree, prepare, replay, status. Live execution is unavailable; no command executes experiments.");
     }
     return;
   }
@@ -1306,6 +1320,9 @@ Usage:
   dal live rollback --campaign <id> --grant <file> --mount-approval <file>
   dal live revoke|recover --campaign <id>
   dal campaign prepare --plan <file>
+  dal campaign create --plan <artifact-campaign-plan>
+  dal campaign append --operation <artifact-campaign-operation>
+  dal campaign tree --campaign <id> [--through <event-sequence>]
   dal campaign replay --campaign <id> [--steps <count>]
   dal campaign status --campaign <id>
   dal setup [--dir <directory>]

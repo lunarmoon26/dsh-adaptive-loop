@@ -1,5 +1,30 @@
 # Requirement Evidence
 
+## Artifact-aware multi-round campaigns (2026-09-29)
+
+Change: `chg-artifact-campaigns-20260929`. Completed for the generic local ledger,
+CLI and public library API, not an executor or an outer-harness integration.
+The [contract](artifact-campaigns.md) separates primary-parent lineage from shared
+artifact dependencies and execution outcomes from exact-result supervisor reviews.
+
+| Requirement | Evidence |
+| --- | --- |
+| Reusable accepted artifacts and immutable starting workspace identities | Multi-round fixture and sibling reuse tests in `tests/artifact-campaign.test.ts` |
+| Reservations, failure accounting, unknown resolution and overrun handling | Focused resource/parallelism tests; no physical-enforcement claim |
+| Independent acceptance and comparable accepted incumbent | Stale/self-review, rejected inputs, metric-context and checkpoint tests |
+| Idempotency, restart and prefix projections | Concurrent writer, operation-conflict, chain-drift and historical-view tests |
+| Metadata-only persistence and packaged portability | Privacy-shape tests; `scripts/release.mjs` clean consumer exercises create/append/tree and exported API |
+
+Verification: 30 focused tests; full repository check passed 1,278 tests with seven
+existing conditional skips, plus types, build, capsules and offline scorecards.
+Release pack and smoke passed. Existing dependency trees were reused in the isolated
+worktree; package-manager dependency auto-repair was disabled for these checks.
+No model, DSH mount, profile edit, experiment execution or policy activation occurred.
+
+Unknowns: runtime enforcement, actual artifact-byte verification, reviewer
+authentication and semantic privacy remain adapter responsibilities. Discovery-policy
+replay with dependency-aware costs and integration with OpenCode are separate work.
+
 ## Human-gated promotion and Dream-RSI orchestration (2026-09-27)
 
 Changes: `chg-dal-hitl-promotion-control-20260927` and

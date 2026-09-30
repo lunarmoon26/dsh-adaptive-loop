@@ -1,0 +1,191 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-artifact-campaigns-20260929-v2",
+  "ingested_at": "2026-09-29T22:06:11.395Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-artifact-campaigns-20260929-v2.json",
+    "sha256": "b8dbadfa7a44bb2e51eb1a04752904aec501b12deb0678d65e49f1e2239669a9"
+  },
+  "feedback_sha256": "e5ae20a5fd649afe701645abe5edf81805f20af1045bc7218b38e4f57b262e66",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-09-29T22:06:11.395Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-artifact-campaigns-20260929-v2",
+    "change_id": "chg-artifact-campaigns-20260929",
+    "created_at": "2026-09-29T22:05:00Z",
+    "supersedes": "fb-artifact-campaigns-20260929",
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode-supervisor"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": null,
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "57b1af6e962d877f98d78947e956d52fb84219d4",
+        "branch": "feat/artifact-campaign",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/artifact-campaigns.md"
+    },
+    "goal": "Complete the generic artifact-aware campaign ledger and close final metadata-review findings without changing execution authority.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-campaign-contract",
+        "statement": "Frozen plans, multiround lineage, shared compatible artifacts, reservations, independent review and immutable prefix history pass the focused contract tests.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused"
+        ]
+      },
+      {
+        "id": "ac-final-review",
+        "statement": "Idempotent retries report the current head; raw-form summary checks cover Unicode separators and network paths while retaining explicit semantic-privacy limits.",
+        "result": "passed",
+        "evidence": [
+          "ev-focused",
+          "ev-source"
+        ]
+      },
+      {
+        "id": "ac-regressions",
+        "statement": "Final repository types, build, tests, capsules and offline scorecards pass.",
+        "result": "passed",
+        "evidence": [
+          "ev-repository"
+        ]
+      },
+      {
+        "id": "ac-distribution",
+        "statement": "Clean packaged consumers execute the artifact-campaign CLI and public API without a source checkout or native model execution.",
+        "result": "passed",
+        "evidence": [
+          "ev-consumer"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Final source and evidence supersede the earlier task receipt after additional review hardening. The generic metadata ledger and packaged interface are complete; no outer harness or live profile was changed.",
+      "exception": null
+    },
+    "what_worked": [
+      "Thirty focused tests passed, including restart, prefix projection, shared reuse and bounded accounting.",
+      "The complete repository and clean package-consumer gates passed after final changes."
+    ],
+    "what_failed": [
+      "Final review found additional Unicode separator and network-path forms not covered by the initial summary guard; both were rejected and regression-tested."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "repository-check",
+        "purpose": "Reverify all contracts and regressions after final hardening.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-focused",
+          "ev-repository"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "release-pack-and-smoke",
+        "purpose": "Verify final package contents and public campaign entry points in a disposable consumer.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-consumer"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-focused",
+        "kind": "test",
+        "uri": "repo://tests/artifact-campaign.test.ts",
+        "summary": "All thirty focused campaign tests passed.",
+        "sha256": "1b7d6a0a9d14ad930082e9eaf57d74189967e0c116f68b345c73ff60d5d7cadc",
+        "observed_at": "2026-09-29T22:05:00Z"
+      },
+      {
+        "id": "ev-source",
+        "kind": "file",
+        "uri": "repo://src/artifact-campaign.ts",
+        "summary": "Final metadata ledger implementation after review fixes.",
+        "sha256": "80623f904e22cf61377d83fea7a3c6002a37d06c16e2981a923cc02d056b15ca",
+        "observed_at": "2026-09-29T22:05:00Z"
+      },
+      {
+        "id": "ev-repository",
+        "kind": "test",
+        "uri": "command://repository-check",
+        "summary": "Full check passed: fifty-eight test files, twelve hundred seventy-eight passing tests, seven existing conditional skips, types, build, capsules and both offline scorecards.",
+        "sha256": null,
+        "observed_at": "2026-09-29T22:05:00Z"
+      },
+      {
+        "id": "ev-consumer",
+        "kind": "test",
+        "uri": "repo://scripts/release.mjs",
+        "summary": "Eight local artifacts packed and clean consumer passed, including artifact lineage CLI, historical prefix and exported campaign API. No model call or DSH mount occurred.",
+        "sha256": null,
+        "observed_at": "2026-09-29T22:05:00Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-adapter-integration",
+        "statement": "OpenCode and competition adapters are not wired to this new ledger yet.",
+        "level": "medium",
+        "resolution": "Integrate the public metadata API and map existing task and artifact receipts in a separate workspace change.",
+        "evidence": [
+          "ev-consumer"
+        ]
+      },
+      {
+        "id": "un-trust-boundary",
+        "statement": "Actor roles and digests are attestations, not authentication, physical resource enforcement, artifact-byte verification or proof of semantic privacy.",
+        "level": "medium",
+        "resolution": "Keep those responsibilities in the independently controlled outer adapter and preserve separate execution and promotion approvals.",
+        "evidence": [
+          "ev-source"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Maintainer code review remains pending. No commit, push, publication or live configuration change was performed."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "synthetic-evidence"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
