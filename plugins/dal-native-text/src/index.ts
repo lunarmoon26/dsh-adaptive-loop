@@ -58,14 +58,9 @@ export async function collectNativeText(stream: AsyncIterable<StreamChunk>, maxB
 }
 
 async function execute(request: TextRequest): Promise<TextReply> {
-  // Keep the newer native host's seam separate from legacy v0 Cordis module
-  // augmentations brought in by the sandbox/tool packages elsewhere in DAL.
-  const ctx = new Context() as unknown as {
-    plugin(plugin: unknown, config?: unknown): Promise<unknown>;
-    llm: LlmRuntime;
-    credentials: { listRecords(): Promise<readonly CredentialRecordEntry[]> };
-    fiber: { dispose(): Promise<void> };
-  };
+  // All native consumers share the pinned DSH/Cordis release. Keep real service
+  // types here so a future runtime update cannot hide behind structural casts.
+  const ctx = new Context();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), request.timeout_ms);
   let stage = "MOUNT";

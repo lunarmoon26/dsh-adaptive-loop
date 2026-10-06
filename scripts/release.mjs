@@ -16,6 +16,7 @@ const packages = await Promise.all(directories.map(async (directory) => ({
   directory, ...JSON.parse(await readFile(join(root, directory, "package.json"), "utf8")),
 })));
 const version = packages[0].version;
+const rootManifest = packages.find((pkg) => pkg.directory === ".");
 const artifacts = join(root, ".dal", "release", version);
 const command = process.argv[2];
 const run = (file, args, cwd = root) => execFileSync(file, args, {
@@ -77,7 +78,7 @@ if (command === "check") {
     // A disposable consumer install, never a DSH profile or plugin mount.
     run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--package-lock=false",
       ...manifest.packages.map((item) => join(artifacts, item.filename)),
-      "@deepseek-ai/dsh-tools@0.1.1-rc.2"], temporary);
+      `@deepseek-ai/dsh-tools@${rootManifest.devDependencies["@deepseek-ai/dsh-tools"]}`], temporary);
     const cli = join(temporary, "node_modules", ".bin", "dal");
     assert.match(run(cli, ["--help"], temporary), /DSH Adaptive Loop/);
     const workspace = join(temporary, "consumer");

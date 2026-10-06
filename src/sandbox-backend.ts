@@ -1,7 +1,7 @@
 import { basename } from "node:path";
 
 import { Context } from "@deepseek-ai/cordis";
-import { SandboxUnavailableError, type ConfinedArgv, type SandboxPolicy } from "@deepseek-ai/dsh-sandbox";
+import { SandboxUnavailableError, type ConfinedArgv, type SandboxPolicy, type SandboxProvider } from "@deepseek-ai/dsh-sandbox";
 import { LocalSandboxProvider } from "@deepseek-ai/dsh-sandbox-local";
 
 import { DalError } from "./errors.js";
@@ -40,9 +40,14 @@ export type ConfineFn = (argv: string[], policy: SandboxPolicy) => Promise<Backe
 
 export async function confine(argv: string[], policy: SandboxPolicy): Promise<BackendConfinement> {
   const ctx = await sandboxContext();
+  return confineWithProvider(ctx.sandbox, argv, policy);
+}
+
+/** Typed adapter boundary, also exercised with synthetic asynchronous providers. */
+export async function confineWithProvider(provider: Pick<SandboxProvider, "confine">, argv: string[], policy: SandboxPolicy): Promise<BackendConfinement> {
   let confined: ConfinedArgv;
   try {
-    confined = ctx.sandbox.confine(argv, policy);
+    confined = await provider.confine(argv, policy);
   } catch (error) {
     if (error instanceof SandboxUnavailableError) {
       throw new DalError("SANDBOX_UNAVAILABLE", error.message);

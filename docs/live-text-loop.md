@@ -150,8 +150,9 @@ Revocation stops new calls, not an already dispatched provider request. The time
 includes a bounded five-second host startup/termination allowance. Missing usage
 remains unknown; failed attempts retain their allocation.
 
-The native host is a separate package with Cordis 4.0.2 and DSH 0.1.5-rc.2 services.
-Legacy v0 dependencies remain pinned independently. Runtime identity pins compiled
+The native host is a separate package with Cordis 4.0.4 and DSH 0.2.0-rc.2 services,
+aligned with the root runtime release set. See [compatibility](distribution.md#dsh-compatibility)
+for migration evidence and limits. Runtime identity pins compiled
 DAL code, schemas and native entry bytes. It is an operation-time integrity check
 for this trusted host, not the general imported-closure attestation required for
 arbitrary executable-plugin evolution. This implementation does not mount those
@@ -159,7 +160,10 @@ peer services merely because their packages are installed.
 
 ## Dependency approval
 
-The maintainer explicitly approved installation of Cordis 4.0.2 and native DSH
+Historically, the maintainer explicitly approved installation of Cordis 4.0.2 and native DSH
 LLM, pi-ai and credentials-local 0.1.5-rc.2 plus resolved dependencies into this
 repository only. Decision `dec-native-text-dependencies-20260916` records that
 installation-only scope; it grants no runtime mount, credential use or live call.
+That historical decision is not transferred to a new runtime generation. The
+0.2.0-rc.2 source migration does not update an installed host or approve a live
+campaign; operation-time identity and exact approvals remain required.
