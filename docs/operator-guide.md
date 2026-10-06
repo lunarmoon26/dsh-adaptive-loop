@@ -17,6 +17,12 @@ The gate typechecks, runs Vitest, builds the CLI, checks all committed capsules,
 
 ## End-of-task feedback
 
+For multi-round task lineage and reusable artifact metadata, use the separate
+[artifact campaign ledger](artifact-campaigns.md): `dal campaign create --plan`,
+`dal campaign append --operation`, and `dal campaign tree --campaign`. These local
+commands do not execute experiments or grant permissions. The outer harness must
+verify the referenced artifacts and checks before recording acceptance.
+
 1. Copy the shape of `tests/fixtures/feedback/completed.json`, `blocked.json`, or `aborted.json`.
 2. Include safe summaries and evidence references only. Never paste transcripts, arguments, outputs, source, environment values, credentials, or personal data.
 3. Validate before write:

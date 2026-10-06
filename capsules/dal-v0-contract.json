@@ -2,18 +2,18 @@
   "$schema": "https://recursive-dev-loop.dev/schemas/knowledge-capsule.v1.schema.json",
   "schema_version": "1.0.0",
   "capsule_id": "capsule-dal-v0-contract",
-  "capsule_version": "2.0.0",
+  "capsule_version": "2.1.0",
   "title": "DAL v0 safety and evidence contract",
   "audience": "Agents and maintainers changing feedback, policy, evaluation, approval, controller, runtime-generation, or HMR-candidate behavior",
-  "checked_at": "2026-09-27",
+  "checked_at": "2026-09-29",
   "refresh_after": "2026-12-01",
   "sources": [
     {
       "id": "src-dal-spec",
       "kind": "local_file",
       "uri": "repo://docs/spec.md",
-      "revision": "chg-dream-rsi-orchestration-20260927-reviewed",
-      "sha256": "8512f2aa7d3fc11124ec85c54c97feb15542ca3112adf7fb0fb33f505c6b3063",
+      "revision": "chg-artifact-campaigns-20260929",
+      "sha256": "01cda572a43bca4b23aa50e9e4326cc0966e3b1c3ffb45c927f8c01d16bb23b7",
       "local_path": "../docs/spec.md",
       "required": true
     },
@@ -46,6 +46,11 @@
     }
   ],
   "claims": [
+    {
+      "id": "claim-artifact-campaigns",
+      "text": "The generic artifact campaign ledger records multi-round lineage, opaque shared artifact dependencies, reservations and separate supervisor reviews. It does not execute work, authenticate reviewers, verify artifact bytes, enforce physical resource caps or certify open-ended improvement. Historical replay and live-text promotion remain separate.",
+      "source_ids": ["src-dal-spec"]
+    },
     {
       "id": "claim-campaign-replay",
       "text": "Campaign replay regrades supplied digest-pinned outputs and recomputes resumable comparison history. It reports proxy and qualification results plus simulated retention, but executes no candidate or model and grants no activation authority. The separate live text path requires an exact campaign grant and native-host mount decision.",

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json",
+  "schema_version": "1.0.0",
+  "operation_id": "reserve-train-child",
+  "campaign_id": "synthetic-cache-campaign",
+  "actor": { "id": "supervisor-demo", "role": "supervisor" },
+  "kind": "reserve",
+  "node_id": "train-child",
+  "parent_id": "feature-producer",
+  "round": 2,
+  "hypothesis": "Training can reuse the accepted compatible cache with only incremental training allocation.",
+  "contract_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+  "worker_id": "worker-training",
+  "workspace_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+  "inputs": [
+    {
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "kind": "workspace",
+      "compatibility_sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+    },
+    {
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "feature-cache",
+      "compatibility_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "reservation": { "compute_seconds": 200 }
+}

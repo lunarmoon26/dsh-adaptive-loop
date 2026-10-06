@@ -1,0 +1,20 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json",
+  "schema_version": "1.0.0",
+  "campaign_id": "synthetic-cache-campaign",
+  "goal": "Compare synthetic training metadata while reusing one reviewed feature cache.",
+  "metric": { "name": "validation-score", "direction": "maximize" },
+  "evaluation_context_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "researcher_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "policy_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "limits": { "attempts": 4, "rounds": 2, "parallelism": 2, "resources": { "compute_seconds": 1000 } },
+  "root_artifacts": [
+    {
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "kind": "workspace",
+      "compatibility_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+      "locator": "artifact://5555555555555555555555555555555555555555555555555555555555555555",
+      "evidence_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+    }
+  ]
+}
