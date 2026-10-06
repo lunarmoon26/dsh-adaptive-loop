@@ -8,7 +8,7 @@
   "files": ["lib", "bootstrap.patch.yml", "README.md"],
   "scripts": { "prepack": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json" },
   "license": "MIT",
-  "peerDependencies": {"@deepseek-ai/cordis": "^4.0.1"},
+  "peerDependencies": {"@deepseek-ai/cordis": "~4.0.4"},
   "peerDependenciesMeta": {"@deepseek-ai/cordis": {"optional": true}},
   "repository": {
     "type": "git",

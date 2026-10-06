@@ -11,7 +11,7 @@
   "description": "DSH Adaptive Loop run mode: projects privacy-safe session observations and launcher-owned runtime attestation, with optional terminal controller batches. Recording only; HMR admission remains quarantined.",
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1"
+    "@deepseek-ai/cordis": "~4.0.4"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {
