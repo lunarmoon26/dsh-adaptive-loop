@@ -1,0 +1,152 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-research-foundation-tests-20261006",
+  "ingested_at": "2026-10-06T21:46:48.815Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-research-foundation-tests-20261006.json",
+    "sha256": "a765278d52685b7ab77a53a3360cb18e27b180359aae45efe81cf3b5e09ef162"
+  },
+  "feedback_sha256": "0d03c8cc4ca0ed89e12498df5cb9984699aa0f91d0a4b5ac91e6cc209ecd60a0",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-10-06T21:46:48.815Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-research-foundation-tests-20261006",
+    "change_id": "chg-research-mechanism-foundation-20261006",
+    "created_at": "2026-10-06T22:47:00.000Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "dsh-agent",
+        "id": "research-test-agent"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "unknown",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": null,
+        "branch": null,
+        "dirty": true
+      },
+      "task_ref": null
+    },
+    "goal": "Add synthetic fixtures and focused tests for the local research foundation.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-byte-fixtures",
+        "statement": "Synthetic workflow derives artifact byte identities and canonical mechanism identity reproducibly.",
+        "result": "passed",
+        "evidence": [
+          "ev-research-tests"
+        ]
+      },
+      {
+        "id": "ac-integrity-tests",
+        "statement": "Focused safety and integrity tests pass without external execution.",
+        "result": "passed",
+        "evidence": [
+          "ev-research-tests"
+        ]
+      },
+      {
+        "id": "ac-cli-metadata",
+        "statement": "Research CLI commands expose metadata without private request payloads.",
+        "result": "passed",
+        "evidence": [
+          "ev-research-tests"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "All thirty-nine focused tests and the project TypeScript check passed.",
+      "exception": null
+    },
+    "what_worked": [
+      "Regular synthetic files exercise byte verification and immutable preparation through the public API."
+    ],
+    "what_failed": [
+      "Initial CLI output assertion used the wrong capture seam; corrected to the existing injected output interface."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Verify focused research tests.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "typescript",
+        "purpose": "Check project TypeScript types.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-research-types"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-research-tests",
+        "kind": "test",
+        "uri": "command://pnpm-exec-vitest-run-tests-research.test.ts",
+        "summary": "Thirty-nine focused tests passed.",
+        "sha256": null,
+        "observed_at": "2026-10-06T22:47:00.000Z"
+      },
+      {
+        "id": "ev-research-types",
+        "kind": "test",
+        "uri": "command://pnpm-exec-tsc-project-noEmit",
+        "summary": "Project TypeScript check passed.",
+        "sha256": null,
+        "observed_at": "2026-10-06T22:47:00.000Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-integration-scope",
+        "statement": "Repository-wide verification remains owned by the parent session. No worker, external service or runtime consumption was tested.",
+        "level": "low",
+        "resolution": "Parent session runs repository-wide verification before closing the integrated change.",
+        "evidence": [
+          "ev-research-tests"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "not_required",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

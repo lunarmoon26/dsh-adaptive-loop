@@ -1,0 +1,56 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-research-redesign-20261006",
+  "change_id": "chg-research-mechanism-foundation-20261006",
+  "created_at": "2026-10-06T21:51:13Z",
+  "supersedes": "fb-research-foundation-tests-20261006",
+  "producer": {
+    "actor": { "kind": "automation", "id": "opencode" },
+    "harness": { "name": "opencode", "version": "2.0.24", "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": "0342b047379d96a08dc1abce8e816b6418cd6d7c", "branch": "feat/research-mechanism-foundation", "dirty": true },
+    "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/21"
+  },
+  "goal": "Track and implement the real research workflow redesign, beginning with versioned mechanisms and verified local request preparation while preserving protected governance.",
+  "acceptance_criteria": [
+    { "id": "ac-issue-plan", "statement": "A tracking issue and five dependency-ordered implementation issues define measurable exit criteria and claim limits.", "result": "passed", "evidence": ["ev-issues"] },
+    { "id": "ac-mechanism-foundation", "statement": "Strict content-addressed mechanisms and immutable byte-verified requests bind existing campaign reservations without dispatch or extra allocations.", "result": "passed", "evidence": ["ev-research-tests", "ev-contract"] },
+    { "id": "ac-verification", "statement": "Focused tests, repository gates, package smoke and local boundary review pass.", "result": "passed", "evidence": ["ev-research-tests", "ev-check", "ev-package", "ev-review"] },
+    { "id": "ac-real-execution", "statement": "The reviewed adapter executes a frozen real research workload with independently verified runtime, evaluator and resource evidence.", "result": "not_run", "evidence": ["ev-next-gate"] },
+    { "id": "ac-recursive-handoff", "statement": "Fresh matched-budget evaluation, approved successor consumption and repeated research cycles establish measured recursive improvement.", "result": "not_run", "evidence": ["ev-next-gate"] }
+  ],
+  "outcome": {
+    "status": "blocked",
+    "summary": "Issue plan and Phase 1 local implementation are verified. The complete roadmap remains blocked on frozen research campaign inputs and reviewed execution/evaluator integration; no L4 or live execution claim is made.",
+    "exception": { "kind": "blocked", "reason": "A frozen real research task set, evaluator entry point/context and resource budget have not been selected, and the execution/attestation adapter is not implemented.", "owner": "project-maintainer-and-adapter-owner", "next_action": "Select the bounded research workload, evaluator and allocations; implement issue 23 against the existing runtime and independent evaluator, then obtain exact approvals before live verification." }
+  },
+  "what_worked": [
+    "Reusing the existing campaign lease and reservation avoids a parallel accounting store or duplicate charge.",
+    "Private instruction assembly consumes verified mechanism and task-harness bytes while CLI output remains metadata-only.",
+    "Independent review and regression tests improved bounded reads, immutable-request verification and serialized-size rejection."
+  ],
+  "what_failed": [
+    "The full recursive workflow cannot be closed by synthetic preparation tests or existing ACP registration alone.",
+    "The delegated initial test receipt used a local test-run timestamp as UTC; this integrated receipt corrects the time basis and preserves the original record through supersession."
+  ],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "github-issues", "purpose": "Publish approved privacy-safe implementation-plan summaries.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-issues"] },
+    { "sequence": 2, "kind": "tool", "name": "repository-check", "purpose": "Verify types, builds, tests, capsule identities and deterministic policy/evaluation gates.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-check"] },
+    { "sequence": 3, "kind": "tool", "name": "clean-consumer-smoke", "purpose": "Verify packaged research preparation API and metadata-only CLI without a model or plugin mount.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-package"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-issues", "kind": "url", "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/21", "summary": "Tracking issue and phase issues 22 through 26 were created after exact approval verification for the published design summaries.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-research-tests", "kind": "test", "uri": "repo://tests/research.test.ts", "summary": "Forty-one research contract tests and six bounded-reader tests pass, covering private staging, parent identity, drift, input sets, conflicts, unsafe paths, pending reservations and metadata-only output.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-check", "kind": "command", "uri": "command://pnpm-run-check", "summary": "Full gate passes with 1333 tests passed and seven opt-in integration skips; types, builds, capsules, policy and offline evaluations pass.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-package", "kind": "command", "uri": "command://pnpm-run-release-smoke", "summary": "Eight artifacts pack and clean-consumer smoke passes for installed research request preparation, verification, CLI and existing campaign APIs; no publication or live execution.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-review", "kind": "file", "uri": "repo://src/research.ts", "summary": "Automated independent boundary review reported no remaining findings after bounded-read and preparation-integrity fixes; this is not human acceptance or runtime assurance.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-contract", "kind": "file", "uri": "repo://docs/research-mechanisms.md", "summary": "Owns Phase 1 behavior, protected boundaries, private retention, finite limits, conservative ledger-head binding and unchanged historical campaign semantics.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" },
+    { "id": "ev-next-gate", "kind": "url", "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/23", "summary": "The next gate needs frozen real task/evaluator/resource inputs and a reviewed runtime/evaluator adapter; later mechanism comparison, successor activation and sustained evidence remain open.", "sha256": null, "observed_at": "2026-10-06T21:51:13Z" }
+  ],
+  "uncertainty": [
+    { "id": "un-real-runtime", "statement": "Source-location inspection does not establish compatible independent execution receipts, physical resource enforcement or protected evaluator isolation for the real research workflow.", "level": "high", "resolution": "Implement and authorize the fixed adapter for a selected bounded campaign before claiming runtime proof.", "evidence": ["ev-next-gate"] }
+  ],
+  "human_review": { "status": "pending", "reviewer": null, "reviewed_at": null, "notes": ["Source implementation awaits maintainer review. Issue publication approval grants no runtime execution, deployment or promotion authority."], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets", "synthetic-verification"], "contains_personal_data": false, "redactions": [] }
+}

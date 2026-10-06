@@ -169,3 +169,15 @@ Use `dal campaign create`, `append` and `tree` from an outer harness; the API is
 also exported as `@lunarmoon26/dal/campaign`. Artifacts are opaque digest references,
 not copied datasets or model files. This does not execute work, activate the live
 text loop, promote a policy or certify open-ended research improvement.
+
+## Research mechanism foundation
+
+The [research mechanism contract](docs/research-mechanisms.md) separates mutable
+diagnosis/proposal instructions and declarative policies from protected authority
+and evaluation. `dal research mechanism check|stage --file <file>` validates or
+privately stages a content-addressed bundle. `dal research prepare --binding <file>`
+verifies an existing pending artifact-campaign reservation and exact input bytes;
+`dal research verify --file <request>` detects drift before an adapter uses it.
+The public API is `@lunarmoon26/dal/research`. No command launches a worker,
+activates a mechanism or supplies actual-consumption/L4 evidence. The phased plan
+is tracked in [issue #21](https://github.com/lunarmoon26/dsh-adaptive-loop/issues/21).

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/research-request.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "binding", "plan_sha256", "ledger", "reservation_sha256", "worker_id", "workspace_sha256", "resources", "mechanism_sha256", "policy_sha256", "task_harness_sha256", "task_contract_sha256", "instructions", "task_contract", "search_policy", "experience_policy"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/research-request.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "binding": { "$ref": "https://recursive-dev-loop.dev/schemas/research-binding.v1.schema.json" },
+    "plan_sha256": { "$ref": "#/$defs/digest" },
+    "ledger": { "type": "object", "additionalProperties": false, "required": ["sequence", "head_sha256"], "properties": { "sequence": { "type": "integer", "minimum": 1 }, "head_sha256": { "$ref": "#/$defs/digest" } } },
+    "reservation_sha256": { "$ref": "#/$defs/digest" },
+    "worker_id": { "$ref": "https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json#/$defs/id" },
+    "workspace_sha256": { "$ref": "#/$defs/digest" },
+    "resources": { "$ref": "https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json#/$defs/resources" },
+    "mechanism_sha256": { "$ref": "#/$defs/digest" }, "policy_sha256": { "$ref": "#/$defs/digest" },
+    "task_harness_sha256": { "$ref": "#/$defs/digest" }, "task_contract_sha256": { "$ref": "#/$defs/digest" },
+    "instructions": { "type": "string", "minLength": 1, "maxLength": 110000 },
+    "task_contract": { "type": "object", "maxProperties": 128 },
+    "search_policy": { "$ref": "https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json#/properties/search_policy" },
+    "experience_policy": { "$ref": "https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json#/properties/experience_policy" }
+  },
+  "$defs": { "digest": { "$ref": "https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json#/$defs/digest" } }
+}

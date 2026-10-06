@@ -1,0 +1,35 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-research-foundation-tests-20261006",
+  "change_id": "chg-research-mechanism-foundation-20261006",
+  "created_at": "2026-10-06T22:47:00.000Z",
+  "supersedes": null,
+  "producer": {
+    "actor": { "kind": "dsh-agent", "id": "research-test-agent" },
+    "harness": { "name": "opencode", "version": "unknown", "session_id": null },
+    "repository": { "root": "repo://dsh-adaptive-loop", "revision": null, "branch": null, "dirty": true },
+    "task_ref": null
+  },
+  "goal": "Add synthetic fixtures and focused tests for the local research foundation.",
+  "acceptance_criteria": [
+    { "id": "ac-byte-fixtures", "statement": "Synthetic workflow derives artifact byte identities and canonical mechanism identity reproducibly.", "result": "passed", "evidence": ["ev-research-tests"] },
+    { "id": "ac-integrity-tests", "statement": "Focused safety and integrity tests pass without external execution.", "result": "passed", "evidence": ["ev-research-tests"] },
+    { "id": "ac-cli-metadata", "statement": "Research CLI commands expose metadata without private request payloads.", "result": "passed", "evidence": ["ev-research-tests"] }
+  ],
+  "outcome": { "status": "completed", "summary": "All thirty-nine focused tests and the project TypeScript check passed.", "exception": null },
+  "what_worked": ["Regular synthetic files exercise byte verification and immutable preparation through the public API."],
+  "what_failed": ["Initial CLI output assertion used the wrong capture seam; corrected to the existing injected output interface."],
+  "calls": [
+    { "sequence": 1, "kind": "tool", "name": "vitest", "purpose": "Verify focused research tests.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-research-tests"] },
+    { "sequence": 2, "kind": "tool", "name": "typescript", "purpose": "Check project TypeScript types.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-research-types"] }
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    { "id": "ev-research-tests", "kind": "test", "uri": "command://pnpm-exec-vitest-run-tests-research.test.ts", "summary": "Thirty-nine focused tests passed.", "sha256": null, "observed_at": "2026-10-06T22:47:00.000Z" },
+    { "id": "ev-research-types", "kind": "test", "uri": "command://pnpm-exec-tsc-project-noEmit", "summary": "Project TypeScript check passed.", "sha256": null, "observed_at": "2026-10-06T22:47:00.000Z" }
+  ],
+  "uncertainty": [{ "id": "un-integration-scope", "statement": "Repository-wide verification remains owned by the parent session. No worker, external service or runtime consumption was tested.", "level": "low", "resolution": "Parent session runs repository-wide verification before closing the integrated change.", "evidence": ["ev-research-tests"] }],
+  "human_review": { "status": "not_required", "reviewer": null, "reviewed_at": null, "notes": [], "approval_refs": [] },
+  "privacy": { "classification": "internal", "retention": "local-only", "tags": ["no-secrets"], "contains_personal_data": false, "redactions": [] }
+}

@@ -246,6 +246,11 @@ export async function appendCampaignOperation(value: unknown): Promise<{ status:
   });
 }
 
+/** Hold the existing writer lease while a local adapter binds a verified snapshot. */
+export async function withArtifactCampaignSnapshot<T>(id: string, action: (state: CampaignProjection) => Promise<T>): Promise<T> {
+  return lease(id, async () => action((await history(id)).state));
+}
+
 export async function artifactCampaignStatus(id: string, through?: number): Promise<CampaignProjection> {
   return lease(id, async () => {
     const { state, events } = await history(id);

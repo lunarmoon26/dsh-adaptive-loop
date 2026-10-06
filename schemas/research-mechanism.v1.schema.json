@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "parent_sha256", "instructions", "search_policy", "experience_policy"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "parent_sha256": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/digest" }] },
+    "instructions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["diagnosis", "proposal"],
+      "properties": { "diagnosis": { "$ref": "#/$defs/instruction" }, "proposal": { "$ref": "#/$defs/instruction" } }
+    },
+    "search_policy": {
+      "type": "object", "additionalProperties": false, "required": ["strategy"],
+      "properties": { "strategy": { "enum": ["breadth_first", "development_first"] } }
+    },
+    "experience_policy": {
+      "type": "object", "additionalProperties": false, "required": ["selection", "max_items"],
+      "properties": { "selection": { "enum": ["latest_reviewed", "best_reviewed"] }, "max_items": { "type": "integer", "minimum": 0, "maximum": 64 } }
+    }
+  },
+  "$defs": {
+    "digest": { "$ref": "https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json#/$defs/digest" },
+    "instruction": { "type": "string", "minLength": 1, "maxLength": 20000 }
+  }
+}

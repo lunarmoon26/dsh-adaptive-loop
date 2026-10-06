@@ -14,7 +14,8 @@
   "exports": {
     "./cli": "./dist/cli.js",
     "./install": "./dist/install.js",
-    "./campaign": "./dist/artifact-campaign.js"
+    "./campaign": "./dist/artifact-campaign.js",
+    "./research": "./dist/research.js"
   },
   "scripts": {
     "build": "tsc -p plugins/dal-native-text/tsconfig.json && tsc -p tsconfig.build.json && tsc -p plugins/dal-run-record/tsconfig.json && tsc -p plugins/dal-improve-tools/tsconfig.json && tsc -p plugins/dal-hmr-candidate/tsconfig.json && tsc -p plugins/dal-unknown-effect-guard/tsconfig.json && tsc -p plugins/dal-codex-oauth/tsconfig.json && tsc -p benchmarks/tau-style-workflow/.dsh/plugins/dal-workflow-tools/tsconfig.json",

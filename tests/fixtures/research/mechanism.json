@@ -1,0 +1,8 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json",
+  "schema_version": "1.0.0",
+  "parent_sha256": null,
+  "instructions": { "diagnosis": "Inspect synthetic diagnostic evidence only.", "proposal": "Propose a bounded synthetic alternative without activation." },
+  "search_policy": { "strategy": "breadth_first" },
+  "experience_policy": { "selection": "latest_reviewed", "max_items": 4 }
+}
