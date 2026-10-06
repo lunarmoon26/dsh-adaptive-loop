@@ -1,4 +1,6 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { gatewayReservation, startGateway, validateSpendPolicy, type E2eSpendPolicy, type GatewayUpstream } from "../src/e2e-model-gateway.js";
 
@@ -15,7 +17,7 @@ const body = (input = "Synthetic development hypothesis") => ({ model: policy.mo
 const ok: GatewayUpstream = async () => Response.json({ type: "message", stop_reason: "end_turn", content: [{ type: "text", text: "Synthetic response" }] });
 let root: string;
 let gateways: Awaited<ReturnType<typeof startGateway>>[];
-beforeEach(async () => { root = await mkdtemp("/tmp/opencode/sonnet55-gateway-"); gateways = []; });
+beforeEach(async () => { root = await mkdtemp(join(await realpath(tmpdir()), "sonnet55-gateway-")); gateways = []; });
 afterEach(async () => { await Promise.all(gateways.map(g => g.close())); await rm(root, { recursive: true, force: true }); });
 async function start(p = policy, upstream: GatewayUpstream = ok) {
   const gateway = await startGateway({ policy: p, ledgerRoot: root, token, mode: "live", upstream });

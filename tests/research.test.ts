@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, readdir, rm, stat, symlink, unlink, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, realpath, rm, stat, symlink, unlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { appendCampaignOperation, artifactCampaignStatus } from "../src/artifact-campaign.js";
@@ -16,7 +17,7 @@ describe("research mechanism foundation", () => {
   const saveBinding = () => writeJson("binding.json", fixture.binding);
   beforeEach(async () => {
     cwd = process.cwd();
-    directory = await mkdtemp("/tmp/opencode/research-test-");
+    directory = await mkdtemp(join(await realpath(tmpdir()), "research-test-"));
     process.chdir(directory);
     fixture = await researchWorkflow(directory);
   });

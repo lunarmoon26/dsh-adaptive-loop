@@ -1,0 +1,115 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-research-test-portability-20261007",
+  "ingested_at": "2026-10-06T23:47:40.223Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-research-test-portability-20261007.json",
+    "sha256": "e5d77afcc98c11386f714e4fb9dfd12e04232482af328de8e7d39d0346daf711"
+  },
+  "feedback_sha256": "194b5e67893f8de2f099fb0b13d579698abb52ea893d778f3def53dee446427d",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-10-06T23:47:40.223Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-research-test-portability-20261007",
+    "change_id": "chg-research-test-portability-20261007",
+    "created_at": "2026-10-06T23:47:30Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "2.0.24",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "84dd0caa405435e876bef5c1fcb181cafb66489c",
+        "branch": "feat/research-mechanism-foundation",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/pull/27"
+    },
+    "goal": "Remove workstation-specific temporary-directory assumptions discovered by PR CI without changing runtime behavior.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-portable-temp",
+        "statement": "The three new test suites resolve the platform temporary root instead of requiring the local agent directory.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-gates",
+        "statement": "Focused tests and full local repository gate pass after the test-only repair.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Test setup now uses the real platform temporary directory. Seventy-one focused tests and the full local gate pass; remote CI is checked before merge.",
+      "exception": null
+    },
+    "what_worked": [
+      "CI exposed a portability failure absent on the development machine.",
+      "Canonical temporary-root resolution follows existing gateway test conventions."
+    ],
+    "what_failed": [
+      "New tests assumed a workstation-specific directory existed on GitHub runners."
+    ],
+    "calls": [],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Three repaired suites pass 71 tests; full local gate passes 1357 tests with seven integration skips, types, build, capsules and deterministic gates.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:47:30Z"
+      },
+      {
+        "id": "ev-ci",
+        "kind": "url",
+        "uri": "https://github.com/lunarmoon26/dsh-adaptive-loop/actions/runs/37548283687",
+        "summary": "Initial PR CI failed because the local-agent temporary directory was absent; no paid calls or runtime changes were involved.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:47:30Z"
+      }
+    ],
+    "uncertainty": [],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The user requested commit, push, PR and merge; the next remote CI run remains the merge gate."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "ci-portability"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

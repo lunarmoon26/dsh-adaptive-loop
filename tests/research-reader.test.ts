@@ -1,4 +1,5 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { readRepositoryFile } from "../src/repository.js";
@@ -8,7 +9,7 @@ describe("bounded regular research artifact reads", () => {
   let directory: string;
   beforeEach(async () => {
     cwd = process.cwd();
-    directory = await mkdtemp("/tmp/opencode/research-reader-");
+    directory = await mkdtemp(join(await realpath(tmpdir()), "research-reader-"));
     process.chdir(directory);
   });
   afterEach(async () => {
