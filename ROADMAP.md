@@ -8,10 +8,12 @@ Version 0 deliberately stops at local validation, immutable evidence, determinis
 
 `chg-dal-live-text-loop-20260916` implements the bounded text-only portion of the
 autonomy plan: exact campaign grants, isolated native DSH/Codex host package,
-durable request allocations, autonomous development-based hypothesis/prompt
-generation, independent qualification, workspace-local active generations,
-post-activation probes, rollback and explicit revocation/recovery. See
-[live text loop](docs/live-text-loop.md) and dated native evidence in
+durable request allocations, development-based hypothesis/prompt generation,
+independent qualification, workspace-local active generations, post-activation
+probes, rollback and explicit revocation/recovery. `chg-dal-hitl-promotion-control-20260927`
+adds candidate-specific human promotion, and `chg-dream-rsi-orchestration-20260927`
+adds fixed-policy parent-linked discovery trees plus replay-only policy comparison.
+See [live text loop](docs/live-text-loop.md) and dated native evidence in
 `docs/requirement-evidence.md`. Synthetic tests are not live evidence.
 
 The earlier blocked record remains historical. Its steps 1–3 and the prompt-only
@@ -30,13 +32,16 @@ and trace-attribution repairs, and a resumable non-authorizing campaign replay
 core. The release set is not yet published. See [target architecture](docs/workspace-autonomy.md),
 [replay contract](docs/campaign-replay.md), and [distribution](docs/distribution.md).
 
-The requested end-to-end live loop remains blocked on these implementation and
-integration steps, not merely on obtaining an API key:
+The following is the historical pre-implementation blocker list. Items 1--3 and
+the prompt-only portion of item 5 now have a bounded text-campaign implementation;
+executable/plugin integration remains blocked on these steps, not merely on
+obtaining an API key:
 
 1. A versioned campaign authority contract with human-authored scope, expiry,
-   revocation, bounded allocations and per-operation enforcement. It explicitly
-   replaces per-candidate approval only within that scope; historical decisions
-   retain their semantics. Current AGENTS/governance constraints remain effective.
+   revocation, bounded allocations and per-operation enforcement. It delegates
+   bounded calls while a separate exact human decision approves each eligible
+   candidate. Historical decisions retain their semantics. Current AGENTS/governance
+   constraints remain effective.
 2. A native DSH/Codex subscription executor with workspace-local launch state,
    explicit dependency resolution and native credential-provider reuse. No copied
    grants, API-key fallback, or unapproved profile setup. Pin the actual DSH version
@@ -54,9 +59,9 @@ integration steps, not merely on obtaining an API key:
    execution proof; replay scores alone establish neither.
 
 Future skill/memory libraries retain applicability and contradiction evidence.
-Search strategy evolution happens between rounds and needs measured successor
-handoff before claiming recursive improvement. Sealed confirmation remains
-distinct from adaptive qualification feedback.
+Bounded policy replay selects a policy for a subsequent frozen campaign and needs
+measured successor handoff before claiming recursive improvement. Sealed
+confirmation remains distinct from adaptive qualification feedback.
 
 ### Core skill adaptation experiment (2026-09-10)
 
@@ -136,6 +141,15 @@ and the complete local gate before closure.
 Accepted architecture, not a claim of end-to-end implementation:
 
 - The loop is Run -> diagnose -> propose -> validate -> independent paired heldout evaluate -> separately approved activate/rollback. Task definitions, evaluator, and policy remain immutable to the proposer; evaluation evidence never grants activation authority.
+- **Dream-RSI exploration orchestration — shipped 2026-09-27.** The bounded live
+  text path uses one fixed declarative policy for each online discovery tree. It
+  persists parent-linked evaluated nodes, then `dal live dream` replays the same
+  root/leaf batch interface against prefix-only stored children and ranks quality,
+  represented work and parallelism. The policy family is deliberately small and
+  data-only; a replay winner is human input to the next frozen plan, not authority
+  to alter the current rollout or activate a candidate. LLM policy development,
+  executable policy code, statistically validated policy gains and general
+  cross-workspace simulator pools remain future work.
 - Clustering is optional diagnosis, not the objective or a prerequisite to proposing. K-means and silhouette scores are optional diagnostic tools only, with unknown and multilabel failures retained rather than forced into one cluster.
 - Measure stable outcome dimensions separately: execution health, business success, deterministic checks, safety/regressions, cost, and complexity. Use pinned model x harness ablations, including no-change and removal baselines, before attributing improvement.
 - Separate evidence validity (authenticity, completeness, receipt binding, deduplication) from comparison compatibility (task, evaluator, policy, model, harness, environment, seeds, and budget pins). Valid evidence need not be comparable evidence.

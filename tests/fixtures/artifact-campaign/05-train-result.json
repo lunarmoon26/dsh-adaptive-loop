@@ -1,0 +1,28 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json",
+  "schema_version": "1.0.0",
+  "operation_id": "result-train-child",
+  "campaign_id": "synthetic-cache-campaign",
+  "actor": { "id": "worker-training", "role": "worker" },
+  "kind": "result",
+  "node_id": "train-child",
+  "outcome": "completed",
+  "outputs": [
+    {
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "kind": "model-checkpoint",
+      "compatibility_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "locator": "artifact://cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "evidence_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "validation-score",
+      "value": 0.75,
+      "context_sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "usage": { "compute_seconds": 160 },
+  "evidence_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+}

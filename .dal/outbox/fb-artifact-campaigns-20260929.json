@@ -1,0 +1,61 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+  "schema_version": "1.0.0",
+  "feedback_id": "fb-artifact-campaigns-20260929",
+  "change_id": "chg-artifact-campaigns-20260929",
+  "created_at": "2026-09-29T21:59:07Z",
+  "supersedes": null,
+  "producer": {
+    "actor": {"kind": "automation", "id": "opencode-supervisor"},
+    "harness": {"name": "opencode", "version": null, "session_id": null},
+    "repository": {
+      "root": "repo://dsh-adaptive-loop",
+      "revision": "57b1af6e962d877f98d78947e956d52fb84219d4",
+      "branch": "feat/artifact-campaign",
+      "dirty": true
+    },
+    "task_ref": "repo://docs/artifact-campaigns.md"
+  },
+  "goal": "Provide a generic local multi-round research ledger with shared artifact dependencies, bounded reservations and separate acceptance evidence.",
+  "acceptance_criteria": [
+    {"id": "ac-frozen-plan", "statement": "Plans pin comparison and research identities and finite named allocations.", "result": "passed", "evidence": ["ev-focused"]},
+    {"id": "ac-lineage-reuse", "statement": "Reviewed parent and compatible artifact identities support branching and shared reuse without duplicate production.", "result": "passed", "evidence": ["ev-focused"]},
+    {"id": "ac-independent-review", "statement": "Execution outcomes and exact-result supervisor reviews remain separate; failed work can retain reviewed checkpoints.", "result": "passed", "evidence": ["ev-focused"]},
+    {"id": "ac-accounting", "statement": "Unknown outcomes retain active slots, failures retain reservations and observed overruns block further allocation.", "result": "passed", "evidence": ["ev-focused"]},
+    {"id": "ac-persistence", "statement": "Immutable linked events support idempotency, restart reconstruction and historical prefix projections.", "result": "passed", "evidence": ["ev-focused"]},
+    {"id": "ac-distribution", "statement": "Public CLI and library work in a clean packaged consumer without a source checkout or native model execution.", "result": "passed", "evidence": ["ev-consumer"]},
+    {"id": "ac-regressions", "statement": "Repository checks pass with the old replay and live-text authority boundaries preserved.", "result": "passed", "evidence": ["ev-repository"]}
+  ],
+  "outcome": {
+    "status": "completed",
+    "summary": "Implemented metadata-only campaign persistence and verified its state, accounting, privacy-shape and distribution boundaries. No model, experiment or policy activation occurred.",
+    "exception": null
+  },
+  "what_worked": [
+    "A primary-parent tree plus explicit accepted artifact inputs represents shared preparation across experiment branches.",
+    "Focused tests distinguish unknown outcomes, diagnostic metrics and accepted comparable results.",
+    "Existing replay commands remain compatible with the additive artifact ledger interface."
+  ],
+  "what_failed": [
+    "Initial checks exposed an outdated capsule test date and a legacy usage-message expectation; both were corrected before final verification.",
+    "Review identified stale head reporting on idempotent retries; current head and original operation sequence are now distinct."
+  ],
+  "calls": [
+    {"sequence": 1, "kind": "tool", "name": "vitest", "purpose": "Verify generic campaign state and failure semantics with synthetic metadata.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-focused"]},
+    {"sequence": 2, "kind": "tool", "name": "repository-check", "purpose": "Verify types, builds, regressions, capsules and offline policy scorecards.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-repository"]},
+    {"sequence": 3, "kind": "tool", "name": "release-smoke", "purpose": "Verify packaged CLI, schemas and public campaign API in a disposable consumer.", "outcome": "succeeded", "duration_ms": null, "evidence": ["ev-consumer"]}
+  ],
+  "failures_and_inefficiencies": [],
+  "evidence": [
+    {"id": "ev-focused", "kind": "test", "uri": "repo://tests/artifact-campaign.test.ts", "summary": "All twenty-eight focused tests passed; source identity binds the executed acceptance suite.", "sha256": "23c5b2446cd2bbb7f785f0852274ccdd5492aa3cbb62fbb8e15c4389d47faf0b", "observed_at": "2026-09-29T21:59:07Z"},
+    {"id": "ev-repository", "kind": "test", "uri": "command://repository-check", "summary": "Full check passed: typecheck, build, all fifty-eight test files, twelve hundred seventy-six passing tests, seven conditional skips, capsule checks and both offline scorecards.", "sha256": null, "observed_at": "2026-09-29T21:59:07Z"},
+    {"id": "ev-consumer", "kind": "test", "uri": "repo://scripts/release.mjs", "summary": "Eight local package artifacts packed; clean consumer exercised artifact-campaign CLI, historical prefix and public library API without a DSH mount or model call.", "sha256": null, "observed_at": "2026-09-29T21:59:07Z"},
+    {"id": "ev-implementation", "kind": "file", "uri": "repo://src/artifact-campaign.ts", "summary": "Generic ledger implementation reviewed for input identity, immutable history and accounting boundaries.", "sha256": "666a3d0898f15195ea7489af884f136abd096d05e308141f8496381b0f8d803b", "observed_at": "2026-09-29T21:59:07Z"}
+  ],
+  "uncertainty": [
+    {"id": "un-adapter-integration", "statement": "The target outer-harness adapter has not been connected to this new ledger.", "level": "medium", "resolution": "Integrate digest-bound task and artifact receipts in the target workspace as a separate measured change.", "evidence": ["ev-consumer"]},
+    {"id": "un-attestation-boundary", "statement": "Recorded roles and digests do not authenticate reviewers or prove artifact existence, actual execution, physical resource enforcement or semantic privacy.", "level": "medium", "resolution": "Keep adapter-owned independent verification and separate execution permissions; do not present ledger acceptance as model improvement or deployment authority.", "evidence": ["ev-implementation"]}
+  ],
+  "human_review": {"status": "pending", "reviewer": null, "reviewed_at": null, "notes": ["Implementation awaits maintainer code review. No commit, push, release publication, shared-profile edit or plugin mount was requested."], "approval_refs": []},
+  "privacy": {"classification": "internal", "retention": "local-only", "tags": ["no-secrets", "synthetic-evidence"], "contains_personal_data": false, "redactions": []}
+}

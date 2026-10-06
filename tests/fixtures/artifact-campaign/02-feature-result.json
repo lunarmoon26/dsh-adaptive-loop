@@ -1,0 +1,22 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json",
+  "schema_version": "1.0.0",
+  "operation_id": "result-feature-cache",
+  "campaign_id": "synthetic-cache-campaign",
+  "actor": { "id": "worker-features", "role": "worker" },
+  "kind": "result",
+  "node_id": "feature-producer",
+  "outcome": "completed",
+  "outputs": [
+    {
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "feature-cache",
+      "compatibility_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "locator": "artifact://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence_sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+    }
+  ],
+  "metrics": [],
+  "usage": { "compute_seconds": 80 },
+  "evidence_sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+}

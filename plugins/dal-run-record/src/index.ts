@@ -76,6 +76,7 @@ export interface RecordedEventLike {
   time: number;
   type: string;
   data: Record<string, unknown>;
+  surfaceOp?: "append" | { op: "replace"; startSeq: number; endSeq: number };
 }
 
 export interface CandidateGenerationLike {
@@ -112,6 +113,8 @@ interface SessionAccumulator {
   provider: string | null;
   model: string | null;
   systemDigest: string | null;
+  systemPromptObserved: boolean;
+  promptProjectionUnknown: boolean;
   inference: Array<{ name: string; value: string }>;
   seeds: number[];
   turnOpen: boolean;
@@ -128,8 +131,11 @@ interface SessionAccumulator {
 const IDENTIFIER_PATTERN = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/;
 
 function traceCallKey(data: Record<string, unknown>, state: SessionAccumulator): string | null {
-  if (typeof data.callId !== "string" || data.callId.length === 0 || data.callId.length > 512) return null;
-  return sha256(JSON.stringify([data.turn ?? state.currentTurn, data.step ?? state.currentStep, data.callId]));
+  const message = data.message as { toolCallId?: unknown; source?: { callId?: unknown } } | undefined;
+  const ids = [data.callId, message?.toolCallId, message?.source?.callId].filter(id => id !== undefined);
+  const callId = ids[0];
+  if (typeof callId !== "string" || callId.length === 0 || callId.length > 512 || ids.some(id => id !== callId)) return null;
+  return sha256(JSON.stringify([data.turn ?? state.currentTurn, data.step ?? state.currentStep, callId]));
 }
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const SEMVER_PATTERN = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
@@ -438,6 +444,8 @@ export class RunSessionRecorder {
       provider: null,
       model: null,
       systemDigest: null,
+      systemPromptObserved: false,
+      promptProjectionUnknown: false,
       inference: [],
       seeds: [],
       turnOpen: false,
@@ -510,7 +518,29 @@ export class RunSessionRecorder {
       state.maxSeq = Math.max(state.maxSeq, event.seq);
       state.eventCount += 1;
       const data = event.data;
+      // A surface replacement can rewrite prior prompt nodes. Without retaining
+      // raw history we cannot reconstruct that projection, so never claim its pin.
+      if (event.surfaceOp !== undefined && event.surfaceOp !== "append") {
+        state.promptProjectionUnknown = true;
+        state.systemDigest = null;
+        state.controllerContextMismatch = true;
+      }
       switch (event.type) {
+        case "system/message": {
+          const message = data.message as { content?: unknown } | undefined;
+          const content = message?.content;
+          const block = Array.isArray(content) && content.length === 1 ? content[0] : undefined;
+          const text = Array.isArray(content) && content.length === 0 ? ""
+            : block?.type === "text" && typeof block.text === "string" ? block.text : undefined;
+          // Single initial text prompt only. Incremental/multi-node rendering
+          // stays unknown rather than storing prompt text or inventing a digest.
+          if (state.systemPromptObserved || text === undefined) state.promptProjectionUnknown = true;
+          state.systemPromptObserved = true;
+          state.systemDigest = state.promptProjectionUnknown ? null : sha256(text!);
+          const observation = this.config.controllerObservation;
+          if (observation !== null && state.systemDigest !== observation.promptSha256) state.controllerContextMismatch = true;
+          break;
+        }
         case "turn/start":
           state.turns += 1;
           state.turnOpen = true;
@@ -579,11 +609,13 @@ export class RunSessionRecorder {
         }
         case "tool/result": {
           const error = data.error as { name?: unknown; code?: unknown } | undefined;
-          if (error !== undefined && error !== null && typeof error === "object") {
+          const message = data.message as { isError?: unknown } | undefined;
+          const failed = (error !== undefined && error !== null) || message?.isError === true;
+          if (failed) {
             if (state.toolErrors.length < this.config.maxErrorFacts) {
               state.toolErrors.push({
-                name: typeof error.name === "string" ? error.name : "unknown",
-                code: typeof error.code === "string" ? error.code : "UNKNOWN",
+                name: typeof error?.name === "string" ? error.name : "unknown",
+                code: typeof error?.code === "string" ? error.code : "UNKNOWN",
               });
             }
           }
@@ -591,8 +623,7 @@ export class RunSessionRecorder {
           const index = key === null ? undefined : state.traceCalls.get(key);
           const pending = typeof index === "number" ? state.trace[index] : undefined;
           if (pending !== undefined && pending.outcome === "unknown") {
-            const failed = error !== undefined && error !== null;
-            const code = failed && typeof error.code === "string" ? error.code.slice(0, 128) : failed ? "UNKNOWN" : null;
+            const code = failed && typeof error?.code === "string" ? error.code.slice(0, 128) : failed ? "UNKNOWN" : null;
             const upper = (code ?? "").toUpperCase();
             pending.outcome = code === null ? "ok" : upper.includes("TIMEOUT") ? "timeout" : upper.includes("DENIED") ? "denied" : "failed";
             pending.code = code;
@@ -638,7 +669,7 @@ export class RunSessionRecorder {
                 state.seeds.sort((left, right) => left - right);
               }
             }
-            if (typeof header.system === "string") {
+            if (!state.systemPromptObserved && !state.promptProjectionUnknown && typeof header.system === "string") {
               state.systemDigest = sha256(header.system);
               const observation = this.config.controllerObservation;
               if (observation !== null && state.systemDigest !== observation.promptSha256) {

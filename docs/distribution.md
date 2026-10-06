@@ -31,6 +31,55 @@ remains quarantined.
 
 ## Release verification
 
+### DSH compatibility
+
+Change `chg-dsh-020rc2-compat` targets DSH `0.2.0-rc.2` and Cordis `4.0.4`.
+Root runtime dependencies, the isolated native text host and tool-plugin peer
+requirements use that release set. Compatibility is verified by type checking,
+offline service/protocol tests and the repository gate, not by a version bump
+alone. The recorder remains privacy-safe, the native text host remains tool-free,
+approval boundaries are unchanged and HMR candidate application stays quarantined.
+
+Acceptance requires aligned manifests/lockfile, repaired API consumers, passing
+focused tests and `pnpm run check`. Historical records, digest-bound benchmark
+images, grants and capsules retain their original identity; dependency migration
+does not rebaseline or authorize their use with a new runtime. Installed profiles,
+credentials, plugin mounts, publication and live model calls are outside this
+change. Old DSH releases are not claimed as supported by the migrated packages.
+
+Current dependency manifests supersede the historical version pins in
+`docs/spec.md` (DAL-017 and the original live extension) and earlier research
+evidence. Those observations and their capsule source identities are preserved;
+they are not refreshed into claims about the new release.
+
+DSH `0.2.0-rc.2` compatibility deltas:
+
+- Sandbox confinement awaits the provider result and maps asynchronous
+  unavailability to the existing fail-closed DAL error. Enforcement and diagnostic
+  evidence retain the provider's values.
+- Workflow tools import the JSON-value type from `dsh-util-values`, its new owner.
+- Recording correlates native `message.toolCallId`/`message.source.callId`, rejects
+  conflicting identifiers and treats `message.isError` as failure even without
+  structured error facts. Legacy event fixtures remain supported.
+- Prompt digests come from an initial single-text `system/message`, not the retired
+  request-header field. Additional system nodes, unsupported content or any surface
+  replacement invalidate the digest and controller enrollment conservatively;
+  DAL does not retain raw prompt history to reconstruct that surface. No configured
+  pin substitutes for unknown observed provenance.
+- Native-host checks use actual DSH service types rather than the former
+  mixed-version structural context cast. The release consumer smoke selects its
+  tools peer from the root manifest instead of an obsolete hard-coded version.
+
+Migration verification (2026-10-06): `pnpm run check` passes with 1,256 tests
+passed and seven opt-in integration tests skipped. Capsules, deterministic
+guardrails and benchmark scorecards pass. `release:pack` builds eight tarballs;
+the clean-consumer `release:smoke` passes CLI, schema/template, plugin-import and
+offline replay checks without mounting DSH or calling a model. Synthetic tests
+use real 0.2.0-rc.2 session/message constructors, but do not claim full launcher,
+profile, OAuth, live provider or OS sandbox integration. Existing DAL package
+versions remain 0.2.0; these changed artifacts are not published, and an immutable
+npm release needs a separately chosen new DAL version before publication.
+
 From a source checkout:
 
 ```sh

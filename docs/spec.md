@@ -59,6 +59,20 @@ The 2026-08-29 project rename (recursive-dev-loop → dsh-adaptive-loop) deliber
 
 ## Current v0 behavior
 
+### Artifact-aware campaign ledger
+
+The additive [artifact campaign contract](artifact-campaigns.md) records generic
+multi-round experiment trees and shared artifact dependencies for an outer harness.
+`dal campaign create`, `append` and `tree` persist frozen plans, pre-execution
+reservations, separate outcomes/reviews, opaque artifact identities and historical
+prefix projections. Unknown outcomes retain active slots, failures retain budget
+charges, and only independently attested accepted artifacts can feed subsequent
+nodes. These are metadata integrity/accounting checks, not an executor, actual
+resource enforcement, artifact-byte verification or an improvement certification.
+Open-ended research can record evidence without acquiring a DAL improvement claim.
+The live-text loop, its schemas, policy promotion and historical campaign replay
+commands remain separate and unchanged.
+
 ### DAL-001 — Structured task feedback
 
 Every feature-change task record contains a change ID, goal, acceptance criteria and outcomes, overall outcome, what worked, what failed, tool/harness/plugin calls, failures or inefficiencies, evidence references, uncertainty, human review and approval state, privacy classification, and redaction metadata. The feedback JSON Schema owns exact syntax; semantic validation owns cross-field rules.
@@ -275,17 +289,31 @@ does not mount them. The isolated native-host package pins DSH 0.1.5-rc.2 and Co
 4.0.2 independently of v0 dependencies. Neither shared profiles nor HMR are changed.
 
 The loop runs baseline cases, asks the native model for a gap/proxy/mechanism and
-bounded replacement prompt using development feedback, evaluates candidates,
-selects strict non-regressing qualification gains, switches a workspace-local
-generation pointer, probes through that pointer and compensates failures by
-restoring the prior retained prompt. Calls reserve finite allocations before
-credential access; ambiguous pending operations are never resent. Immutable receipts
-and linked state snapshots support verified resume; qualifications are adaptive
-selection evidence, not untouched holdouts. `live task` consumes the active prompt
-for an already approved case; manual rollback and revocation are explicit commands.
-Exact shapes, trust assumptions and runtime limits are in [live text loop](live-text-loop.md)
-and its owning schemas. This extension does not establish arbitrary executable
-harness evolution, general runtime-closure attestation or improved research quality.
+bounded replacement prompt using development feedback, and records each evaluated
+candidate as a parent-linked node in a fixed-policy discovery tree. The shared
+online/replay policy interface selects root/leaf batches; policy configuration is
+frozen for one online rollout. `dal live dream` replays alternate bounded policies
+against recorded trees, revealing only a selected parent’s stored child, so it makes
+no model, evaluator or native-service call. The selected replay policy becomes
+evidence for the next human-approved frozen plan; it cannot change the current
+rollout.
+
+Strict non-regressing qualification gains stage a review request while retaining the
+workspace-local active pointer. A separate DAL promotion executor verifies the exact,
+current human candidate-application decision before switching the pointer, probes
+through it and compensates failures by restoring the prior retained prompt. Calls
+reserve finite allocations before credential access; ambiguous pending operations are
+never resent. Immutable receipts and linked state snapshots support verified resume;
+qualifications are adaptive selection evidence, not untouched holdouts. The
+controller derives a read-only BPE workspace: Belief is development status/digests,
+Progress is finite campaign state, and Experience is development-only evaluated
+history. The proposal view never receives qualification/canary inputs or outcomes,
+expected answers or raw replies. `live task` consumes the active prompt for an
+already approved case; manual rollback and revocation are explicit commands. Exact
+shapes, trust assumptions and runtime limits are in [live text loop](live-text-loop.md),
+[live promotion control](live-promotion-control.md) and their owning schemas. This
+extension does not establish arbitrary executable harness evolution, general runtime
+closure attestation or improved research quality.
 
 ## Constraints and assumptions
 
@@ -322,6 +350,7 @@ harness evolution, general runtime-closure attestation or improved research qual
 22. Runtime generation manifests digest deterministic closed I-JSON with RFC 8785 JCS; evidence keeps assurance and session-transition appraisal separate; run recording never late-binds or qualifies checkpoints/transition-spanning sessions; controller enrollment validates repository-local evidence and its manifest, preserves the legacy harness pin, and rejects absent, unstable, under-qualified, mixed, unavailable, or digest-mismatched runtime generations.
 23. Given a configured workspace-owned plugin entry and staged candidate, `dal_candidate_apply` fails with `CANDIDATE_ADMISSION_QUARANTINED`, does not invoke approval verification, changes no live file, publishes no admitted generation, and cannot make a run candidate-evaluation-eligible. Opt-in integration evidence records current DSH's pre-readiness reload event, failed-start non-rollback, and multi-file hybrid risk without modifying dsh core or a shared profile.
 24. Given two terminal run-mode sessions with one explicit compatible `controllerObservation` configuration and stable policy-qualified launcher evidence, their final records validate and feed `dal control estimate` directly; checkpoint, incomplete, contradictory, and unconfigured records do not join the batch; configured pins cannot bypass runtime attestation or HMR quarantine; raw session content remains absent.
+25. Given a live campaign with a fixed bounded exploration policy, every online child records a verified parent-linked discovery node; `dal live dream` replays only stored children from policy-observable prefixes, makes no native/model/evaluator call, and cannot alter the active pointer or deploy a policy without a later frozen plan and its approvals.
 
 ## Evidence plan
 

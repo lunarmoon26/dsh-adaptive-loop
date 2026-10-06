@@ -43,6 +43,10 @@ export async function validateLivePlan(value: unknown): Promise<LivePlan> {
   liveAssert(new Set(plan.cases.map((item) => item.id)).size === plan.cases.length, "LIVE_DUPLICATE_CASE");
   liveAssert(new Set(plan.cases.map((item) => item.input)).size === plan.cases.length, "LIVE_DUPLICATE_INPUT");
   for (const role of ["development", "qualification", "canary"]) liveAssert(plan.cases.some((item) => item.role === role), "LIVE_MISSING_CASE_ROLE");
+  if (plan.exploration_policy !== undefined) {
+    liveAssert(plan.exploration_policy.max_parallelism <= plan.limits.candidates
+      && plan.exploration_policy.max_rounds <= plan.limits.candidates, "LIVE_INVALID_EXPLORATION_POLICY");
+  }
   const evaluated = plan.cases.filter((item) => item.role !== "canary").length;
   const canaries = plan.cases.length - evaluated;
   liveAssert(evaluated * (1 + plan.limits.candidates) + plan.limits.candidates + canaries <= plan.limits.requests, "LIVE_INSUFFICIENT_ALLOCATION");

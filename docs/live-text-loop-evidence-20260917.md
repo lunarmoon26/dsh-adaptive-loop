@@ -3,6 +3,12 @@
 Change: `chg-dal-live-text-loop-20260916`. Status: completed for the bounded,
 tool-free text-harness path in `live-text-loop.md`.
 
+This is historical evidence for the pre-HITL, automatic-promotion implementation.
+The current contract stages a qualifying candidate for a separate human decision
+and adds fixed-policy discovery trees plus offline Dream-RSI-style replay. This
+pilot does not evidence those later control paths and must not be retried under its
+expired/revoked authority.
+
 ## Executed scope
 
 The maintainer separately approved repository-local native dependencies, then the

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/live-dream.v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["$schema", "schema_version", "kind", "compatibility_sha256", "sources", "policies", "selected_policy_sha256"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/live-dream.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "kind": { "const": "replay" },
+    "compatibility_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+    "sources": {
+      "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["campaign_id", "state_sha256"],
+        "properties": {
+          "campaign_id": { "$ref": "live-plan.v1.schema.json#/$defs/id" },
+          "state_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" }
+        }
+      }
+    },
+    "policies": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["policy", "policy_sha256", "score", "quality", "work", "rounds"],
+        "properties": {
+          "policy": {
+            "type": "object", "additionalProperties": false,
+            "required": ["strategy", "max_parallelism", "max_rounds"],
+            "properties": {
+              "strategy": { "enum": ["breadth_first", "development_first"] },
+              "max_parallelism": { "type": "integer", "minimum": 1, "maximum": 8 },
+              "max_rounds": { "type": "integer", "minimum": 1, "maximum": 8 }
+            }
+          },
+          "policy_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+          "score": { "type": "number", "minimum": -8, "maximum": 2 },
+          "quality": { "type": "number", "minimum": 0, "maximum": 1 },
+          "work": { "type": "number", "minimum": 0, "maximum": 8 },
+          "rounds": { "type": "number", "minimum": 0, "maximum": 8 }
+        }
+      }
+    },
+    "selected_policy_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" }
+  }
+}

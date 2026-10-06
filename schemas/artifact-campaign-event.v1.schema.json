@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recursive-dev-loop.dev/schemas/artifact-campaign-event.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "sequence", "plan_sha256", "previous_sha256", "operation"],
+  "properties": {
+    "$schema": { "const": "https://recursive-dev-loop.dev/schemas/artifact-campaign-event.v1.schema.json" },
+    "schema_version": { "const": "1.0.0" },
+    "sequence": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "plan_sha256": { "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" },
+    "previous_sha256": { "anyOf": [{ "$ref": "artifact-campaign-plan.v1.schema.json#/$defs/digest" }, { "type": "null" }] },
+    "operation": { "$ref": "artifact-campaign-operation.v1.schema.json" }
+  }
+}

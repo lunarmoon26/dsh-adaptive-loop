@@ -22,11 +22,73 @@
     "sequence": { "type": "integer", "minimum": 0, "maximum": 1000 },
     "previous_sha256": { "anyOf": [{ "$ref": "live-plan.v1.schema.json#/$defs/digest" }, { "type": "null" }] },
     "plan_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
-    "phase": { "enum": ["prepared", "baseline", "search", "probe", "complete", "rolled_back", "failed"] },
+    "phase": { "enum": ["prepared", "baseline", "search", "awaiting_review", "probe", "complete", "rolled_back", "rejected", "failed"] },
     "active": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
     "retained": { "type": "array", "minItems": 1, "maxItems": 10, "uniqueItems": true, "items": { "$ref": "live-plan.v1.schema.json#/$defs/digest" } },
     "candidate_index": { "type": "integer", "minimum": 0, "maximum": 8 },
     "last_error": { "type": ["string", "null"], "maxLength": 128 },
+    "review": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["request_sha256", "candidate", "incumbent", "evaluation_sha256", "scope", "decision"],
+          "properties": {
+            "request_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+            "candidate": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+            "incumbent": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+            "evaluation_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+            "scope": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "decision": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["approval_sha256", "decision_id", "outcome"],
+                  "properties": {
+                    "approval_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+                    "decision_id": { "type": "string", "pattern": "^dec-[a-z0-9-]+$", "maxLength": 100 },
+                    "outcome": { "enum": ["approved", "rejected"] }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "exploration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "rounds_completed", "nodes"],
+      "properties": {
+        "policy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["strategy", "max_parallelism", "max_rounds"],
+          "properties": {
+            "strategy": { "enum": ["breadth_first", "development_first"] },
+            "max_parallelism": { "type": "integer", "minimum": 1, "maximum": 8 },
+            "max_rounds": { "type": "integer", "minimum": 1, "maximum": 8 }
+          }
+        },
+        "rounds_completed": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "nodes": {
+          "type": "array", "minItems": 1, "maxItems": 9,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "parent_id", "generation", "evaluation_sha256", "development_score", "qualification_score", "round"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^(root|node-[0-7])$" },
+              "parent_id": { "anyOf": [{ "type": "null" }, { "type": "string", "pattern": "^(root|node-[0-7])$" }] },
+              "generation": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+              "evaluation_sha256": { "$ref": "live-plan.v1.schema.json#/$defs/digest" },
+              "development_score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "qualification_score": { "type": "number", "minimum": 0, "maximum": 1 },
+              "round": { "type": "integer", "minimum": 0, "maximum": 8 }
+            }
+          }
+        }
+      }
+    },
     "evaluations": {
       "type": "array", "maxItems": 9,
       "items": {

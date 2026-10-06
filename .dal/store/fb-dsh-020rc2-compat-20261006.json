@@ -1,0 +1,206 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-dsh-020rc2-compat-20261006",
+  "ingested_at": "2026-10-06T18:26:09.285Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-dsh-020rc2-compat-20261006.json",
+    "sha256": "16f95fc758b87280ea4db87cf9b8641f4eb0ba2caf6de04d2b6328613f969071"
+  },
+  "feedback_sha256": "a90c4804ef550c7fdf1b1c98d07d1e9f8b9b304b3412b07708246d9f0206c4b6",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-10-06T18:26:09.285Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-dsh-020rc2-compat-20261006",
+    "change_id": "chg-dsh-020rc2-compat",
+    "created_at": "2026-10-06T18:25:36Z",
+    "supersedes": null,
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "2.0.24",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "57b1af6e962d877f98d78947e956d52fb84219d4",
+        "branch": "fix/dsh-0.2.0-rc.2",
+        "dirty": true
+      },
+      "task_ref": "repo://docs/distribution.md"
+    },
+    "goal": "Migrate DAL source compatibility to DSH 0.2.0-rc.2 without changing installed profiles, credentials, approvals or historical evidence.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-release-alignment",
+        "statement": "Runtime dependencies, native host and tool-plugin peers align with the requested DSH and Cordis release set.",
+        "result": "passed",
+        "evidence": [
+          "ev-compatibility-tests",
+          "ev-consumer-smoke"
+        ]
+      },
+      {
+        "id": "ac-api-consumers",
+        "statement": "Async sandbox confinement and native session-event consumers preserve fail-closed behavior and privacy-safe provenance.",
+        "result": "passed",
+        "evidence": [
+          "ev-compatibility-tests",
+          "ev-repository-check"
+        ]
+      },
+      {
+        "id": "ac-documentation",
+        "statement": "Compatibility deltas, conservative recording limits and historical evidence boundaries are documented.",
+        "result": "passed",
+        "evidence": [
+          "ev-compatibility-contract"
+        ]
+      },
+      {
+        "id": "ac-verification",
+        "statement": "Focused checks, the repository gate and clean-consumer packaging checks pass without a live model call.",
+        "result": "passed",
+        "evidence": [
+          "ev-repository-check",
+          "ev-consumer-smoke"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Local source migration and packaging verification passed. Deployment and publication remain separate human actions.",
+      "exception": null
+    },
+    "what_worked": [
+      "Exact prerelease alignment exposed API drift through real service types.",
+      "Synthetic native session envelopes verified nested tool-result correlation and digest-only prompt recording.",
+      "The repository gate and clean-consumer smoke passed while retaining approval and quarantine boundaries."
+    ],
+    "what_failed": [
+      "Initial compilation exposed asynchronous confinement and a relocated JSON-value type.",
+      "Rejected-promise mocking was unsuitable for the sandbox regression fixture; explicit synthetic async providers verified the adapter instead."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "vitest",
+        "purpose": "Verify native event and sandbox adapter compatibility with synthetic inputs.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-compatibility-tests"
+        ]
+      },
+      {
+        "sequence": 2,
+        "kind": "tool",
+        "name": "pnpm-check",
+        "purpose": "Run the repository type, build, test, capsule, policy and deterministic evaluation gates.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-repository-check"
+        ]
+      },
+      {
+        "sequence": 3,
+        "kind": "tool",
+        "name": "release-smoke",
+        "purpose": "Verify changed tarballs in a disposable consumer without profile installation or model execution.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-consumer-smoke"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-compatibility-tests",
+        "kind": "test",
+        "uri": "repo://tests/dsh-compatibility.test.ts",
+        "summary": "Native session constructors, nested call identity, failure flags, prompt invalidation and manifest alignment pass; asynchronous sandbox adapter tests also pass.",
+        "sha256": null,
+        "observed_at": "2026-10-06T18:25:36Z"
+      },
+      {
+        "id": "ev-repository-check",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Repository gate passes with 1256 tests passed and seven opt-in tests skipped; capsule, guardrail and deterministic benchmark checks pass.",
+        "sha256": null,
+        "observed_at": "2026-10-06T18:25:36Z"
+      },
+      {
+        "id": "ev-consumer-smoke",
+        "kind": "command",
+        "uri": "command://pnpm-run-release-smoke",
+        "summary": "Eight local release artifacts pass clean-consumer CLI, schema, template, plugin-import and offline replay verification; nothing is published or mounted into a DSH profile.",
+        "sha256": null,
+        "observed_at": "2026-10-06T18:25:36Z"
+      },
+      {
+        "id": "ev-compatibility-contract",
+        "kind": "file",
+        "uri": "repo://docs/distribution.md",
+        "summary": "Documents the current compatibility release, API changes, conservative prompt provenance limits and unchanged historical evidence identities.",
+        "sha256": null,
+        "observed_at": "2026-10-06T18:25:36Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-live-integration",
+        "statement": "Local tests do not establish live OAuth, provider, launcher/profile or OS sandbox integration.",
+        "level": "medium",
+        "resolution": "Perform separately approved integration verification before deployment or live use.",
+        "evidence": [
+          "ev-repository-check",
+          "ev-consumer-smoke"
+        ]
+      },
+      {
+        "id": "un-release-version",
+        "statement": "Changed DAL packages retain their existing version and have not been published.",
+        "level": "low",
+        "resolution": "Choose a new coordinated DAL release version and obtain separate publication approval before publishing.",
+        "evidence": [
+          "ev-compatibility-contract"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "Source migration awaits maintainer review. Worktree authorization does not authorize deployment, credential use, live calls or publication."
+      ],
+      "approval_refs": []
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "synthetic-verification"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
