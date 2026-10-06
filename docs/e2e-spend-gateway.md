@@ -49,6 +49,12 @@ The candidate container joins only an internal candidate-facing Docker network. 
 - `POST /v1/responses`: OpenAI gateway only, exact model `gpt-5.6-terra`.
 - `POST /v1/messages`: Anthropic gateway only, exact model `claude-sonnet-5`.
 
+The additive [Sonnet 5.5 pilot gate](sonnet55-research-pilot.md) admits exact
+`claude-sonnet-5-5` only under its separately pinned pricing profile and explicit
+`between_tools`. It is text-only: tools, signed-thinking replay and sampling
+overrides are rejected. Historical Sonnet 5 disabled-thinking admission is
+unchanged. This addition does not enable existing runner/proposer model routes.
+
 Authentication accepts `Authorization: Bearer <capability>` or Anthropic-style `x-api-key: <capability>`. A supplied Authorization header takes precedence. Token length is at least 32 non-whitespace characters; the launcher generates a cryptographically random token. Authentication compares fixed-length SHA-256 digests with `timingSafeEqual`. The capability never becomes an upstream header. All refusals have a fixed safe JSON error (400 before reservation; 502 after reservation); if response bytes were already sent, the connection is terminated. No raw transport exceptions are logged or returned.
 
 `GatewayUpstream` is a trusted in-process test seam `(url: string, init: RequestInit) => Promise<Response>`. In live mode, an injected transport suppresses credential reads; it is never configurable over HTTP or standalone environment. Production omits it and uses native `fetch`. Rehearsal rejects injection entirely, so its built-in responder never opens outbound sockets. `createRehearsalUpstream()` exports the deterministic responder for protocol tests or trusted fixture extension. It emits a first `get_order({order_id: "ord-1001"})` call and subsequent `DONE` responses, with OpenAI function-call events or Anthropic tool-use events. This fixture does **not** interpret workflow results or prove the workflow oracle passes; main may refine its deterministic sequence for actual keyless DSH rehearsal.
@@ -100,6 +106,17 @@ This deliberately reserves the full 1024 output tokens even if a request asks fo
 The ledger is locally trusted, not a defense against a filesystem owner deleting or rolling back the whole volume. Losing the entire ledger cannot be distinguished from a never-initialized store by a new process. Both launchers enforce the same canonical repository `.dal/check/spend` root; alternate roots are rejected. Persistent volume integrity and independent campaign provenance remain operator responsibilities.
 
 ## Response Evidence
+
+Completion repair `chg-sonnet55-completion-repair-20261007`: optional
+`provider_stop_reason` in diagnostics and outcome summaries is a closed allowlist,
+never provider text. Historical diagnostics remain valid. Unknown values map to
+`unknown`; missing reasons map to null. Token/context limits and paused turns remain
+incomplete, not accepted research output; refusal remains transport-only completion
+on the new Sonnet 5.5 route. The last SSE stop reason controls completion, so an
+earlier end-turn cannot mask a later truncation. JSON bodies are now bounded and
+validated before HTTP 200/body publication; failure yields a safe HTTP 502 without
+leaking a partial body. SSE remains byte-for-byte streaming and terminates on failure.
+No refunds, continuations, fallback or automatic retries are added.
 
 The AbortController deadline starts with the inbound request and covers body read, fetch, all response reads and backpressure. Caller disconnect and shutdown abort transport. Response byte counting is continuous, independent of Content-Length; at most 2 MiB passes through. Only content-type plus fixed no-store/proxy-buffering headers are returned. SSE bytes are unchanged; bounded ephemeral parsing checks for a terminal provider event and explicit failure events, without persisting raw data. Nonstream JSON must have a completed OpenAI status or recognized Anthropic terminal reason. Truncation/error closes the connection and increments failure counts without refund.
 

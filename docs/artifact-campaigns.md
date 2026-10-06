@@ -115,5 +115,8 @@ Append replies bind `sequence`/`head_sha256` to the current journal tip and
   enforcement. Adapters own those checks and keep blobs/raw traces private.
 
 The complete synthetic fixture sequence is in `tests/fixtures/artifact-campaign/`.
+The opt-in [research mechanism foundation](research-mechanisms.md) verifies local
+artifact bytes and prepares private requests against these reservations. It does
+not change ledger semantics or supply the still adapter-owned execution boundary.
 Focused tests in `tests/artifact-campaign.test.ts` cover the criteria above without
 DSH, a model, a plugin mount or a competition run.

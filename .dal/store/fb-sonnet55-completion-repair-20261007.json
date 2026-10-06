@@ -1,0 +1,175 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-sonnet55-completion-repair-20261007",
+  "ingested_at": "2026-10-06T23:12:32.268Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-sonnet55-completion-repair-20261007.json",
+    "sha256": "c5d63831edf8e4791bbf066b8df810442a9e05650422fc951761168c12beaccb"
+  },
+  "feedback_sha256": "db6ae4d4bf7e816024dc57389098ffef34bea8f8df44fdb8016404d2d1c67c1d",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-10-06T23:12:32.268Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-sonnet55-completion-repair-20261007",
+    "change_id": "chg-sonnet55-completion-repair-20261007",
+    "created_at": "2026-10-06T23:12:01Z",
+    "supersedes": "fb-sonnet55-paid-check-20261006",
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "2.0.24",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "0342b047379d96a08dc1abce8e816b6418cd6d7c",
+        "branch": "feat/research-mechanism-foundation",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/23"
+    },
+    "goal": "Repair gateway completion diagnostics and JSON publication, then verify a fresh paid Sonnet 5.5 request under the retained campaign cap.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-safe-diagnostics",
+        "statement": "Closed-vocabulary provider stop reasons distinguish truncation, refusal, pause and unknown replies without storing provider text.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-contract"
+        ]
+      },
+      {
+        "id": "ac-json-publication",
+        "statement": "Incomplete nonstream JSON produces safe HTTP 502 before publishing a body, while SSE validates the final observed reason.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-live-check",
+        "statement": "A distinct approved budget-reserved API check completes without replaying or refunding the first failed attempt.",
+        "result": "passed",
+        "evidence": [
+          "ev-live"
+        ]
+      },
+      {
+        "id": "ac-verification",
+        "statement": "Focused regression tests and the repository gate pass.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests",
+          "ev-check"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "completed",
+      "summary": "Completion handling is repaired and a fresh paid Sonnet 5.5 call completed with end_turn. The initial failed call remains charged and its stop reason remains unknown. Real research adapter and L4 evidence are not claimed.",
+      "exception": null
+    },
+    "what_worked": [
+      "Bounded JSON buffering avoids publishing an invalid HTTP 200 before completion validation.",
+      "An optional closed diagnostic field preserves historical failure records and exposes no provider text.",
+      "A concise fresh request completed under the same durable cap without replay or refund."
+    ],
+    "what_failed": [
+      "The first paid call's stop reason cannot be reconstructed from historical diagnostics.",
+      "The full type gate caught an optional-property assertion admitting undefined; the assertion was narrowed without runtime change."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "metered-anthropic-api-check",
+        "purpose": "Verify repaired completion using one exact approved fresh request.",
+        "outcome": "succeeded",
+        "duration_ms": null,
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/sonnet55-gateway.test.ts",
+        "summary": "Twenty-four Sonnet tests and eighty-nine historical gateway tests pass; new cases reject token limits, pauses, context exhaustion and unknown reasons without leaking partial JSON and prevent earlier SSE completion masking final truncation.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:12:01Z"
+      },
+      {
+        "id": "ev-check",
+        "kind": "command",
+        "uri": "command://pnpm-run-check",
+        "summary": "Repository gate passes: 1357 tests passed, seven integration skips; types, build, capsule freshness, policy and deterministic evaluation gates pass.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:12:01Z"
+      },
+      {
+        "id": "ev-live",
+        "kind": "file",
+        "uri": "repo://.dal/check/sonnet55-pilot-002/receipt.json",
+        "summary": "Exact-approved fresh paid call: HTTP 200, end_turn, 143 input and 204 output tokens reported. Two retained reservations total 96056 microUSD under the ten-dollar cap; actual invoices unmeasured. No provider failure, automatic retry or research evaluation.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:11:27Z"
+      },
+      {
+        "id": "ev-contract",
+        "kind": "file",
+        "uri": "repo://docs/e2e-spend-gateway.md",
+        "summary": "Owns optional stop-reason diagnostics, delayed JSON publication, final SSE validation and unchanged no-refund/no-retry rules.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:12:01Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-original-stop",
+        "statement": "The initial failed live response's stop reason and actual billed amount remain unknown; the new successful call does not retroactively explain that result.",
+        "level": "medium",
+        "resolution": "Retain the failed attempt as historical evidence; use new closed diagnostics for subsequent incomplete responses.",
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "The user explicitly requested repair and previously approved model, cap, paid checks and launcher dotenv loading. Exact new transfer approval was verified before this send; no plugin mount, profile change or candidate application."
+      ],
+      "approval_refs": [
+        "dec-sonnet55-api-check002-20261007"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "paid-api-check"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}

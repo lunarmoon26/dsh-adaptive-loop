@@ -18,3 +18,4 @@ benchmarks/tau-style-workflow/.dal/
 
 # transient dsh home scratch from local harness runs
 benchmarks/tau-style-workflow/.tmp-dsh-home/
+.dal/research/

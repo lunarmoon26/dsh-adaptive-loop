@@ -31,6 +31,7 @@ import { publishJsonExclusive, readJsonFile, sha256 } from "./json.js";
 import { assertNoPii, assertNoSecrets, scanPii, scanSecrets } from "./privacy.js";
 import { prepareProposeRequest, runPropose } from "./propose.js";
 import { resetExecute, resetStatus } from "./reset.js";
+import { checkResearchMechanism, prepareResearchRequest, researchDigest, stageResearchMechanism, verifyResearchRequest } from "./research.js";
 import {
   assertNoSymlinkTraversal,
   prepareSafeRepositoryDirectory,
@@ -130,6 +131,29 @@ async function dispatch(argv: readonly string[], io: CliIo): Promise<void> {
       const options = { campaign: requiredOption(parsed, "campaign"), grant: requiredOption(parsed, "grant"), mountApproval: requiredOption(parsed, "mount-approval") };
       printJson(io, action === "run" ? await runLive(options) : action === "rollback" ? await rollbackLive(options) : action === "promote" ? await promoteLive({ ...options, approval: requiredOption(parsed, "approval") }) : await taskLive(options, requiredOption(parsed, "case"), requiredOption(parsed, "operation")));
     } else throw new DalError("USAGE_ERROR", "Unknown live campaign command");
+    return;
+  }
+  if (group === "research") {
+    if (action === "mechanism") {
+      const [operation, ...args] = rest;
+      const parsed = parseArguments(args);
+      assertOptions(parsed, ["file"]);
+      exactlyPositionals(parsed, 0, "research mechanism check|stage --file <file>");
+      const file = requiredOption(parsed, "file");
+      if (operation === "check") printJson(io, { status: "valid", ...await checkResearchMechanism(file) });
+      else if (operation === "stage") printJson(io, await stageResearchMechanism(file));
+      else throw new DalError("USAGE_ERROR", "Supported research mechanism commands: check, stage");
+    } else {
+      const parsed = parseArguments(rest);
+      assertOptions(parsed, action === "prepare" ? ["binding"] : ["file"]);
+      exactlyPositionals(parsed, 0, "research prepare --binding <file> | verify --file <request>");
+      if (action === "prepare") printJson(io, await prepareResearchRequest(requiredOption(parsed, "binding")));
+      else if (action === "verify") {
+        const request = await verifyResearchRequest(requiredOption(parsed, "file"));
+        printJson(io, { status: "verified", request_sha256: researchDigest(request), mechanism_sha256: request.mechanism_sha256,
+          task_harness_sha256: request.task_harness_sha256, campaign_id: request.binding.campaign_id, node_id: request.binding.node_id });
+      } else throw new DalError("USAGE_ERROR", "Supported research commands: mechanism, prepare, verify. No command dispatches workers.");
+    }
     return;
   }
   if (group === "campaign") {
@@ -1335,6 +1359,9 @@ Usage:
   dal feedback summary [query filters] [--format text|json]
   dal capsule check <path-or-directory>
   dal approval verify <decision-file> --action <action> --scope <scope>
+  dal research mechanism check|stage --file <mechanism-file>
+  dal research prepare --binding <binding-file>
+  dal research verify --file <prepared-request>
                       [--candidate-sha256 <digest>] [--at <date-time>]
   dal policy check <action-file> [--approval <decision-file>] [--store <directory>]
   dal eval run <suite-file> [--store <directory>]

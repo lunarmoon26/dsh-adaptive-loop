@@ -152,18 +152,67 @@ if (command === "check") {
       import assert from 'node:assert/strict';
       import { userGlobalInstallScopeDigest } from '@lunarmoon26/dal/install';
       import { defaultCli } from '@lunarmoon26/dal-improve-tools';
-      import { artifactCampaignStatus } from '@lunarmoon26/dal/campaign';
+      import { artifactCampaignStatus, prepareArtifactCampaign, appendCampaignOperation } from '@lunarmoon26/dal/campaign';
+      import { stageResearchMechanism, prepareResearchRequest, verifyResearchRequest, researchDigest, mechanismPolicyDigest } from '@lunarmoon26/dal/research';
+      import { writeFile } from 'node:fs/promises';
+      import { createHash } from 'node:crypto';
       import { existsSync } from 'node:fs';
       assert.match(await userGlobalInstallScopeDigest(), /^[a-f0-9]{64}$/);
       assert.ok(existsSync(defaultCli()[1]));
       process.chdir(${JSON.stringify(workspace)});
       assert.equal((await artifactCampaignStatus(${JSON.stringify(artifactPlan.campaign_id)})).sequence, 6);
+      const hash = value => createHash('sha256').update(value).digest('hex');
+      const mechanism = {
+        $schema: 'https://recursive-dev-loop.dev/schemas/research-mechanism.v1.schema.json', schema_version: '1.0.0', parent_sha256: null,
+        instructions: { diagnosis: 'Inspect synthetic development failures.', proposal: 'Propose one falsifiable research repair.' },
+        search_policy: { strategy: 'development_first' }, experience_policy: { selection: 'latest_reviewed', max_items: 4 },
+      };
+      await writeFile('mechanism.json', JSON.stringify(mechanism));
+      await stageResearchMechanism('mechanism.json');
+      const workspaceBytes = JSON.stringify({ snapshot: 'synthetic' });
+      const harnessBytes = 'Use bounded synthetic research inputs.';
+      const taskBytes = JSON.stringify({ objective: 'Verify local packaged request assembly.' });
+      await writeFile('workspace.json', workspaceBytes);
+      await writeFile('harness.md', harnessBytes);
+      await writeFile('task.json', taskBytes);
+      const artifacts = [
+        { sha256: hash(workspaceBytes), kind: 'workspace' }, { sha256: hash(harnessBytes), kind: 'task-harness' },
+      ].map(item => ({ ...item, compatibility_sha256: 'a'.repeat(64), evidence_sha256: 'b'.repeat(64), locator: 'artifact://' + item.sha256 }));
+      await prepareArtifactCampaign({
+        $schema: 'https://recursive-dev-loop.dev/schemas/artifact-campaign-plan.v1.schema.json', schema_version: '1.0.0',
+        campaign_id: 'research-smoke', goal: 'Verify packaged research preparation', metric: { name: 'quality', direction: 'maximize' },
+        evaluation_context_sha256: 'c'.repeat(64), researcher_sha256: researchDigest(mechanism), policy_sha256: mechanismPolicyDigest(mechanism),
+        limits: { attempts: 1, rounds: 1, parallelism: 1, resources: { compute_seconds: 1 } }, root_artifacts: artifacts,
+      });
+      await appendCampaignOperation({
+        $schema: 'https://recursive-dev-loop.dev/schemas/artifact-campaign-operation.v1.schema.json', schema_version: '1.0.0',
+        kind: 'reserve', operation_id: 'reserve-smoke', campaign_id: 'research-smoke', actor: { id: 'supervisor-smoke', role: 'supervisor' },
+        node_id: 'node-smoke', parent_id: null, round: 1, hypothesis: 'Synthetic preparation can bind installed API identities.',
+        contract_sha256: hash(taskBytes), worker_id: 'worker-smoke', workspace_sha256: artifacts[0].sha256,
+        inputs: artifacts.map(({ sha256, kind, compatibility_sha256 }) => ({ sha256, kind, compatibility_sha256 })), reservation: { compute_seconds: 1 },
+      });
+      await writeFile('binding.json', JSON.stringify({
+        $schema: 'https://recursive-dev-loop.dev/schemas/research-binding.v1.schema.json', schema_version: '1.0.0',
+        campaign_id: 'research-smoke', node_id: 'node-smoke', mechanism_sha256: researchDigest(mechanism),
+        task_contract_uri: 'repo://task.json', task_harness_sha256: artifacts[1].sha256,
+        artifacts: [{ sha256: artifacts[0].sha256, uri: 'repo://workspace.json' }, { sha256: artifacts[1].sha256, uri: 'repo://harness.md' }],
+      }));
+      const prepared = await prepareResearchRequest('binding.json');
+      assert.equal(prepared.status, 'prepared');
+      const request = await verifyResearchRequest('.dal/research/requests/research-smoke/node-smoke.json');
+      assert.equal(researchDigest(request), prepared.request_sha256);
+      assert.ok(request.instructions.includes(mechanism.instructions.proposal));
+      assert.equal((await artifactCampaignStatus('research-smoke')).sequence, 1);
       for (const name of ${JSON.stringify(packages.filter((pkg) => pkg.directory !== "." && !pkg.name.endsWith("dal-modes")).map((pkg) => pkg.name))}) {
         await import(name);
       }
     `;
     run(process.execPath, ["--input-type=module", "-e", probe], temporary);
-    console.log("Clean consumer smoke passed: executable CLI, schemas, templates, plugin imports, packaged CLI resolution, campaign replay and artifact-campaign API/tree; no DSH mount or model call");
+    const research = JSON.parse(run(cli, ["research", "verify", "--file", ".dal/research/requests/research-smoke/node-smoke.json"], workspace));
+    assert.equal(research.status, "verified");
+    assert.equal(research.campaign_id, "research-smoke");
+    assert.ok(!("instructions" in research));
+    console.log("Clean consumer smoke passed: CLI/assets/plugin imports, campaign replay/ledger and research preparation API/CLI; no DSH mount or model call");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

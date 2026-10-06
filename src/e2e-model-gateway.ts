@@ -15,13 +15,13 @@ export interface E2eSpendPolicy {
   approval_id: string;
   run_id: string;
   provider: "openai" | "anthropic";
-  model: "gpt-5.6-terra" | "claude-sonnet-5";
+  model: "gpt-5.6-terra" | "claude-sonnet-5" | "claude-sonnet-5-5";
   provider_limit_microusd: number;
   max_request_bytes: 65536;
   max_response_bytes: 2097152;
   timeout_ms: 120000;
   max_output_tokens: 1024;
-  pricing_profile: "reviewed-text-upper-rates-20260907-v1";
+  pricing_profile: "reviewed-text-upper-rates-20260907-v1" | "reviewed-sonnet55-text-upper-rates-20261006-v1";
   token_bound_profile: "json-bytes-times-two-plus-8192-v1";
   input_microusd_per_token: 5 | 4;
   output_microusd_per_token: 18 | 10;
@@ -43,6 +43,7 @@ export interface GatewayFailure {
   upstream_status: number | null;
   provider_error_type: string | null;
   provider_error_code: string | null;
+  provider_stop_reason?: "end_turn" | "stop_sequence" | "tool_use" | "refusal" | "max_tokens" | "pause_turn" | "model_context_window_exceeded" | "unknown" | null;
 }
 /** Exact closed validation; never return AJV errors containing untrusted values. */
 export function validateGatewayFailure(value: unknown): asserts value is GatewayFailure {
@@ -103,7 +104,16 @@ function admit(body: unknown, p: E2eSpendPolicy): asserts body is ObjectValue {
     })), "GATEWAY_OPENAI_INPUT");
   } else {
     assert(keys(body, ["model", "messages", "system", "max_tokens", "stream", "tools", "tool_choice", "temperature", "top_p", "stop_sequences", "thinking"]), "unknown_fields");
-    assert(object(body.thinking) && Object.keys(body.thinking).length === 1 && body.thinking.type === "disabled", "reasoning_denied");
+    const sonnet55 = p.model === "claude-sonnet-5-5";
+    assert(object(body.thinking) && Object.keys(body.thinking).length === 1 && body.thinking.type === (sonnet55 ? "between_tools" : "disabled"), "reasoning_denied");
+    // Text-only foundation. Tool-enabled 5.5 returns signed thinking updates;
+    // accepting tools without verified replay support would lose that history.
+    if (sonnet55) {
+      assert(body.tools === undefined && body.tool_choice === undefined, "GATEWAY_TOOLS");
+      assert(body.temperature === undefined && body.top_p === undefined, "sampling_range");
+      assert(Array.isArray(body.messages) && body.messages.every(m => object(m) && (text(m.content) ||
+        (Array.isArray(m.content) && m.content.every(c => object(c) && keys(c, ["type", "text"]) && c.type === "text" && text(c.text))))), "messages_shape");
+    }
     assert(body.system === undefined || text(body.system) || (Array.isArray(body.system) && body.system.every(c => object(c) && keys(c, ["type", "text"]) && c.type === "text" && text(c.text))), "system_shape");
     assert(Array.isArray(body.messages) && body.messages.length > 0 && body.messages.every(m => object(m) && keys(m, ["role", "content"]) && ["user", "assistant"].includes(String(m.role)) && content(m.content, "anthropic")), "messages_shape");
     assert(body.stop_sequences === undefined || (Array.isArray(body.stop_sequences) && body.stop_sequences.every(text)), "stop_sequences");
@@ -448,7 +458,7 @@ export async function startGateway(options: {
       assert(mime === (body.stream ? "text/event-stream" : "application/json"));
       reader = upstream.body.getReader();
       const responseChunks: Buffer[] = [];
-      res.writeHead(200, { "content-type": mime, "cache-control": "no-store", "x-accel-buffering": "no" });
+      if (body.stream) res.writeHead(200, { "content-type": mime, "cache-control": "no-store", "x-accel-buffering": "no" });
       for (;;) {
         phase("upstream", "network_exception");
         const { done, value } = await Promise.race([reader.read(), aborted]);
@@ -457,26 +467,41 @@ export async function startGateway(options: {
         phase("response", "response_oversize"); assert(responseBytes <= policy.max_response_bytes);
         responseChunks.push(Buffer.from(value));
         counts.response_bytes = Math.min(Number.MAX_SAFE_INTEGER, counts.response_bytes + value.byteLength);
-        if (!res.write(value)) await Promise.race([new Promise<void>(resolveDrain => res.once("drain", resolveDrain)), aborted]);
+        if (body.stream && !res.write(value)) await Promise.race([new Promise<void>(resolveDrain => res.once("drain", resolveDrain)), aborted]);
       }
       // Bounded, ephemeral parsing only: never store raw provider data or usage as billing.
       const responseText = Buffer.concat(responseChunks).toString("utf8");
+      const anthropicTerminalReasons = ["end_turn", "tool_use", "stop_sequence",
+        ...(policy.model === "claude-sonnet-5-5" ? ["refusal"] : [])];
+      const observeStopReason = (reason: unknown): void => {
+        if (policy.provider !== "anthropic") return;
+        const allowed = ["end_turn", "stop_sequence", "tool_use", "refusal", "max_tokens", "pause_turn", "model_context_window_exceeded"];
+        failure.provider_stop_reason = reason === undefined || reason === null ? null :
+          typeof reason === "string" && allowed.includes(reason) ? reason as NonNullable<GatewayFailure["provider_stop_reason"]> : "unknown";
+      };
       if (body.stream) {
         const events = responseText.split(/\r?\n\r?\n/).flatMap(frame => {
           const data = frame.split(/\r?\n/).filter(line => line.startsWith("data:")).map(line => line.slice(5).trimStart()).join("\n");
           if (!data || data === "[DONE]") return [];
           try { return [JSON.parse(data) as ObjectValue]; } catch { return []; }
         });
+        const deltas = events.filter(e => e.type === "message_delta" && object(e.delta));
+        observeStopReason((deltas.at(-1)?.delta as ObjectValue | undefined)?.stop_reason);
         phase("response", "sse_error");
         assert(!events.some(e => ["error", "response.failed", "response.incomplete"].includes(String(e.type))));
         phase("response", "sse_missing_terminal");
         assert(events.some(e => policy.provider === "anthropic" ? e.type === "message_stop" : e.type === "response.completed" && object(e.response) && e.response.status === "completed"));
-        if (policy.provider === "anthropic") assert(events.some(e => e.type === "message_delta" && object(e.delta) && ["end_turn", "tool_use", "stop_sequence"].includes(String(e.delta.stop_reason))));
+        if (policy.provider === "anthropic") assert(anthropicTerminalReasons.includes(String(failure.provider_stop_reason)));
       } else {
         phase("response", "response_json");
         const parsed: unknown = JSON.parse(responseText);
+        observeStopReason(object(parsed) ? parsed.stop_reason : undefined);
         phase("response", "response_incomplete");
-        assert(object(parsed) && (policy.provider === "openai" ? parsed.status === "completed" : parsed.type === "message" && ["end_turn", "tool_use", "stop_sequence"].includes(String(parsed.stop_reason))));
+        assert(object(parsed) && (policy.provider === "openai" ? parsed.status === "completed" : parsed.type === "message" && anthropicTerminalReasons.includes(String(parsed.stop_reason))));
+      }
+      if (!body.stream) {
+        res.writeHead(200, { "content-type": mime, "cache-control": "no-store", "x-accel-buffering": "no" });
+        res.write(Buffer.concat(responseChunks));
       }
       res.end();
       completed = true;
@@ -510,7 +535,7 @@ export async function startGateway(options: {
           assert((await lstat(directory)).isDirectory());
           const handle = await open(join(directory, `${sha256(`${policy.budget_id}:${policy.provider}:${requestDigest}`)}.json`), constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
           try {
-            await handle.writeFile(`${canonicalJson({ schema_version: "1.0.0", campaign_id: policy.campaign_id, run_id: policy.run_id, provider: policy.provider, request_digest: requestDigest, mode: options.mode, outcome: completed ? "completed" : "failed_or_partial", response_bytes: Math.min(responseBytes, policy.max_response_bytes), accounting: "upper-bound-reservations-no-refund" })}\n`);
+            await handle.writeFile(`${canonicalJson({ schema_version: "1.0.0", campaign_id: policy.campaign_id, run_id: policy.run_id, provider: policy.provider, request_digest: requestDigest, mode: options.mode, outcome: completed ? "completed" : "failed_or_partial", response_bytes: Math.min(responseBytes, policy.max_response_bytes), accounting: "upper-bound-reservations-no-refund", ...(failure.provider_stop_reason !== undefined ? { provider_stop_reason: failure.provider_stop_reason } : {}) })}\n`);
             await handle.sync();
           } finally { await handle.close(); }
           for (const path of [directory, options.ledgerRoot]) {

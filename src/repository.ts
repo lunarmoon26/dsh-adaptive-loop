@@ -70,6 +70,19 @@ export function repositoryPathUri(filePath: string, label: string): string {
 
 /** Read one repository JSON file through a checked descriptor, never a followed final symlink. */
 export async function readRepositoryJsonFile<T>(uri: string, label: string, maximumBytes?: number): Promise<JsonDocument<T>> {
+  const raw = await readRepositoryFile(uri, label, maximumBytes);
+  try {
+    return { value: JSON.parse(raw.toString("utf8")) as T, raw };
+  } catch {
+    throw new DalError("INVALID_JSON", `${label} is not valid JSON`);
+  }
+}
+
+/** Checked bytes for a single regular artifact file, not a runtime closure. */
+export async function readRepositoryFile(uri: string, label: string, maximumBytes?: number): Promise<Buffer> {
+  if (maximumBytes !== undefined && (!Number.isSafeInteger(maximumBytes) || maximumBytes < 0)) {
+    throw new DalError("REPOSITORY_FILE_READ_FAILED", `${label} has an invalid input byte limit`);
+  }
   const path = resolveRepositoryUri(uri, label);
   const root = await realpath(process.cwd());
   if (
@@ -105,7 +118,25 @@ export async function readRepositoryJsonFile<T>(uri: string, label: string, maxi
     if (opened.dev !== resolved.dev || opened.ino !== resolved.ino) {
       throw new DalError("REPOSITORY_FILE_READ_FAILED", `${label} changed while it was opened`);
     }
-    raw = await handle.readFile();
+    if (maximumBytes === undefined) {
+      raw = await handle.readFile();
+    } else {
+      // A file may grow after fstat. Never read an unbounded allocation before
+      // the post-read mutation check; one extra byte detects the enforced cap.
+      const chunks: Buffer[] = [];
+      let total = 0;
+      while (total <= maximumBytes) {
+        const chunk = Buffer.alloc(Math.min(64 * 1024, maximumBytes - total + 1));
+        const { bytesRead } = await handle.read(chunk, 0, chunk.length, null);
+        if (bytesRead === 0) break;
+        total += bytesRead;
+        if (total > maximumBytes) {
+          throw new DalError("REPOSITORY_FILE_READ_FAILED", `${label} exceeds the input byte limit`);
+        }
+        chunks.push(chunk.subarray(0, bytesRead));
+      }
+      raw = Buffer.concat(chunks, total);
+    }
     const completed = await handle.stat({ bigint: true });
     if (
       opened.dev !== completed.dev
@@ -123,11 +154,7 @@ export async function readRepositoryJsonFile<T>(uri: string, label: string, maxi
     await handle.close();
   }
 
-  try {
-    return { value: JSON.parse(raw.toString("utf8")) as T, raw };
-  } catch {
-    throw new DalError("INVALID_JSON", `${label} is not valid JSON`);
-  }
+  return raw;
 }
 
 export function resolveDedicatedRepositoryWritePath(

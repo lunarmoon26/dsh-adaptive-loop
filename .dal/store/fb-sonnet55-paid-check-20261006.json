@@ -1,0 +1,171 @@
+{
+  "$schema": "https://recursive-dev-loop.dev/schemas/stored-feedback-record.v1.schema.json",
+  "storage_version": "1.0.0",
+  "record_id": "fb-sonnet55-paid-check-20261006",
+  "ingested_at": "2026-10-06T23:08:16.728Z",
+  "source": {
+    "display_path": ".dal/outbox/fb-sonnet55-paid-check-20261006.json",
+    "sha256": "30d8fd820c6e571ae3c3837a4865a01f27c6cf175a90f161ad642bdb82d5e73d"
+  },
+  "feedback_sha256": "3f0622038f10cb05a6b4f758dcefe26122a2125c0f22696ba757fd4622e510f1",
+  "privacy_scan": {
+    "ruleset_version": "secret-ruleset-2026-08-27-v1",
+    "pii_ruleset_version": "pii-ruleset-2026-08-27-v1",
+    "status": "passed",
+    "scanned_at": "2026-10-06T23:08:16.728Z",
+    "matched_rules": []
+  },
+  "feedback": {
+    "$schema": "https://recursive-dev-loop.dev/schemas/feedback-log.v1.schema.json",
+    "schema_version": "1.0.0",
+    "feedback_id": "fb-sonnet55-paid-check-20261006",
+    "change_id": "chg-sonnet55-research-gate-20261006",
+    "created_at": "2026-10-06T23:07:27Z",
+    "supersedes": "fb-sonnet55-research-gate-20261006",
+    "producer": {
+      "actor": {
+        "kind": "automation",
+        "id": "opencode"
+      },
+      "harness": {
+        "name": "opencode",
+        "version": "2.0.24",
+        "session_id": null
+      },
+      "repository": {
+        "root": "repo://dsh-adaptive-loop",
+        "revision": "0342b047379d96a08dc1abce8e816b6418cd6d7c",
+        "branch": "feat/research-mechanism-foundation",
+        "dirty": true
+      },
+      "task_ref": "https://github.com/lunarmoon26/dsh-adaptive-loop/issues/23"
+    },
+    "goal": "Verify the supplied native credential and perform one exact approved Sonnet 5.5 paid API check under the shared ten-dollar cap.",
+    "acceptance_criteria": [
+      {
+        "id": "ac-key-loading",
+        "statement": "Explicit launcher-only dotenv loading confirms native credential availability without exposing values.",
+        "result": "passed",
+        "evidence": [
+          "ev-live"
+        ]
+      },
+      {
+        "id": "ac-paid-dispatch",
+        "statement": "One exact approved request reaches Anthropic after durable reservation, with no automatic retry or fallback.",
+        "result": "passed",
+        "evidence": [
+          "ev-live",
+          "ev-approval"
+        ]
+      },
+      {
+        "id": "ac-refusal-fix",
+        "statement": "JSON and SSE refusals complete transport without refund or retry while historical admission remains unchanged.",
+        "result": "passed",
+        "evidence": [
+          "ev-tests"
+        ]
+      },
+      {
+        "id": "ac-accepted-response",
+        "statement": "The paid request produces a verified terminal response and accepted research output.",
+        "result": "failed",
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "outcome": {
+      "status": "blocked",
+      "summary": "The supplied key works: the paid request reached Anthropic and returned HTTP 200. Gateway completion failed with response_incomplete, so no accepted model proposal or research evaluation exists.",
+      "exception": {
+        "kind": "blocked",
+        "reason": "The provider response failed the gateway terminal-reason check and its body was not recoverable after connection termination. Native tool-enabled research integration remains unfinished.",
+        "owner": "gateway-and-research-adapter-owner",
+        "next_action": "Implement privacy-safe terminal diagnostics and review a new bounded request/output allocation before another send; never replay or refund this attempt. Complete the trusted research execution/evaluation adapter separately."
+      }
+    },
+    "what_worked": [
+      "The user-authorized dotenv launcher exposed no key values.",
+      "Exact request, policy and gateway-source approval was verified immediately before sending.",
+      "Durable reservation and failure evidence survive the caller's failed response read."
+    ],
+    "what_failed": [
+      "The initial temporary launcher needed ESM mode; this was corrected before any provider request.",
+      "The live gateway rejected the HTTP 200 response as incomplete; the caller could not recover usage or stop reason."
+    ],
+    "calls": [
+      {
+        "sequence": 1,
+        "kind": "tool",
+        "name": "metered-anthropic-api-check",
+        "purpose": "Perform one text-only compatibility check under exact approval and shared budget.",
+        "outcome": "failed",
+        "duration_ms": null,
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "failures_and_inefficiencies": [],
+    "evidence": [
+      {
+        "id": "ev-live",
+        "kind": "file",
+        "uri": "repo://.dal/check/sonnet55-pilot/receipt.json",
+        "summary": "Live Anthropic HTTP 200; response_incomplete after 3575 bytes. One retained 48544-microUSD reservation leaves 9951456 microUSD under the cap. Actual billing, provider stop reason and usage are unknown. No retry or research evaluation.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:07:27Z"
+      },
+      {
+        "id": "ev-approval",
+        "kind": "file",
+        "uri": "repo://.dal/check/sonnet55-pilot/approval.json",
+        "summary": "Human go-ahead was transcribed into an exact approved expiring transfer decision for the fixed abstract prompt, gateway source and ten-dollar policy; operation-time verification passed. No dataset, labels or source entered the request.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:07:27Z"
+      },
+      {
+        "id": "ev-tests",
+        "kind": "test",
+        "uri": "repo://tests/sonnet55-gateway.test.ts",
+        "summary": "Eighteen new Sonnet gateway tests and eighty-nine historical gateway tests pass, including refusal handling and retained budget accounting. Full repository gate passes with 1351 tests passed and seven integration skips.",
+        "sha256": null,
+        "observed_at": "2026-10-06T23:08:00Z"
+      }
+    ],
+    "uncertainty": [
+      {
+        "id": "un-response",
+        "statement": "HTTP 200 confirms provider contact but does not establish a complete reply, known stop reason, measured billing or research gain.",
+        "level": "high",
+        "resolution": "Preserve this reservation and add closed-vocabulary completion diagnostics before a separately approved new request.",
+        "evidence": [
+          "ev-live"
+        ]
+      }
+    ],
+    "human_review": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null,
+      "notes": [
+        "User approved model, cap, paid testing and explicit dotenv loading. Candidate application and profile changes remain unauthorized and unperformed."
+      ],
+      "approval_refs": [
+        "dec-sonnet55-api-pilot-20261006"
+      ]
+    },
+    "privacy": {
+      "classification": "internal",
+      "retention": "local-only",
+      "tags": [
+        "no-secrets",
+        "paid-api-check"
+      ],
+      "contains_personal_data": false,
+      "redactions": []
+    }
+  }
+}
